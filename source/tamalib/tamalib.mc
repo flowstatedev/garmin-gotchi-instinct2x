@@ -50,6 +50,7 @@ typedef Tamalib as interface {
     function step() as Void;
     function mainloop() as Void;
 
+    // TODO: move implementations to tamalib_pvt.mc
     // function set_button(btn, state) { hw.set_button(btn, state); }
 
     // function set_speed(speed) { cpu.set_speed(speed); }
