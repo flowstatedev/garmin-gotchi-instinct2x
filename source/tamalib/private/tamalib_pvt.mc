@@ -22,23 +22,28 @@ import Toybox.Lang;
 
 module tamalib {
 
-class _Tamalib {
+class Tamalib_impl {
+
     const DEFAULT_FRAMERATE = 30; // fps
 
     var exec_mode as ExecMode = EXEC_MODE_RUN;
     var step_depth as U32 = 0;
     var screen_ts as Timestamp = 0;
-    var ts_freq as U32;
+    var ts_freq as U32?;
     var g_framerate as U8 = DEFAULT_FRAMERATE;
-    var g_hal as HAL;
-    var g_cpu as CPU;
-    var g_hw as HW;
+    var g_hal as HAL?;
+    var g_cpu as CPU?;
+    var g_hw as HW?;
 
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Bool {
+    function init(program as Program, breakpoints as BreakpointNode, freq as U32) as Int {
         var res = 0;
 
-        res |= g_cpu.init(program, breakpoints, freq);
-        res |= g_hw.init();
+        g_hal = new HAL_impl();
+        g_cpu = new CPU_impl();
+        g_hw = new HW_impl();
+
+        res |= g_cpu.init(g_hal, g_hw, program, breakpoints, freq);
+        res |= g_hw.init(g_hal, g_cpu);
 
         ts_freq = freq;
 
@@ -123,6 +128,34 @@ class _Tamalib {
                 g_hal.update_screen();
             }
         }
+    }
+
+    function set_button(btn, state) {
+        g_hw.set_button(btn, state);
+    }
+
+    function set_speed(speed) {
+        g_cpu.set_speed(speed);
+    }
+
+    function get_state() {
+        return g_cpu.get_state();
+    }
+
+    function refresh_hw() {
+        g_cpu.refresh_hw();
+    }
+
+    function reset() {
+        g_cpu.reset();
+    }
+
+    function add_bp(list, addr) {
+        g_cpu.add_bp(list, addr);
+    }
+
+    function free_bp(list) {
+        g_cpu.free_bp(list);
     }
 
 }

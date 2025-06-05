@@ -2,13 +2,14 @@ import Toybox.Lang;
 
 module tamalib {
 
-class _HAL {
+class HAL_impl {
 
-    function malloc(size as U32) as Object {
+    function malloc(size as U32) as Object? {
         /* TODO */
+        return null;
     }
 
-    function free(ptr as Object) as Void {
+    function free(ptr as Object?) as Void {
         /* TODO */
     }
 
@@ -18,9 +19,10 @@ class _HAL {
 
     function is_log_enabled(level as LogLevel) as Bool {
         /* TODO */
+        return false;
     }
 
-    function log(level as LogLevel, buff as String) as Void {
+    function log(level as LogLevel, buff as String, args as Array) as Void {
         /* TODO */
     }
 
@@ -30,6 +32,7 @@ class _HAL {
 
     function get_timestamp() as Timestamp {
         /* TODO */
+        return 0;
     }
 
     function update_screen() as Void {
@@ -54,6 +57,7 @@ class _HAL {
 
     function handler() as Int {
         /* TODO */
+        return 0;
     }
 
 }

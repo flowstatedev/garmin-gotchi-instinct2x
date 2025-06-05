@@ -55,13 +55,13 @@ function GET_IO_MEMORY(buffer, n)    { return GET_MEMORY(buffer, n); }
 
 typedef MemBufferType as U4;
 
-class Breakpoint {
-    var addr as U13;
-    var next as Breakpoint;
+class BreakpointNode {
+    var addr as U13?;
+    var next as BreakpointNode?;
 
-    function initialize(addr, next) {
+    function initialize(addr) {
         me.addr = addr;
-        me.next = next;
+        me.next = null;
     }
 }
 
@@ -129,14 +129,14 @@ typedef State as interface {
     function get_prog_timer_data() as U8;            function set_prog_timer_data(in as U8) as Void;
     function get_prog_timer_rld() as U8;             function set_prog_timer_rld(in as U8) as Void;
     function get_call_depth() as U32;                function set_call_depth(in as U32) as Void;
-    function get_interrupts() as Interrupt;          function set_interrupts(in as Interrupt) as Void;
+    function get_interrupts() as Array<Interrupt>;   function set_interrupts(in as Array<Interrupt>) as Void;
     function get_cpu_halted() as Bool;               function set_cpu_halted(in as Bool) as Void;
-    function get_memory() as MemBufferType;          function set_memory(in as MemBufferType) as Void;
+    function get_memory() as Array<MemBufferType>;   function set_memory(in as Array<MemBufferType>) as Void;
 };
 
 typedef CPU as interface {
-    function add_bp(list as Array<Breakpoint>, addr as U13) as Void;
-    function free_bp(list as Array<Breakpoint>) as Void;
+    function add_bp(list as BreakpointNode, addr as U13) as Void;
+    function free_bp(list as BreakpointNode) as Void;
     function set_speed(speed as U8) as Void;
     function get_state() as State;
     function get_depth() as U32;
@@ -144,7 +144,7 @@ typedef CPU as interface {
     function sync_ref_timestamp() as Void;
     function refresh_hw() as Void;
     function reset() as Void;
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Bool;
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as BreakpointNode, freq as U32) as Int;
     function release() as Void;
     function step() as Int;
 };

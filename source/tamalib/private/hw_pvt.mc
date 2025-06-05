@@ -22,10 +22,10 @@ import Toybox.Lang;
 
 module tamalib {
 
-class _HW {
-    // TODO: handle singletons in constructor
-    var g_hal as HAL;
-    var g_cpu as CPU;
+class HW_impl {
+
+    var g_hal as HAL?;
+    var g_cpu as CPU?;
 
     /* SEG -> LCD mapping */
     /* 51 segments */
@@ -35,7 +35,10 @@ class _HW {
         38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
     ];
 
-    function init() as Bool {
+    function init(hal as HAL, cpu as CPU) as Int {
+        g_hal = hal;
+        g_cpu = cpu;
+
         /* Buttons/Tap sensor are active LOW */
         g_cpu.set_input_pin(PIN_K00, PIN_STATE_HIGH);
         g_cpu.set_input_pin(PIN_K01, PIN_STATE_HIGH);
@@ -49,7 +52,7 @@ class _HW {
 
     function set_lcd_pin(seg as U8, com as U8, val as U8) as Void {
         if (seg_pos[seg] < LCD_WIDTH) {
-            g_hal.set_lcd_matrix(seg_pos[seg], com, val);
+            g_hal.set_lcd_matrix(seg_pos[seg], com, to_bool(val));
         } else {
             /*
             * IC n -> seg-com|...
@@ -63,9 +66,9 @@ class _HW {
             * IC 7 -> 28-15|38-12|39-13
             */
             if (seg == 8 && com < 4) {
-                g_hal.set_lcd_icon(com, val);
+                g_hal.set_lcd_icon(com, to_bool(val));
             } else if (seg == 28 && com >= 12) {
-                g_hal.set_lcd_icon(com - 8, val);
+                g_hal.set_lcd_icon(com - 8, to_bool(val));
             }
         }
     }

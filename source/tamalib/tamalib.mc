@@ -32,15 +32,11 @@ enum ExecMode {
 }
 
 typedef Tamalib as interface {
-
     function release() as Void;
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Bool;
-
+    function init(program as Program, breakpoints as BreakpointNode, freq as U32) as Int;
     function set_framerate(framerate as U8) as Void;
     function get_framerate() as U8;
-
     function register_hal(hal as HAL) as Void;
-
     function set_exec_mode(mode as ExecMode) as Void;
 
     /* NOTE: Only one of these two functions must be used in the main application
@@ -50,19 +46,13 @@ typedef Tamalib as interface {
     function step() as Void;
     function mainloop() as Void;
 
-    // TODO: move implementations to tamalib_pvt.mc
-    // function set_button(btn, state) { hw.set_button(btn, state); }
-
-    // function set_speed(speed) { cpu.set_speed(speed); }
-
-    // function get_state() { return cpu.get_state(); }
-    // function refresh_hw() { cpu.refresh_hw(); }
-
-    // function reset() { cpu.reset(); }
-
-    // function add_bp(list, addr) { cpu.add_bp(list, addr); }
-    // function free_bp(list) { cpu.free_bp(list); }
-
+    function set_button(btn, state);
+    function set_speed(speed);
+    function get_state();
+    function refresh_hw();
+    function reset();
+    function add_bp(list, addr);
+    function free_bp(list);
 };
 
 }

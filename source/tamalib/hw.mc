@@ -38,7 +38,7 @@ enum Button {
 }
 
 typedef HW as interface {
-    function init() as Bool;
+    function init(hal as HAL, cpu as CPU) as Int;
     function release() as Void;
     function set_lcd_pin(seg as U8, com as U8, val as U8) as Void;
     function set_button(btn as Button, state as ButtonState) as Void;

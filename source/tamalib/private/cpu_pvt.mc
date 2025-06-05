@@ -22,7 +22,8 @@ import Toybox.Lang;
 
 module tamalib {
 
-class _CPU {
+class CPU_impl {
+
     const TICK_FREQUENCY = 32768; // Hz
 
     const OSC1_FREQUENCY = TICK_FREQUENCY; // Hz
@@ -139,37 +140,54 @@ class _CPU {
     const INPUT_PORT_NUM = 2;
 
     class Op {
-        var log as String;
+        var log as String?;
         var code as U12;
         var mask as U12;
         var shift_arg0 as U12;
         var mask_arg0 as U12; // != 0 only if there are two arguments
         var cycles as U8;
-        var cb as (Method(arg0 as U8, arg1 as U8) as Void);
+        var cb as (Method(arg0 as U8, arg1 as U8) as Void)?;
+
+        function initialize(log, code, mask, shift_arg0, mask_arg0, cycles, cb) {
+            me.log = log;
+            me.code = code;
+            me.mask = mask;
+            me.shift_arg0 = shift_arg0;
+            me.mask_arg0 = mask_arg0;
+            me.cycles = cycles;
+            me.cb = cb;
+        }
     }
 
     class InputPort {
         var states as U4;
+
+        function initialize(states) {
+            me.states = states;
+        }
     }
 
-    // TODO: handle singletons in constructor
-    var g_hal as HAL;
-    var g_hw as HW;
+    /* Object references */
+    var g_hal as HAL?;
+    var g_hw as HW?;
 
     /* Registers */
-    var pc as U13, next_pc as U13;
-    var x as U12, y as U12;
-    var a as U4, b as U4;
-    var np as U5;
-    var sp as U8;
+    var pc as U13?, next_pc as U13?;
+    var x as U12?, y as U12?;
+    var a as U4?, b as U4?;
+    var np as U5?;
+    var sp as U8?;
 
     /* Flags */
-    var flags as U4;
+    var flags as U4?;
 
     var g_program as Program? = null;
     var memory as Array<MemBufferType> = new [MEM_BUFFER_SIZE];
 
-    var inputs as Array<InputPort> = new [INPUT_PORT_NUM]; // TODO: allocate 2 default instances
+    var inputs as Array<InputPort> = [
+        new InputPort(0),
+        new InputPort(0),
+    ];
 
     /* Interrupts (in priority order) */
     var interrupts as Array<Interrupt> = [
@@ -190,7 +208,7 @@ class _CPU {
         "INT_CLOCK_TIMER_SLOT",
     ];
 
-    var g_breakpoints as Array<Breakpoint>? = null;
+    var g_breakpoints as BreakpointNode = new BreakpointNode(null);
 
     var call_depth as U32 = 0;
 
@@ -203,87 +221,93 @@ class _CPU {
     var clk_timer_128hz_timestamp as U32 = 0; // in ticks
     var clk_timer_256hz_timestamp as U32 = 0; // in ticks
     var prog_timer_timestamp as U32 = 0; // in ticks
-    var prog_timer_enabled as Bool = 0;
+    var prog_timer_enabled as Bool = false;
     var prog_timer_data as U8 = 0;
     var prog_timer_rld as U8 = 0;
 
     var tick_counter as U32 = 0;
-    var ts_freq as U32;
+    var ts_freq as U32?;
     var speed_ratio as U8 = 1;
-    var ref_ts as Timestamp;
+    var ref_ts as Timestamp?;
 
-    var cpu_halted as Bool = 0;
+    var cpu_halted as Bool = false;
     var cpu_frequency as U32 = OSC1_FREQUENCY; // in hz
     var scaled_cycle_accumulator as U32 = 0;
 
-    // TODO: figure out how to do this
-    // var state_t cpu_state = {
-    //     .pc = &pc,
-    //     .x = &x,
-    //     .y = &y,
-    //     .a = &a,
-    //     .b = &b,
-    //     .np = &np,
-    //     .sp = &sp,
-    //     .flags = &flags,
-
-    //     .tick_counter = &tick_counter,
-    //     .clk_timer_2hz_timestamp = &clk_timer_2hz_timestamp,
-    //     .clk_timer_4hz_timestamp = &clk_timer_4hz_timestamp,
-    //     .clk_timer_8hz_timestamp = &clk_timer_8hz_timestamp,
-    //     .clk_timer_16hz_timestamp = &clk_timer_16hz_timestamp,
-    //     .clk_timer_32hz_timestamp = &clk_timer_32hz_timestamp,
-    //     .clk_timer_64hz_timestamp = &clk_timer_64hz_timestamp,
-    //     .clk_timer_128hz_timestamp = &clk_timer_128hz_timestamp,
-    //     .clk_timer_256hz_timestamp = &clk_timer_256hz_timestamp,
-    //     .prog_timer_timestamp = &prog_timer_timestamp,
-    //     .prog_timer_enabled = &prog_timer_enabled,
-    //     .prog_timer_data = &prog_timer_data,
-    //     .prog_timer_rld = &prog_timer_rld,
-
-    //     .call_depth = &call_depth,
-
-    //     .interrupts = interrupts,
-
-    //     .cpu_halted = &cpu_halted,
-
-    //     .memory = memory,
-    // };
-    var cpu_state as State;
-
-    function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
-        // TODO: fix breakpoints
-        // breakpoint_t *bp;
-
-        // bp = (breakpoint_t *) g_hal.malloc(sizeof(breakpoint_t));
-        // if (!bp) {
-        //     g_hal.log(LOG_ERROR, "Cannot allocate memory for breakpoint 0x%04X!\n", addr);
-        //     return;
-        // }
-
-        // bp->addr = addr;
-
-        // if (*list != null) {
-        //     bp->next = *list;
-        // } else {
-        //     /* List is empty */
-        //     bp->next = null;
-        // }
-
-        // *list = bp;
+    class State_impl {
+        var g_cpu as CPU_impl;
+        function initialize(cpu as CPU_impl) { g_cpu = cpu; }
+        function get_pc() as U13 { return g_cpu.pc; }
+        function set_pc(in as U13) as Void { g_cpu.pc = in; }
+        function get_x() as U12 { return g_cpu.x; }
+        function set_x(in as U12) as Void { g_cpu.x = in; }
+        function get_y() as U12 { return g_cpu.y; }
+        function set_y(in as U12) as Void { g_cpu.y = in; }
+        function get_a() as U4 { return g_cpu.a; }
+        function set_a(in as U4) as Void { g_cpu.a = in; }
+        function get_b() as U4 { return g_cpu.b; }
+        function set_b(in as U4) as Void { g_cpu.b = in; }
+        function get_np() as U5 { return g_cpu.np; }
+        function set_np(in as U5) as Void { g_cpu.np = in; }
+        function get_sp() as U8 { return g_cpu.sp; }
+        function set_sp(in as U8) as Void { g_cpu.sp = in; }
+        function get_flags() as U4 { return g_cpu.flags; }
+        function set_flags(in as U4) as Void { g_cpu.flags = in; }
+        function get_tick_counter() as U32 { return g_cpu.tick_counter; }
+        function set_tick_counter(in as U32) as Void { g_cpu.tick_counter = in; }
+        function get_clk_timer_2hz_timestamp() as U32 { return g_cpu.clk_timer_2hz_timestamp; }
+        function set_clk_timer_2hz_timestamp(in as U32) as Void { g_cpu.clk_timer_2hz_timestamp = in; }
+        function get_clk_timer_4hz_timestamp() as U32 { return g_cpu.clk_timer_4hz_timestamp; }
+        function set_clk_timer_4hz_timestamp(in as U32) as Void { g_cpu.clk_timer_4hz_timestamp = in; }
+        function get_clk_timer_8hz_timestamp() as U32 { return g_cpu.clk_timer_8hz_timestamp; }
+        function set_clk_timer_8hz_timestamp(in as U32) as Void { g_cpu.clk_timer_8hz_timestamp = in; }
+        function get_clk_timer_16hz_timestamp() as U32 { return g_cpu.clk_timer_16hz_timestamp; }
+        function set_clk_timer_16hz_timestamp(in as U32) as Void { g_cpu.clk_timer_16hz_timestamp = in; }
+        function get_clk_timer_32hz_timestamp() as U32 { return g_cpu.clk_timer_32hz_timestamp; }
+        function set_clk_timer_32hz_timestamp(in as U32) as Void { g_cpu.clk_timer_32hz_timestamp = in; }
+        function get_clk_timer_64hz_timestamp() as U32 { return g_cpu.clk_timer_64hz_timestamp; }
+        function set_clk_timer_64hz_timestamp(in as U32) as Void { g_cpu.clk_timer_64hz_timestamp = in; }
+        function get_clk_timer_128hz_timestamp() as U32 { return g_cpu.clk_timer_128hz_timestamp; }
+        function set_clk_timer_128hz_timestamp(in as U32) as Void { g_cpu.clk_timer_128hz_timestamp = in; }
+        function get_clk_timer_256hz_timestamp() as U32 { return g_cpu.clk_timer_256hz_timestamp; }
+        function set_clk_timer_256hz_timestamp(in as U32) as Void { g_cpu.clk_timer_256hz_timestamp = in; }
+        function get_prog_timer_timestamp() as U32 { return g_cpu.prog_timer_timestamp; }
+        function set_prog_timer_timestamp(in as U32) as Void { g_cpu.prog_timer_timestamp = in; }
+        function get_prog_timer_enabled() as Bool { return g_cpu.prog_timer_enabled; }
+        function set_prog_timer_enabled(in as Bool) as Void { g_cpu.prog_timer_enabled = in; }
+        function get_prog_timer_data() as U8 { return g_cpu.prog_timer_data; }
+        function set_prog_timer_data(in as U8) as Void { g_cpu.prog_timer_data = in; }
+        function get_prog_timer_rld() as U8 { return g_cpu.prog_timer_rld; }
+        function set_prog_timer_rld(in as U8) as Void { g_cpu.prog_timer_rld = in; }
+        function get_call_depth() as U32 { return g_cpu.call_depth; }
+        function set_call_depth(in as U32) as Void { g_cpu.call_depth = in; }
+        function get_interrupts() as Array<Interrupt> { return g_cpu.interrupts; }
+        function set_interrupts(in as Array<Interrupt>) as Void { g_cpu.interrupts = in; }
+        function get_cpu_halted() as Bool { return g_cpu.cpu_halted; }
+        function set_cpu_halted(in as Bool) as Void { g_cpu.cpu_halted = in; }
+        function get_memory() as Array<MemBufferType> { return g_cpu.memory; }
+        function set_memory(in as Array<MemBufferType>) as Void { g_cpu.memory = in; }
     }
 
-    function free_bp(list as Array<Breakpoint>) as Void {
-        // TODO: fix breakpoints
-        // breakpoint_t *bp = *list, *tmp;
+    function add_bp(list as BreakpointNode, addr as U13) as Void {
+        if (list.addr != null) {
+            var bp = list;
+            while (bp.next != null) {
+                bp = bp.next;
+            }
+            bp.next = new BreakpointNode(addr);
+        } else {
+            list.addr = addr;
+            list.next = null;
+        }
+    }
 
-        // while (bp != null) {
-        //     tmp = bp->next;
-        //     g_hal.free(bp);
-        //     bp = tmp;
-        // }
-
-        // *list = null;
+    function free_bp(list as BreakpointNode) as Void {
+        if (list.next != null) {
+            free_bp(list.next);
+        }
+        list.addr = 0x0;
+        list.next = null;
     }
 
     function set_speed(speed as U8) as Void {
@@ -291,7 +315,7 @@ class _CPU {
     }
 
     function get_state() as State {
-        return cpu_state;
+        return new State_impl(me);
     }
 
     function get_depth() as U32 {
@@ -304,7 +328,7 @@ class _CPU {
 
         /* Trigger the INT only if not masked */
         if (interrupts[slot].mask_reg & (0x1 << bit)) {
-            interrupts[slot].triggered = 1;
+            interrupts[slot].triggered = true;
         }
     }
 
@@ -476,14 +500,14 @@ class _CPU {
 
             case REG_PROG_TIMER_CTRL:
                 /* Prog timer stop/run/reset */
-                return !!prog_timer_enabled;
+                return to_int(!!prog_timer_enabled);
 
             case REG_PROG_TIMER_CLK_SEL:
                 /* Prog timer clock selection */
                 break;
 
             default:
-                g_hal.log(LOG_ERROR, "Read from unimplemented I/O 0x%03X - PC = 0x%04X\n", n, pc);
+                g_hal.log(LOG_ERROR, "Read from unimplemented I/O 0x%03X - PC = 0x%04X\n", [n, pc]);
         }
 
         return 0;
@@ -557,24 +581,24 @@ class _CPU {
 
             case REG_R40_R43_BZ_OUTPUT_PORT:
                 /* Output port (R40-R43) */
-                //g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", v);
-                g_hw.enable_buzzer(!(v & 0x8));
+                //g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", [v]);
+                g_hw.enable_buzzer(!to_bool(v & 0x8));
                 break;
 
             case REG_CPU_OSC3_CTRL:
                 /* CPU/OSC3 clocks switch, CPU voltage switch */
                 /* Do not care about OSC3 state nor operating voltage */
-                if ((v & 0x8) && cpu_frequency != OSC3_FREQUENCY) {
+                if (to_bool(v & 0x8) && cpu_frequency != OSC3_FREQUENCY) {
                     /* OSC3 */
                     cpu_frequency = OSC3_FREQUENCY;
                     scaled_cycle_accumulator = 0;
-                    //g_hal.log(LOG_INFO, "Switch to OSC3\n");
+                    //g_hal.log(LOG_INFO, "Switch to OSC3\n", []);
                 }
-                if (!(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
+                if (!to_bool(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
                     /* OSC1 */
                     cpu_frequency = OSC1_FREQUENCY;
                     scaled_cycle_accumulator = 0;
-                    //g_hal.log(LOG_INFO, "Switch to OSC1\n");
+                    //g_hal.log(LOG_INFO, "Switch to OSC1\n", []);
                 }
                 break;
 
@@ -616,11 +640,11 @@ class _CPU {
                     prog_timer_data = prog_timer_rld;
                 }
 
-                if ((v & 0x1) && !prog_timer_enabled) {
+                if (to_bool(v & 0x1) && !prog_timer_enabled) {
                     prog_timer_timestamp = tick_counter;
                 }
 
-                prog_timer_enabled = v & 0x1;
+                prog_timer_enabled = to_bool(v & 0x1);
                 break;
 
             case REG_PROG_TIMER_CLK_SEL:
@@ -629,7 +653,7 @@ class _CPU {
                 break;
 
             default:
-                g_hal.log(LOG_ERROR, "Write 0x%X to unimplemented I/O 0x%03X - PC = 0x%04X\n", v, n, pc);
+                g_hal.log(LOG_ERROR, "Write 0x%X to unimplemented I/O 0x%03X - PC = 0x%04X\n", [v, n, pc]);
         }
     }
 
@@ -650,26 +674,26 @@ class _CPU {
 
         if (n < MEM_RAM_SIZE) {
             /* RAM */
-            g_hal.log(LOG_MEMORY, "RAM              - ");
+            g_hal.log(LOG_MEMORY, "RAM              - ", []);
             res = GET_RAM_MEMORY(memory, n);
         } else if (n >= MEM_DISPLAY1_ADDR && n < (MEM_DISPLAY1_ADDR + MEM_DISPLAY1_SIZE)) {
             /* Display Memory 1 */
-            g_hal.log(LOG_MEMORY, "Display Memory 1 - ");
+            g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
             res = GET_DISP1_MEMORY(memory, n);
         } else if (n >= MEM_DISPLAY2_ADDR && n < (MEM_DISPLAY2_ADDR + MEM_DISPLAY2_SIZE)) {
             /* Display Memory 2 */
-            g_hal.log(LOG_MEMORY, "Display Memory 2 - ");
+            g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
             res = GET_DISP2_MEMORY(memory, n);
         } else if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
             /* I/O Memory */
-            g_hal.log(LOG_MEMORY, "I/O              - ");
+            g_hal.log(LOG_MEMORY, "I/O              - ", []);
             res = get_io(n);
         } else {
-            g_hal.log(LOG_ERROR, "Read from invalid memory address 0x%03X - PC = 0x%04X\n", n, pc);
+            g_hal.log(LOG_ERROR, "Read from invalid memory address 0x%03X - PC = 0x%04X\n", [n, pc]);
             return 0;
         }
 
-        g_hal.log(LOG_MEMORY, "Read  0x%X - Address 0x%03X - PC = 0x%04X\n", res, n, pc);
+        g_hal.log(LOG_MEMORY, "Read  0x%X - Address 0x%03X - PC = 0x%04X\n", [res, n, pc]);
 
         return res;
     }
@@ -679,28 +703,28 @@ class _CPU {
         if (n < MEM_RAM_SIZE) {
             /* RAM */
             SET_RAM_MEMORY(memory, n, v);
-            g_hal.log(LOG_MEMORY, "RAM              - ");
+            g_hal.log(LOG_MEMORY, "RAM              - ", []);
         } else if (n >= MEM_DISPLAY1_ADDR && n < (MEM_DISPLAY1_ADDR + MEM_DISPLAY1_SIZE)) {
             /* Display Memory 1 */
             SET_DISP1_MEMORY(memory, n, v);
             set_lcd(n, v);
-            g_hal.log(LOG_MEMORY, "Display Memory 1 - ");
+            g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
         } else if (n >= MEM_DISPLAY2_ADDR && n < (MEM_DISPLAY2_ADDR + MEM_DISPLAY2_SIZE)) {
             /* Display Memory 2 */
             SET_DISP2_MEMORY(memory, n, v);
             set_lcd(n, v);
-            g_hal.log(LOG_MEMORY, "Display Memory 2 - ");
+            g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
         } else if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
             /* I/O Memory */
             SET_IO_MEMORY(memory, n, v);
             set_io(n, v);
-            g_hal.log(LOG_MEMORY, "I/O              - ");
+            g_hal.log(LOG_MEMORY, "I/O              - ", []);
         } else {
-            g_hal.log(LOG_ERROR, "Write 0x%X to invalid memory address 0x%03X - PC = 0x%04X\n", v, n, pc);
+            g_hal.log(LOG_ERROR, "Write 0x%X to invalid memory address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
             return;
         }
 
-        g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", v, n, pc);
+        g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
     }
 
     class Range {
@@ -806,26 +830,26 @@ class _CPU {
 
     function op_call_cb(arg0 as U8, arg1 as U8) as Void {
         pc = (pc + 1) & 0x1FFF; // This does not actually change the PC register
-        SET_M((sp - 1) & 0xFF, PCP);
-        SET_M((sp - 2) & 0xFF, PCSH);
-        SET_M((sp - 3) & 0xFF, PCSL);
+        SET_M((sp - 1) & 0xFF, PCP());
+        SET_M((sp - 2) & 0xFF, PCSH());
+        SET_M((sp - 3) & 0xFF, PCSL());
         sp = (sp - 3) & 0xFF;
-        next_pc = TO_PC(PCB, NPP, arg0);
+        next_pc = TO_PC(PCB(), NPP(), arg0);
         call_depth++;
     }
 
     function op_calz_cb(arg0 as U8, arg1 as U8) as Void {
         pc = (pc + 1) & 0x1FFF; // This does not actually change the PC register
-        SET_M((sp - 1) & 0xFF, PCP);
-        SET_M((sp - 2) & 0xFF, PCSH);
-        SET_M((sp - 3) & 0xFF, PCSL);
+        SET_M((sp - 1) & 0xFF, PCP());
+        SET_M((sp - 2) & 0xFF, PCSH());
+        SET_M((sp - 3) & 0xFF, PCSL());
         sp = (sp - 3) & 0xFF;
-        next_pc = TO_PC(PCB, 0, arg0);
+        next_pc = TO_PC(PCB(), 0, arg0);
         call_depth++;
     }
 
     function op_ret_cb(arg0 as U8, arg1 as U8) as Void {
-        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB << 12);
+        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB() << 12);
         sp = (sp + 3) & 0xFF;
         if (call_depth > 0) {
             call_depth--;
@@ -833,7 +857,7 @@ class _CPU {
     }
 
     function op_rets_cb(arg0 as U8, arg1 as U8) as Void {
-        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB << 12);
+        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB() << 12);
         sp = (sp + 3) & 0xFF;
         next_pc = (next_pc + 1) & 0x1FFF;
         if (call_depth > 0) {
@@ -842,11 +866,11 @@ class _CPU {
     }
 
     function op_retd_cb(arg0 as U8, arg1 as U8) as Void {
-        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB << 12);
+        next_pc = M(sp) | (M((sp + 1) & 0xFF) << 4) | (M((sp + 2) & 0xFF) << 8) | (PCB() << 12);
         sp = (sp + 3) & 0xFF;
         SET_M(x, arg0 & 0xF);
-        SET_M(((x + 1) & 0xFF) | (XP << 8), (arg0 >> 4) & 0xF);
-        x = ((x + 2) & 0xFF) | (XP << 8);
+        SET_M(((x + 1) & 0xFF) | (XP() << 8), (arg0 >> 4) & 0xF);
+        x = ((x + 2) & 0xFF) | (XP() << 8);
         if (call_depth > 0) {
             call_depth--;
         }
@@ -859,78 +883,78 @@ class _CPU {
     }
 
     function op_halt_cb(arg0 as U8, arg1 as U8) as Void {
-        cpu_halted = 1;
+        cpu_halted = true;
     }
 
     function op_inc_x_cb(arg0 as U8, arg1 as U8) as Void {
-        x = ((x + 1) & 0xFF) | (XP << 8);
+        x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_inc_y_cb(arg0 as U8, arg1 as U8) as Void {
-        y = ((y + 1) & 0xFF) | (YP << 8);
+        y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_ld_x_cb(arg0 as U8, arg1 as U8) as Void {
-        x = arg0 | (XP << 8);
+        x = arg0 | (XP() << 8);
     }
 
     function op_ld_y_cb(arg0 as U8, arg1 as U8) as Void {
-        y = arg0 | (YP << 8);
+        y = arg0 | (YP() << 8);
     }
 
     function op_ld_xp_r_cb(arg0 as U8, arg1 as U8) as Void {
-        x = XHL | (RQ(arg0) << 8);
+        x = XHL() | (RQ(arg0) << 8);
     }
 
     function op_ld_xh_r_cb(arg0 as U8, arg1 as U8) as Void {
-        x = XL | (RQ(arg0) << 4) | (XP << 8);
+        x = XL() | (RQ(arg0) << 4) | (XP() << 8);
     }
 
     function op_ld_xl_r_cb(arg0 as U8, arg1 as U8) as Void {
-        x = RQ(arg0) | (XH << 4) | (XP << 8);
+        x = RQ(arg0) | (XH() << 4) | (XP() << 8);
     }
 
     function op_ld_yp_r_cb(arg0 as U8, arg1 as U8) as Void {
-        y = YHL | (RQ(arg0) << 8);
+        y = YHL() | (RQ(arg0) << 8);
     }
 
     function op_ld_yh_r_cb(arg0 as U8, arg1 as U8) as Void {
-        y = YL | (RQ(arg0) << 4) | (YP << 8);
+        y = YL() | (RQ(arg0) << 4) | (YP() << 8);
     }
 
     function op_ld_yl_r_cb(arg0 as U8, arg1 as U8) as Void {
-        y = RQ(arg0) | (YH << 4) | (YP << 8);
+        y = RQ(arg0) | (YH() << 4) | (YP() << 8);
     }
 
     function op_ld_r_xp_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, XP);
+        SET_RQ(arg0, XP());
     }
 
     function op_ld_r_xh_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, XH);
+        SET_RQ(arg0, XH());
     }
 
     function op_ld_r_xl_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, XL);
+        SET_RQ(arg0, XL());
     }
 
     function op_ld_r_yp_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, YP);
+        SET_RQ(arg0, YP());
     }
 
     function op_ld_r_yh_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, YH);
+        SET_RQ(arg0, YH());
     }
 
     function op_ld_r_yl_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, YL);
+        SET_RQ(arg0, YL());
     }
 
     function op_adc_xh_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = XH + arg0 + C;
-        x = XL | ((tmp & 0xF) << 4)| (XP << 8);
+        tmp = XH() + arg0 + C();
+        x = XL() | ((tmp & 0xF) << 4)| (XP() << 8);
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
     }
@@ -938,8 +962,8 @@ class _CPU {
     function op_adc_xl_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = XL + arg0 + C;
-        x = (tmp & 0xF) | (XH << 4) | (XP << 8);
+        tmp = XL() + arg0 + C();
+        x = (tmp & 0xF) | (XH() << 4) | (XP() << 8);
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
     }
@@ -947,8 +971,8 @@ class _CPU {
     function op_adc_yh_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = YH + arg0 + C;
-        y = YL | ((tmp & 0xF) << 4)| (YP << 8);
+        tmp = YH() + arg0 + C();
+        y = YL() | ((tmp & 0xF) << 4)| (YP() << 8);
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
     }
@@ -956,30 +980,30 @@ class _CPU {
     function op_adc_yl_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = YL + arg0 + C;
-        y = (tmp & 0xF) | (YH << 4) | (YP << 8);
+        tmp = YL() + arg0 + C();
+        y = (tmp & 0xF) | (YH() << 4) | (YP() << 8);
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_xh_cb(arg0 as U8, arg1 as U8) as Void {
-        if (XH < arg0) { SET_C(); } else { CLEAR_C(); }
-        if (XH == arg0) { SET_Z(); } else { CLEAR_Z(); }
+        if (XH() < arg0) { SET_C(); } else { CLEAR_C(); }
+        if (XH() == arg0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_xl_cb(arg0 as U8, arg1 as U8) as Void {
-        if (XL < arg0) { SET_C(); } else { CLEAR_C(); }
-        if (XL == arg0) { SET_Z(); } else { CLEAR_Z(); }
+        if (XL() < arg0) { SET_C(); } else { CLEAR_C(); }
+        if (XL() == arg0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_yh_cb(arg0 as U8, arg1 as U8) as Void {
-        if (YH < arg0) { SET_C(); } else { CLEAR_C(); }
-        if (YH == arg0) { SET_Z(); } else { CLEAR_Z(); }
+        if (YH() < arg0) { SET_C(); } else { CLEAR_C(); }
+        if (YH() == arg0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_yl_cb(arg0 as U8, arg1 as U8) as Void {
-        if (YL < arg0) { SET_C(); } else { CLEAR_C(); }
-        if (YL == arg0) { SET_Z(); } else { CLEAR_Z(); }
+        if (YL() < arg0) { SET_C(); } else { CLEAR_C(); }
+        if (YL() == arg0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_ld_r_i_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1008,28 +1032,28 @@ class _CPU {
 
     function op_ldpx_mx_cb(arg0 as U8, arg1 as U8) as Void {
         SET_M(x, arg0);
-        x = ((x + 1) & 0xFF) | (XP << 8);
+        x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_ldpx_r_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg1));
-        x = ((x + 1) & 0xFF) | (XP << 8);
+        x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_ldpy_my_cb(arg0 as U8, arg1 as U8) as Void {
         SET_M(y, arg0);
-        y = ((y + 1) & 0xFF) | (YP << 8);
+        y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_ldpy_r_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg1));
-        y = ((y + 1) & 0xFF) | (YP << 8);
+        y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_lbpx_cb(arg0 as U8, arg1 as U8) as Void {
         SET_M(x, arg0 & 0xF);
-        SET_M(((x + 1) & 0xFF) | (XP << 8), (arg0 >> 4) & 0xF);
-        x = ((x + 2) & 0xFF) | (XP << 8);
+        SET_M(((x + 1) & 0xFF) | (XP() << 8), (arg0 >> 4) & 0xF);
+        x = ((x + 2) & 0xFF) | (XP() << 8);
     }
 
     function op_set_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1087,32 +1111,32 @@ class _CPU {
 
     function op_push_xp_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, XP);
+        SET_M(sp, XP());
     }
 
     function op_push_xh_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, XH);
+        SET_M(sp, XH());
     }
 
     function op_push_xl_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, XL);
+        SET_M(sp, XL());
     }
 
     function op_push_yp_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, YP);
+        SET_M(sp, YP());
     }
 
     function op_push_yh_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, YH);
+        SET_M(sp, YH());
     }
 
     function op_push_yl_cb(arg0 as U8, arg1 as U8) as Void {
         sp = (sp - 1) & 0xFF;
-        SET_M(sp, YL);
+        SET_M(sp, YL());
     }
 
     function op_push_f_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1126,32 +1150,32 @@ class _CPU {
     }
 
     function op_pop_xp_cb(arg0 as U8, arg1 as U8) as Void {
-        x = XL | (XH << 4)| (M(sp) << 8);
+        x = XL() | (XH() << 4)| (M(sp) << 8);
         sp = (sp + 1) & 0xFF;
     }
 
     function op_pop_xh_cb(arg0 as U8, arg1 as U8) as Void {
-        x = XL | (M(sp) << 4)| (XP << 8);
+        x = XL() | (M(sp) << 4)| (XP() << 8);
         sp = (sp + 1) & 0xFF;
     }
 
     function op_pop_xl_cb(arg0 as U8, arg1 as U8) as Void {
-        x = M(sp) | (XH << 4)| (XP << 8);
+        x = M(sp) | (XH() << 4)| (XP() << 8);
         sp = (sp + 1) & 0xFF;
     }
 
     function op_pop_yp_cb(arg0 as U8, arg1 as U8) as Void {
-        y = YL | (YH << 4)| (M(sp) << 8);
+        y = YL() | (YH() << 4)| (M(sp) << 8);
         sp = (sp + 1) & 0xFF;
     }
 
     function op_pop_yh_cb(arg0 as U8, arg1 as U8) as Void {
-        y = YL | (M(sp) << 4)| (YP << 8);
+        y = YL() | (M(sp) << 4)| (YP() << 8);
         sp = (sp + 1) & 0xFF;
     }
 
     function op_pop_yl_cb(arg0 as U8, arg1 as U8) as Void {
-        y = M(sp) | (YH << 4)| (YP << 8);
+        y = M(sp) | (YH() << 4)| (YP() << 8);
         sp = (sp + 1) & 0xFF;
     }
 
@@ -1161,26 +1185,26 @@ class _CPU {
     }
 
     function op_ld_sph_r_cb(arg0 as U8, arg1 as U8) as Void {
-        sp = SPL | (RQ(arg0) << 4);
+        sp = SPL() | (RQ(arg0) << 4);
     }
 
     function op_ld_spl_r_cb(arg0 as U8, arg1 as U8) as Void {
-        sp = RQ(arg0) | (SPH << 4);
+        sp = RQ(arg0) | (SPH() << 4);
     }
 
     function op_ld_r_sph_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, SPH);
+        SET_RQ(arg0, SPH());
     }
 
     function op_ld_r_spl_cb(arg0 as U8, arg1 as U8) as Void {
-        SET_RQ(arg0, SPL);
+        SET_RQ(arg0, SPL());
     }
 
     function op_add_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
         tmp = RQ(arg0) + arg1;
-        if (D) {
+        if (D()) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1199,7 +1223,7 @@ class _CPU {
         var tmp;
 
         tmp = RQ(arg0) + RQ(arg1);
-        if (D) {
+        if (D()) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1217,8 +1241,8 @@ class _CPU {
     function op_adc_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) + arg1 + C;
-        if (D) {
+        tmp = RQ(arg0) + arg1 + C();
+        if (D()) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1236,8 +1260,8 @@ class _CPU {
     function op_adc_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) + RQ(arg1) + C;
-        if (D) {
+        tmp = RQ(arg0) + RQ(arg1) + C();
+        if (D()) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1256,7 +1280,7 @@ class _CPU {
         var tmp;
 
         tmp = RQ(arg0) - RQ(arg1);
-        if (D) {
+        if (D()) {
             if (tmp >> 4) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
@@ -1272,8 +1296,8 @@ class _CPU {
     function op_sbc_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) - arg1 - C;
-        if (D) {
+        tmp = RQ(arg0) - arg1 - C();
+        if (D()) {
             if (tmp >> 4) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
@@ -1289,8 +1313,8 @@ class _CPU {
     function op_sbc_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) - RQ(arg1) - C;
-        if (D) {
+        tmp = RQ(arg0) - RQ(arg1) - C();
+        if (D()) {
             if (tmp >> 4) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
@@ -1354,7 +1378,7 @@ class _CPU {
     function op_rlc_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = (RQ(arg0) << 1) | C;
+        tmp = (RQ(arg0) << 1) | C();
         if (RQ(arg0) & 0x8) { SET_C(); } else { CLEAR_C(); }
         SET_RQ(arg0, tmp & 0xF);
         /* No need to set Z (issue in DS) */
@@ -1363,7 +1387,7 @@ class _CPU {
     function op_rrc_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = (RQ(arg0) >> 1) | (C << 3);
+        tmp = (RQ(arg0) >> 1) | (C() << 3);
         if (RQ(arg0) & 0x1) { SET_C(); } else { CLEAR_C(); }
         SET_RQ(arg0, tmp & 0xF);
         /* No need to set Z (issue in DS) */
@@ -1390,8 +1414,8 @@ class _CPU {
     function op_acpx_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(x) + RQ(arg0) + C;
-        if (D) {
+        tmp = M(x) + RQ(arg0) + C();
+        if (D()) {
             if (tmp >= 10) {
                 SET_M(x, (tmp - 10) & 0xF);
                 SET_C();
@@ -1404,14 +1428,14 @@ class _CPU {
             if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         }
         if (!M(x)) { SET_Z(); } else { CLEAR_Z(); }
-        x = ((x + 1) & 0xFF) | (XP << 8);
+        x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_acpy_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(y) + RQ(arg0) + C;
-        if (D) {
+        tmp = M(y) + RQ(arg0) + C();
+        if (D()) {
             if (tmp >= 10) {
                 SET_M(y, (tmp - 10) & 0xF);
                 SET_C();
@@ -1424,14 +1448,14 @@ class _CPU {
             if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         }
         if (!M(y)) { SET_Z(); } else { CLEAR_Z(); }
-        y = ((y + 1) & 0xFF) | (YP << 8);
+        y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_scpx_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(x) - RQ(arg0) - C;
-        if (D) {
+        tmp = M(x) - RQ(arg0) - C();
+        if (D()) {
             if (tmp >> 4) {
                 SET_M(x, (tmp - 6) & 0xF);
             } else {
@@ -1442,14 +1466,14 @@ class _CPU {
         }
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!M(x)) { SET_Z(); } else { CLEAR_Z(); }
-        x = ((x + 1) & 0xFF) | (XP << 8);
+        x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_scpy_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(y) - RQ(arg0) - C;
-        if (D) {
+        tmp = M(y) - RQ(arg0) - C();
+        if (D()) {
             if (tmp >> 4) {
                 SET_M(y, (tmp - 6) & 0xF);
             } else {
@@ -1460,7 +1484,7 @@ class _CPU {
         }
         if (tmp >> 4) { SET_C(); } else { CLEAR_C(); }
         if (!M(y)) { SET_Z(); } else { CLEAR_Z(); }
-        y = ((y + 1) & 0xFF) | (YP << 8);
+        y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_not_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1577,9 +1601,8 @@ class _CPU {
         new Op("ACPY R(%X)             ",   0xF2C, MASK_10B, 0, 0,     7,  method(:op_acpy_cb)),     // ACPY
         new Op("SCPX R(%X)             ",   0xF38, MASK_10B, 0, 0,     7,  method(:op_scpx_cb)),     // SCPX
         new Op("SCPY R(%X)             ",   0xF3C, MASK_10B, 0, 0,     7,  method(:op_scpy_cb)),     // SCPY
-        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF   , 4, 0,     7,  method(:op_not_cb)),      // NOT
-
-        new Op(null, 0, 0, 0, 0, 0, null),
+        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb)),      // NOT
+        new Op(null,                        0,     0,        0, 0,     0,  null),
     ];
 
 
@@ -1615,19 +1638,19 @@ class _CPU {
         /* Process interrupts in priority order */
         for (i = 0; i < INT_SLOT_NUM; i++) {
             if (interrupts[i].triggered) {
-                g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", interrupt_names[i], i);
-                SET_M((sp - 1) & 0xFF, PCP);
-                SET_M((sp - 2) & 0xFF, PCSH);
-                SET_M((sp - 3) & 0xFF, PCSL);
+                g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", [interrupt_names[i], i]);
+                SET_M((sp - 1) & 0xFF, PCP());
+                SET_M((sp - 2) & 0xFF, PCSH());
+                SET_M((sp - 3) & 0xFF, PCSL());
                 sp = (sp - 3) & 0xFF;
                 CLEAR_I();
-                np = TO_NP(NBP, 1);
-                pc = TO_PC(PCB, 1, interrupts[i].vector);
+                np = TO_NP(NBP(), 1);
+                pc = TO_PC(PCB(), 1, interrupts[i].vector);
                 call_depth++;
-                cpu_halted = 0;
+                cpu_halted = false;
 
                 ref_ts = wait_for_cycles(ref_ts, 12);
-                interrupts[i].triggered = 0;
+                interrupts[i].triggered = false;
                 return;
             }
         }
@@ -1640,36 +1663,36 @@ class _CPU {
             return;
         }
 
-        g_hal.log(LOG_CPU, "0x%04X: ", addr);
+        g_hal.log(LOG_CPU, "0x%04X: ", [addr]);
 
         if (call_depth < 100) {
             for (i = 0; i < call_depth; i++) {
-                g_hal.log(LOG_CPU, "  ");
+                g_hal.log(LOG_CPU, "  ", []);
             }
         } else {
             /* Something went wrong with the call depth */
-            g_hal.log(LOG_CPU, "<<< ");
+            g_hal.log(LOG_CPU, "<<< ", []);
         }
 
         if (ops[op_num].mask_arg0 != 0) {
             /* Two arguments */
-            g_hal.log(LOG_CPU, ops[op_num].log, (op & ops[op_num].mask_arg0) >> ops[op_num].shift_arg0, op & ~(ops[op_num].mask | ops[op_num].mask_arg0));
+            g_hal.log(LOG_CPU, ops[op_num].log, [(op & ops[op_num].mask_arg0) >> ops[op_num].shift_arg0, op & ~(ops[op_num].mask | ops[op_num].mask_arg0)]);
         } else {
             /* One argument */
-            g_hal.log(LOG_CPU, ops[op_num].log, (op & ~ops[op_num].mask) >> ops[op_num].shift_arg0);
+            g_hal.log(LOG_CPU, ops[op_num].log, [(op & ~ops[op_num].mask) >> ops[op_num].shift_arg0]);
         }
 
         if (call_depth < 10) {
             for (i = 0; i < (10 - call_depth); i++) {
-                g_hal.log(LOG_CPU, "  ");
+                g_hal.log(LOG_CPU, "  ", []);
             }
         }
 
-        g_hal.log(LOG_CPU, " ; 0x%03X - ", op);
+        g_hal.log(LOG_CPU, " ; 0x%03X - ", [op]);
         for (i = 0; i < 12; i++) {
-            g_hal.log(LOG_CPU, "%s", ((op >> (11 - i)) & 0x1) ? "1" : "0");
+            g_hal.log(LOG_CPU, "%s", [((op >> (11 - i)) & 0x1) ? "1" : "0"]);
         }
-        g_hal.log(LOG_CPU, " - PC = 0x%04X, SP = 0x%02X, NP = 0x%02X, X = 0x%03X, Y = 0x%03X, A = 0x%X, B = 0x%X, F = 0x%X\n", pc, sp, np, x, y, a, b, flags);
+        g_hal.log(LOG_CPU, " - PC = 0x%04X, SP = 0x%02X, NP = 0x%02X, X = 0x%03X, Y = 0x%03X, A = 0x%X, B = 0x%X, F = 0x%X\n", [pc, sp, np, x, y, a, b, flags]);
     }
 
     function handle_timers() as Void {
@@ -1806,7 +1829,9 @@ class _CPU {
         sync_ref_timestamp();
     }
 
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Bool {
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as BreakpointNode, freq as U32) as Int {
+        g_hal = hal;
+        g_hw = hw;
         g_program = program;
         g_breakpoints = breakpoints;
         ts_freq = freq;
@@ -1816,12 +1841,11 @@ class _CPU {
         return 0;
     }
 
-    function release() as Void {
-    }
+    function release() as Void {}
 
     function step() as Int {
         var op;
-        var i;
+        var i = null;
         var bp = g_breakpoints;
         var previous_cycles = 0;
 
@@ -1836,7 +1860,7 @@ class _CPU {
             }
 
             if (ops[i].log == null) {
-                g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", op, pc);
+                g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
                 return 1;
             }
 
@@ -1882,7 +1906,7 @@ class _CPU {
         handle_timers();
 
         /* Check if there is any pending interrupt */
-        if (I && i != 0 && i != 58) { // Do not process interrupts after a PSET or EI operation
+        if (I() && i != 0 && i != 58) { // Do not process interrupts after a PSET or EI operation
             process_interrupts();
         }
 

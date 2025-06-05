@@ -34,8 +34,8 @@ typedef HAL as interface {
     /* Memory allocation functions
      * NOTE: Needed only if breakpoints support is required.
      */
-    function malloc(size as U32) as Object;
-    function free(ptr as Object) as Void;
+    function malloc(size as U32) as Object?;
+    function free(ptr as Object?) as Void;
 
     /* What to do if the CPU has halted
      */
@@ -45,7 +45,7 @@ typedef HAL as interface {
      * NOTE: Needed only if log messages are required.
      */
     function is_log_enabled(level as LogLevel) as Bool;
-    function log(level as LogLevel, buff as String) as Void;
+    function log(level as LogLevel, buff as String, args as Array) as Void;
 
     /* Clock related functions
      * NOTE: Timestamps granularity is configured with tamalib_init(), an accuracy
