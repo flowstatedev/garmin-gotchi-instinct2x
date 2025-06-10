@@ -3,36 +3,38 @@ import Toybox.Lang;
 module tamalib {
 
 class HAL_impl {
+    var _start_time as Number;
+    var _log_level_flags as Number;
 
-    function malloc(size as U32) as Object? {
-        /* TODO */
-        return null;
+    function initialize(log_level_flags as Number) {
+        _start_time = System.getTimer();
+        _log_level_flags = log_level_flags;
     }
 
-    function free(ptr as Object?) as Void {
-        /* TODO */
-    }
+    function malloc(size as U32) as Object? { return null; }
 
-    function halt() as Void {
-        /* TODO */
-    }
+    function free(ptr as Object?) as Void {}
+
+    function halt() as Void {}
 
     function is_log_enabled(level as LogLevel) as Bool {
-        /* TODO */
-        return false;
+        return bool(_log_level_flags & level);
     }
 
     function log(level as LogLevel, buff as String, args as Array) as Void {
-        /* TODO */
+        if (is_log_enabled(level)) {
+            printf(buff, args);
+        }
     }
 
     function sleep_until(ts as Timestamp) as Void {
-        /* TODO */
+        // TODO: figure out timing and avoid unnecessary waits
+        var t0 = get_timestamp();
+        while (get_timestamp() - t0 < ts) {}
     }
 
     function get_timestamp() as Timestamp {
-        /* TODO */
-        return 0;
+        return System.getTimer() - _start_time;
     }
 
     function update_screen() as Void {

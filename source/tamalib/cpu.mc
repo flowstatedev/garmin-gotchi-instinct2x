@@ -55,13 +55,11 @@ function GET_IO_MEMORY(buffer, n)    { return GET_MEMORY(buffer, n); }
 
 typedef MemBufferType as U4;
 
-class BreakpointNode {
-    var addr as U13?;
-    var next as BreakpointNode?;
+class Breakpoint {
+    var addr as U13;
 
     function initialize(addr) {
         me.addr = addr;
-        me.next = null;
     }
 }
 
@@ -135,8 +133,8 @@ typedef State as interface {
 };
 
 typedef CPU as interface {
-    function add_bp(list as BreakpointNode, addr as U13) as Void;
-    function free_bp(list as BreakpointNode) as Void;
+    function add_bp(list as Array<Breakpoint>, addr as U13) as Void;
+    function free_bp(list as Array<Breakpoint>) as Void;
     function set_speed(speed as U8) as Void;
     function get_state() as State;
     function get_depth() as U32;
@@ -144,7 +142,7 @@ typedef CPU as interface {
     function sync_ref_timestamp() as Void;
     function refresh_hw() as Void;
     function reset() as Void;
-    function init(hal as HAL, hw as HW, program as Program, breakpoints as BreakpointNode, freq as U32) as Int;
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int;
     function release() as Void;
     function step() as Int;
 };

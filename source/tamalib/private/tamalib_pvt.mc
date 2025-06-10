@@ -31,16 +31,18 @@ class Tamalib_impl {
     var screen_ts as Timestamp = 0;
     var ts_freq as U32?;
     var g_framerate as U8 = DEFAULT_FRAMERATE;
-    var g_hal as HAL?;
-    var g_cpu as CPU?;
-    var g_hw as HW?;
+    var g_hal as HAL;
+    var g_cpu as CPU;
+    var g_hw as HW;
 
-    function init(program as Program, breakpoints as BreakpointNode, freq as U32) as Int {
-        var res = 0;
-
-        g_hal = new HAL_impl();
+    function initialize(log_level_flags as Number) {
+        g_hal = new HAL_impl(log_level_flags);
         g_cpu = new CPU_impl();
         g_hw = new HW_impl();
+    }
+
+    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int {
+        var res = 0;
 
         res |= g_cpu.init(g_hal, g_hw, program, breakpoints, freq);
         res |= g_hw.init(g_hal, g_cpu);

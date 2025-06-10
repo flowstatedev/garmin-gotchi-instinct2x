@@ -52,7 +52,7 @@ class HW_impl {
 
     function set_lcd_pin(seg as U8, com as U8, val as U8) as Void {
         if (seg_pos[seg] < LCD_WIDTH) {
-            g_hal.set_lcd_matrix(seg_pos[seg], com, to_bool(val));
+            g_hal.set_lcd_matrix(seg_pos[seg], com, bool(val));
         } else {
             /*
             * IC n -> seg-com|...
@@ -66,9 +66,9 @@ class HW_impl {
             * IC 7 -> 28-15|38-12|39-13
             */
             if (seg == 8 && com < 4) {
-                g_hal.set_lcd_icon(com, to_bool(val));
+                g_hal.set_lcd_icon(com, bool(val));
             } else if (seg == 28 && com >= 12) {
-                g_hal.set_lcd_icon(com - 8, to_bool(val));
+                g_hal.set_lcd_icon(com - 8, bool(val));
             }
         }
     }

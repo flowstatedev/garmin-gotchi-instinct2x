@@ -33,7 +33,7 @@ enum ExecMode {
 
 typedef Tamalib as interface {
     function release() as Void;
-    function init(program as Program, breakpoints as BreakpointNode, freq as U32) as Int;
+    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int;
     function set_framerate(framerate as U8) as Void;
     function get_framerate() as U8;
     function register_hal(hal as HAL) as Void;

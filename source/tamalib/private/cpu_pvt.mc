@@ -208,7 +208,7 @@ class CPU_impl {
         "INT_CLOCK_TIMER_SLOT",
     ];
 
-    var g_breakpoints as BreakpointNode = new BreakpointNode(null);
+    var g_breakpoints as Array<Breakpoint> = [];
 
     var call_depth as U32 = 0;
 
@@ -289,25 +289,14 @@ class CPU_impl {
         function set_memory(in as Array<MemBufferType>) as Void { g_cpu.memory = in; }
     }
 
-    function add_bp(list as BreakpointNode, addr as U13) as Void {
-        if (list.addr != null) {
-            var bp = list;
-            while (bp.next != null) {
-                bp = bp.next;
-            }
-            bp.next = new BreakpointNode(addr);
-        } else {
-            list.addr = addr;
-            list.next = null;
-        }
+    function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
+        list.add(new Breakpoint(addr));
     }
 
-    function free_bp(list as BreakpointNode) as Void {
-        if (list.next != null) {
-            free_bp(list.next);
+    function free_bp(list as Array<Breakpoint>) as Void {
+        while (list.size() > 0) {
+            list.remove(list[0]);
         }
-        list.addr = 0x0;
-        list.next = null;
     }
 
     function set_speed(speed as U8) as Void {
@@ -500,7 +489,7 @@ class CPU_impl {
 
             case REG_PROG_TIMER_CTRL:
                 /* Prog timer stop/run/reset */
-                return to_int(!!prog_timer_enabled);
+                return int(!!prog_timer_enabled);
 
             case REG_PROG_TIMER_CLK_SEL:
                 /* Prog timer clock selection */
@@ -582,19 +571,19 @@ class CPU_impl {
             case REG_R40_R43_BZ_OUTPUT_PORT:
                 /* Output port (R40-R43) */
                 //g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", [v]);
-                g_hw.enable_buzzer(!to_bool(v & 0x8));
+                g_hw.enable_buzzer(!bool(v & 0x8));
                 break;
 
             case REG_CPU_OSC3_CTRL:
                 /* CPU/OSC3 clocks switch, CPU voltage switch */
                 /* Do not care about OSC3 state nor operating voltage */
-                if (to_bool(v & 0x8) && cpu_frequency != OSC3_FREQUENCY) {
+                if (bool(v & 0x8) && cpu_frequency != OSC3_FREQUENCY) {
                     /* OSC3 */
                     cpu_frequency = OSC3_FREQUENCY;
                     scaled_cycle_accumulator = 0;
                     //g_hal.log(LOG_INFO, "Switch to OSC3\n", []);
                 }
-                if (!to_bool(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
+                if (!bool(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
                     /* OSC1 */
                     cpu_frequency = OSC1_FREQUENCY;
                     scaled_cycle_accumulator = 0;
@@ -640,11 +629,11 @@ class CPU_impl {
                     prog_timer_data = prog_timer_rld;
                 }
 
-                if (to_bool(v & 0x1) && !prog_timer_enabled) {
+                if (bool(v & 0x1) && !prog_timer_enabled) {
                     prog_timer_timestamp = tick_counter;
                 }
 
-                prog_timer_enabled = to_bool(v & 0x1);
+                prog_timer_enabled = bool(v & 0x1);
                 break;
 
             case REG_PROG_TIMER_CLK_SEL:
@@ -1829,7 +1818,7 @@ class CPU_impl {
         sync_ref_timestamp();
     }
 
-    function init(hal as HAL, hw as HW, program as Program, breakpoints as BreakpointNode, freq as U32) as Int {
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int {
         g_hal = hal;
         g_hw = hw;
         g_program = program;
@@ -1845,12 +1834,13 @@ class CPU_impl {
 
     function step() as Int {
         var op;
-        var i = null;
-        var bp = g_breakpoints;
+        var i = 0;
+        var bp_i = 0;
         var previous_cycles = 0;
 
         if (!cpu_halted) {
-            op = g_program[pc];
+            var prg_i = pc * 2;
+            op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
 
             /* Lookup the OP code */
             for (i = 0; ops[i].log != null; i++) {
@@ -1911,12 +1901,11 @@ class CPU_impl {
         }
 
         /* Check if we could pause the execution */
-        while (!cpu_halted && bp != null) {
-            if (bp.addr == pc) {
+        while (!cpu_halted && bp_i < g_breakpoints.size()) {
+            if (g_breakpoints[bp_i].addr == pc) {
                 return 1;
             }
-
-            bp = bp.next;
+            bp_i++;
         }
 
         return 0;

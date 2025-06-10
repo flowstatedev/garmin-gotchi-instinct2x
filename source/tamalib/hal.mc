@@ -23,7 +23,7 @@ import Toybox.Lang;
 module tamalib {
 
 enum LogLevel {
-    LOG_ERROR  = 0x1,
+    LOG_ERROR  = (0x1 << 0),
     LOG_INFO   = (0x1 << 1),
     LOG_MEMORY = (0x1 << 2),
     LOG_CPU    = (0x1 << 3),
