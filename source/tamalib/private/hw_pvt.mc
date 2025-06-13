@@ -24,8 +24,8 @@ module tamalib {
 
 class HW_impl {
 
-    var g_hal as HAL?;
-    var g_cpu as CPU?;
+    (:initialized) var g_hal as HAL;
+    (:initialized) var g_cpu as CPU;
 
     /* SEG -> LCD mapping */
     /* 51 segments */

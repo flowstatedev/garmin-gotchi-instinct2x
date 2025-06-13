@@ -45,7 +45,7 @@ typedef HAL as interface {
      * NOTE: Needed only if log messages are required.
      */
     function is_log_enabled(level as LogLevel) as Bool;
-    function log(level as LogLevel, buff as String, args as Array) as Void;
+    function log(level as LogLevel, buff as String, args as Array<Object>) as Void;
 
     /* Clock related functions
      * NOTE: Timestamps granularity is configured with tamalib_init(), an accuracy

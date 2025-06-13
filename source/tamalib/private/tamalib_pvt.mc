@@ -29,14 +29,14 @@ class Tamalib_impl {
     var exec_mode as ExecMode = EXEC_MODE_RUN;
     var step_depth as U32 = 0;
     var screen_ts as Timestamp = 0;
-    var ts_freq as U32?;
+    var ts_freq as U32 = 0;
     var g_framerate as U8 = DEFAULT_FRAMERATE;
-    var g_hal as HAL;
+
+    (:initialized) var g_hal as HAL;
     var g_cpu as CPU;
     var g_hw as HW;
 
-    function initialize(log_level_flags as Number) {
-        g_hal = new HAL_impl(log_level_flags);
+    function initialize() {
         g_cpu = new CPU_impl();
         g_hw = new HW_impl();
     }
@@ -80,7 +80,7 @@ class Tamalib_impl {
             return;
         }
 
-        if (g_cpu.step()) {
+        if (bool(g_cpu.step())) {
             exec_mode = EXEC_MODE_PAUSE;
             step_depth = g_cpu.get_depth();
         } else {
@@ -120,7 +120,7 @@ class Tamalib_impl {
     function mainloop() as Void {
         var ts;
 
-        while (!g_hal.handler()) {
+        while (!bool(g_hal.handler())) {
             step();
 
             /* Update the screen @ g_framerate fps */
@@ -132,31 +132,31 @@ class Tamalib_impl {
         }
     }
 
-    function set_button(btn, state) {
+    function set_button(btn as Button, state as ButtonState) as Void {
         g_hw.set_button(btn, state);
     }
 
-    function set_speed(speed) {
+    function set_speed(speed as U8) as Void {
         g_cpu.set_speed(speed);
     }
 
-    function get_state() {
+    function get_state() as State {
         return g_cpu.get_state();
     }
 
-    function refresh_hw() {
+    function refresh_hw() as Void {
         g_cpu.refresh_hw();
     }
 
-    function reset() {
+    function reset() as Void {
         g_cpu.reset();
     }
 
-    function add_bp(list, addr) {
+    function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
         g_cpu.add_bp(list, addr);
     }
 
-    function free_bp(list) {
+    function free_bp(list as Array<Breakpoint>) as Void {
         g_cpu.free_bp(list);
     }
 

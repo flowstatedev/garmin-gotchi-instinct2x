@@ -53,12 +53,13 @@ function GET_DISP1_MEMORY(buffer, n) { return GET_MEMORY(buffer, n); }
 function GET_DISP2_MEMORY(buffer, n) { return GET_MEMORY(buffer, n); }
 function GET_IO_MEMORY(buffer, n)    { return GET_MEMORY(buffer, n); }
 
+/* TODO: swap with bytearray to save memory */
 typedef MemBufferType as U4;
 
 class Breakpoint {
     var addr as U13;
 
-    function initialize(addr) {
+    function initialize(addr as U13) {
         me.addr = addr;
     }
 }
@@ -96,7 +97,7 @@ class Interrupt {
     var triggered as Bool;
     var vector as U8;
 
-    function initialize(factor_flag_reg, mask_reg, triggered, vector) {
+    function initialize(factor_flag_reg as U4, mask_reg as U4, triggered as Bool, vector as U8) {
         me.factor_flag_reg = factor_flag_reg;
         me.mask_reg = mask_reg;
         me.triggered = triggered;
