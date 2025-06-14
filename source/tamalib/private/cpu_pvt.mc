@@ -45,48 +45,57 @@ class CPU_impl {
     const MASK_10B = 0xFFC;
     const MASK_12B = 0xFFF;
 
-    function PCS()                     { return (pc & 0xFF); }
-    function PCSL()                    { return (pc & 0xF); }
-    function PCSH()                    { return ((pc >> 4) & 0xF); }
-    function PCP()                     { return ((pc >> 8) & 0xF); }
-    function PCB()                     { return ((pc >> 12) & 0x1); }
-    function TO_PC(bank, page, step)   { return ((step & 0xFF) | ((page & 0xF) << 8) | (bank & 0x1) << 12); }
-    function NBP()                     { return ((np >> 4) & 0x1); }
-    function NPP()                     { return (np & 0xF); }
-    function TO_NP(bank, page)         { return ((page & 0xF) | (bank & 0x1) << 4); }
-    function XHL()                     { return (x & 0xFF); }
-    function XL()                      { return (x & 0xF); }
-    function XH()                      { return ((x >> 4) & 0xF); }
-    function XP()                      { return ((x >> 8) & 0xF); }
-    function YHL()                     { return (y & 0xFF); }
-    function YL()                      { return (y & 0xF); }
-    function YH()                      { return ((y >> 4) & 0xF); }
-    function YP()                      { return ((y >> 8) & 0xF); }
-    function M(n)                      { return get_memory(n); }
-    function SET_M(n, v)               { set_memory(n, v); }
-    function RQ(i)                     { return get_rq(i); }
-    function SET_RQ(i, v)              { set_rq(i, v); }
-    function SPL()                     { return (sp & 0xF); }
-    function SPH()                     { return ((sp >> 4) & 0xF); }
+    function PCS()  as U13 { return (pc & 0xFF); }
+    function PCSL() as U13 { return (pc & 0xF); }
+    function PCSH() as U13 { return ((pc >> 4) & 0xF); }
+    function PCP()  as U13 { return ((pc >> 8) & 0xF); }
+    function PCB()  as U13 { return ((pc >> 12) & 0x1); }
+
+    function NBP() as U5 { return ((np >> 4) & 0x1); }
+    function NPP() as U5 { return (np & 0xF); }
+
+    function TO_PC(bank as U13, page as U5, step as U8) as U13 {
+        return ((step & 0xFF) | ((page & 0xF) << 8) | (bank & 0x1) << 12); }
+
+    function TO_NP(bank as U5, page as Int) as U5 {
+        return ((page & 0xF) | (bank & 0x1) << 4); }
+
+    function XHL() as U12 { return (x & 0xFF); }
+    function XL()  as U12 { return (x & 0xF); }
+    function XH()  as U12 { return ((x >> 4) & 0xF); }
+    function XP()  as U12 { return ((x >> 8) & 0xF); }
+    function YHL() as U12 { return (y & 0xFF); }
+    function YL()  as U12 { return (y & 0xF); }
+    function YH()  as U12 { return ((y >> 4) & 0xF); }
+    function YP()  as U12 { return ((y >> 8) & 0xF); }
+
+    function M(n as U12)              as U4   { return get_memory(n); }
+    function SET_M(n as U12, v as U4) as Void { set_memory(n, v); }
+
+    function RQ(i as U12)              as U4   { return get_rq(i); }
+    function SET_RQ(i as U12, v as U4) as Void { set_rq(i, v); }
+
+    function SPL() as U8 { return (sp & 0xF); }
+    function SPH() as U8 { return ((sp >> 4) & 0xF); }
 
     const FLAG_C = (0x1 << 0);
     const FLAG_Z = (0x1 << 1);
     const FLAG_D = (0x1 << 2);
     const FLAG_I = (0x1 << 3);
 
-    function C() { return !!bool(flags & FLAG_C); }
-    function Z() { return !!bool(flags & FLAG_Z); }
-    function D() { return !!bool(flags & FLAG_D); }
-    function I() { return !!bool(flags & FLAG_I); }
+    function C() as Bool { return !!bool(flags & FLAG_C); }
+    function Z() as Bool { return !!bool(flags & FLAG_Z); }
+    function D() as Bool { return !!bool(flags & FLAG_D); }
+    function I() as Bool { return !!bool(flags & FLAG_I); }
 
-    function SET_C()   { flags |= FLAG_C; }
-    function CLEAR_C() { flags &= ~FLAG_C; }
-    function SET_Z()   { flags |= FLAG_Z; }
-    function CLEAR_Z() { flags &= ~FLAG_Z; }
-    function SET_D()   { flags |= FLAG_D; }
-    function CLEAR_D() { flags &= ~FLAG_D; }
-    function SET_I()   { flags |= FLAG_I; }
-    function CLEAR_I() { flags &= ~FLAG_I; }
+    function SET_C()   as Void { flags |=  FLAG_C; }
+    function CLEAR_C() as Void { flags &= ~FLAG_C; }
+    function SET_Z()   as Void { flags |=  FLAG_Z; }
+    function CLEAR_Z() as Void { flags &= ~FLAG_Z; }
+    function SET_D()   as Void { flags |=  FLAG_D; }
+    function CLEAR_D() as Void { flags &= ~FLAG_D; }
+    function SET_I()   as Void { flags |=  FLAG_I; }
+    function CLEAR_I() as Void { flags &= ~FLAG_I; }
 
     const REG_CLK_INT_FACTOR_FLAGS       = 0xF00;
     const REG_SW_INT_FACTOR_FLAGS        = 0xF01;
@@ -139,23 +148,25 @@ class CPU_impl {
 
     const INPUT_PORT_NUM = 2;
 
+    typedef OpCallback as (Method(arg0 as U8, arg1 as U8) as Void);
+
     class Op {
-        var log as String?;
+        var log as String;
         var code as U12;
         var mask as U12;
         var shift_arg0 as U12;
         var mask_arg0 as U12; // != 0 only if there are two arguments
         var cycles as U8;
-        var cb as (Method(arg0 as U8, arg1 as U8) as Void)?;
+        var cb as OpCallback;
 
         function initialize(
-            log as String?,
+            log as String,
             code as U12,
             mask as U12,
             shift_arg0 as U12,
             mask_arg0 as U12,
             cycles as U8,
-            cb as (Method(arg0 as U8, arg1 as U8) as Void)?
+            cb as OpCallback
         ) {
             me.log = log;
             me.code = code;
@@ -189,8 +200,8 @@ class CPU_impl {
     /* Flags */
     (:initialized) var flags as U4;
 
-    var g_program as Program? = null;
-    var memory as Array<MemBufferType> = new [MEM_BUFFER_SIZE] as Array<MemBufferType>;
+    (:initialized) var g_program as Program;
+    var memory as Memory = new [MEM_BUFFER_SIZE]b as Memory;
 
     var inputs as Array<InputPort> = [
         new InputPort(0),
@@ -245,21 +256,22 @@ class CPU_impl {
     class State_impl {
         var g_cpu as CPU_impl;
         function initialize(cpu as CPU_impl) { g_cpu = cpu; }
-        function get_pc() as U13 { return g_cpu.pc; }
+
+        function get_pc() as U13  { return g_cpu.pc; }
         function set_pc(in as U13) as Void { g_cpu.pc = in; }
-        function get_x() as U12 { return g_cpu.x; }
+        function get_x() as U12  { return g_cpu.x; }
         function set_x(in as U12) as Void { g_cpu.x = in; }
-        function get_y() as U12 { return g_cpu.y; }
+        function get_y() as U12  { return g_cpu.y; }
         function set_y(in as U12) as Void { g_cpu.y = in; }
-        function get_a() as U4 { return g_cpu.a; }
+        function get_a() as U4   { return g_cpu.a; }
         function set_a(in as U4) as Void { g_cpu.a = in; }
-        function get_b() as U4 { return g_cpu.b; }
+        function get_b() as U4   { return g_cpu.b; }
         function set_b(in as U4) as Void { g_cpu.b = in; }
-        function get_np() as U5 { return g_cpu.np; }
+        function get_np() as U5   { return g_cpu.np; }
         function set_np(in as U5) as Void { g_cpu.np = in; }
-        function get_sp() as U8 { return g_cpu.sp; }
+        function get_sp() as U8   { return g_cpu.sp; }
         function set_sp(in as U8) as Void { g_cpu.sp = in; }
-        function get_flags() as U4 { return g_cpu.flags; }
+        function get_flags() as U4   { return g_cpu.flags; }
         function set_flags(in as U4) as Void { g_cpu.flags = in; }
         function get_tick_counter() as U32 { return g_cpu.tick_counter; }
         function set_tick_counter(in as U32) as Void { g_cpu.tick_counter = in; }
@@ -293,8 +305,8 @@ class CPU_impl {
         function set_interrupts(in as Array<Interrupt>) as Void { g_cpu.interrupts = in; }
         function get_cpu_halted() as Bool { return g_cpu.cpu_halted; }
         function set_cpu_halted(in as Bool) as Void { g_cpu.cpu_halted = in; }
-        function get_memory() as Array<MemBufferType> { return g_cpu.memory; }
-        function set_memory(in as Array<MemBufferType>) as Void { g_cpu.memory = in; }
+        function get_memory() as Memory { return g_cpu.memory; }
+        function set_memory(in as Memory) as Void { g_cpu.memory = in; }
     }
 
     function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
@@ -1597,8 +1609,7 @@ class CPU_impl {
         new Op("ACPY R(%X)             ",   0xF2C, MASK_10B, 0, 0,     7,  method(:op_acpy_cb)),     // ACPY
         new Op("SCPX R(%X)             ",   0xF38, MASK_10B, 0, 0,     7,  method(:op_scpx_cb)),     // SCPX
         new Op("SCPY R(%X)             ",   0xF3C, MASK_10B, 0, 0,     7,  method(:op_scpy_cb)),     // SCPY
-        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb)),      // NOT
-        new Op(null,                        0,     0,        0, 0,     0,  null),
+        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb))       // NOT
     ];
 
 
@@ -1850,13 +1861,15 @@ class CPU_impl {
             op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
 
             /* Lookup the OP code */
-            for (i = 0; ops[i].log != null; i++) {
+            var op_found = false;
+            for (i = 0; i < ops.size(); i++) {
                 if ((op & ops[i].mask) == ops[i].code) {
+                    op_found = true;
                     break;
                 }
             }
 
-            if (ops[i].log == null) {
+            if (!op_found) {
                 g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
                 return 1;
             }

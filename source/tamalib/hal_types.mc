@@ -32,5 +32,6 @@ typedef U13 as Number;
 typedef U32 as Number;
 typedef Timestamp as Number;
 typedef Program as ByteArray;
+typedef Memory as ByteArray;
 
 }

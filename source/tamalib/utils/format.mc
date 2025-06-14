@@ -1,85 +1,14 @@
 import Toybox.System;
 import Toybox.Lang;
-import Toybox.Math;
-import Toybox.Graphics;
 
 module tamalib {
 
-typedef IntArray as Array<Int>;
-typedef BoolArray as Array<Bool>;
-
-class Circle {
-    var x as Int;
-    var y as Int;
-    var r as Int;
-
-    function initialize(x as Int, y as Int, r as Int) {
-        me.x = x;
-        me.y = y;
-        me.r = r;
-    }
-}
-
-function bbox_to_circle(box as BoundingBox) as Circle {
-    var r = float(box.width) / 2;
-    var x = (box.x as Int) + r;
-    var y = (box.y as Int) + r;
-    return new Circle(round(x), round(y), round(r));
-}
-
-class Rect {
-    var x as Int;
-    var y as Int;
-    var width as Int;
-    var height as Int;
-
-    function initialize(x as Int, y as Int, width as Int, height as Int) {
-        me.x = x;
-        me.y = y;
-        me.width = width;
-        me.height = height;
-    }
-}
-
-function bbox_to_rect(box as BoundingBox) as Rect {
-    return new Rect(box.x as Int, box.y as Int, box.width, box.height);
-}
-
-function int(val as Bool or Numeric) as Int {
-    switch (val) {
-        case instanceof Boolean:
-            return (val as Boolean) ? 1 : 0;
-        default:
-            return (val as Numeric).toNumber();
-    }
-}
-
-function bool(val as Int) as Bool {
-    return val != 0;
-}
-
-function float(val as Int) as Float {
-    return val.toFloat();
-}
-
-function round(val as Float) as Int {
-    return Math.round(val).toNumber();
-}
-
-function max(a as Numeric, b as Numeric) as Numeric {
-    return (a > b) ? a : b;
-}
-
-function min(a as Numeric, b as Numeric) as Numeric {
-    return (a < b) ? a : b;
+function printf(c_fmt as String, params as Array<Object>) as Void {
+    System.print(fmt(c_fmt, params));
 }
 
 function fmt(c_fmt as String, params as Array<Object>) as String {
     return new Fmt(c_fmt).convert(params);
-}
-
-function printf(c_fmt as String, params as Array<Object>) as Void {
-    System.print(fmt(c_fmt, params));
 }
 
 class Fmt {

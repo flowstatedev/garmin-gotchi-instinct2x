@@ -41,20 +41,17 @@ const LOW_FOOTPRINT = false;
 
 const MEM_BUFFER_SIZE = MEMORY_SIZE;
 
-function SET_MEMORY(buffer, n, v)       { buffer[n] = v; }
-function SET_RAM_MEMORY(buffer, n, v)   { SET_MEMORY(buffer, n, v); }
-function SET_DISP1_MEMORY(buffer, n, v) { SET_MEMORY(buffer, n, v); }
-function SET_DISP2_MEMORY(buffer, n, v) { SET_MEMORY(buffer, n, v); }
-function SET_IO_MEMORY(buffer, n, v)    { SET_MEMORY(buffer, n, v); }
+function SET_MEMORY(buffer as Memory, n as U12, v as U4)       as Void { buffer[n] = v; }
+function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4)   as Void { SET_MEMORY(buffer, n, v); }
+function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4)    as Void { SET_MEMORY(buffer, n, v); }
 
-function GET_MEMORY(buffer, n)       { return buffer[n]; }
-function GET_RAM_MEMORY(buffer, n)   { return GET_MEMORY(buffer, n); }
-function GET_DISP1_MEMORY(buffer, n) { return GET_MEMORY(buffer, n); }
-function GET_DISP2_MEMORY(buffer, n) { return GET_MEMORY(buffer, n); }
-function GET_IO_MEMORY(buffer, n)    { return GET_MEMORY(buffer, n); }
-
-/* TODO: swap with bytearray to save memory */
-typedef MemBufferType as U4;
+function GET_MEMORY(buffer as Memory, n as U12)       as U4 { return buffer[n]; }
+function GET_RAM_MEMORY(buffer as Memory, n as U12)   as U4 { return GET_MEMORY(buffer, n); }
+function GET_DISP1_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+function GET_DISP2_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+function GET_IO_MEMORY(buffer as Memory, n as U12)    as U4 { return GET_MEMORY(buffer, n); }
 
 class Breakpoint {
     var addr as U13;
@@ -130,7 +127,7 @@ typedef State as interface {
     function get_call_depth() as U32;                function set_call_depth(in as U32) as Void;
     function get_interrupts() as Array<Interrupt>;   function set_interrupts(in as Array<Interrupt>) as Void;
     function get_cpu_halted() as Bool;               function set_cpu_halted(in as Bool) as Void;
-    function get_memory() as Array<MemBufferType>;   function set_memory(in as Array<MemBufferType>) as Void;
+    function get_memory() as Memory;                 function set_memory(in as Memory) as Void;
 };
 
 typedef CPU as interface {
