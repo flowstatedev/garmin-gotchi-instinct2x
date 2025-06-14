@@ -4,19 +4,23 @@ using Toybox.Lang;
 
 class GarminGotchiApp extends app.AppBase {
 
+    var game as GarminGotchiGame = new GarminGotchiGame();
+
     function initialize() {
         AppBase.initialize();
+        game.init();
     }
 
-    // onStart() is called on application start up
-    function onStart(state as Lang.Dictionary?) as Void {}
+    function onStart(state as Lang.Dictionary?) as Void {
+        game.start();
+    }
 
-    // onStop() is called when your application is exiting
-    function onStop(state as Lang.Dictionary?) as Void {}
+    function onStop(state as Lang.Dictionary?) as Void {
+        game.stop();
+    }
 
-    // Return the initial view of your application here
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
-        return [ new GarminGotchiView(), new GarminGotchiDelegate() ];
+        return [ new GarminGotchiView(game), new GarminGotchiDelegate() ];
     }
 
 }
