@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
+using Toybox.Lang;
 
 module tamalib {
 
@@ -29,14 +29,14 @@ class CPU_impl {
     const OSC1_FREQUENCY = TICK_FREQUENCY; // Hz
     const OSC3_FREQUENCY = 1000000; // Hz
 
-    const TIMER_2HZ_PERIOD   = ( TICK_FREQUENCY / 2 );   // in ticks
-    const TIMER_4HZ_PERIOD   = ( TICK_FREQUENCY / 4 );   // in ticks
-    const TIMER_8HZ_PERIOD   = ( TICK_FREQUENCY / 8 );   // in ticks
-    const TIMER_16HZ_PERIOD  = ( TICK_FREQUENCY / 16 );  // in ticks
-    const TIMER_32HZ_PERIOD  = ( TICK_FREQUENCY / 32 );  // in ticks
-    const TIMER_64HZ_PERIOD  = ( TICK_FREQUENCY / 64 );  // in ticks
-    const TIMER_128HZ_PERIOD = ( TICK_FREQUENCY / 128 ); // in ticks
-    const TIMER_256HZ_PERIOD = ( TICK_FREQUENCY / 256 ); // in ticks
+    const TIMER_2HZ_PERIOD   = (TICK_FREQUENCY / 2);   // in ticks
+    const TIMER_4HZ_PERIOD   = (TICK_FREQUENCY / 4);   // in ticks
+    const TIMER_8HZ_PERIOD   = (TICK_FREQUENCY / 8);   // in ticks
+    const TIMER_16HZ_PERIOD  = (TICK_FREQUENCY / 16);  // in ticks
+    const TIMER_32HZ_PERIOD  = (TICK_FREQUENCY / 32);  // in ticks
+    const TIMER_64HZ_PERIOD  = (TICK_FREQUENCY / 64);  // in ticks
+    const TIMER_128HZ_PERIOD = (TICK_FREQUENCY / 128); // in ticks
+    const TIMER_256HZ_PERIOD = (TICK_FREQUENCY / 256); // in ticks
 
     const MASK_4B  = 0xF00;
     const MASK_6B  = 0xFC0;
@@ -148,9 +148,9 @@ class CPU_impl {
 
     const INPUT_PORT_NUM = 2;
 
-    typedef OpCallback as (Method(arg0 as U8, arg1 as U8) as Void);
-
     class Op {
+        typedef OpCallback as (Method(arg0 as U8, arg1 as U8) as Void);
+
         var log as String;
         var code as U12;
         var mask as U12;
@@ -178,6 +178,8 @@ class CPU_impl {
         }
     }
 
+    typedef Ops as Lang.Array<Op>;
+
     class InputPort {
         var states as U4;
 
@@ -186,30 +188,24 @@ class CPU_impl {
         }
     }
 
-    /* Object references */
+    typedef InputPorts as Lang.Array<InputPort>;
+
     (:initialized) var g_hal as HAL;
     (:initialized) var g_hw as HW;
+    (:initialized) var g_program as Program;
+    var g_breakpoints as Breakpoints? = null;
 
-    /* Registers */
     (:initialized) var pc as U13, next_pc as U13;
     (:initialized) var x as U12, y as U12;
     (:initialized) var a as U4, b as U4;
     (:initialized) var np as U5;
     (:initialized) var sp as U8;
 
-    /* Flags */
     (:initialized) var flags as U4;
 
-    (:initialized) var g_program as Program;
     var memory as Memory = new [MEM_BUFFER_SIZE]b as Memory;
-
-    var inputs as Array<InputPort> = [
-        new InputPort(0),
-        new InputPort(0),
-    ];
-
-    /* Interrupts (in priority order) */
-    var interrupts as Array<Interrupt> = [
+    var inputs as InputPorts = [new InputPort(0), new InputPort(0)];
+    var interrupts as Interrupts = [
         new Interrupt(0x0, 0x0, false, 0x0C), // Prog timer
         new Interrupt(0x0, 0x0, false, 0x0A), // Serial interface
         new Interrupt(0x0, 0x0, false, 0x08), // Input (K10-K13)
@@ -218,7 +214,7 @@ class CPU_impl {
         new Interrupt(0x0, 0x0, false, 0x02), // Clock timer
     ];
 
-    var interrupt_names as Array<String> = [
+    var interrupt_names as Strings = [
         "INT_PROG_TIMER_SLOT",
         "INT_SERIAL_SLOT",
         "INT_K10_K13_SLOT",
@@ -226,8 +222,6 @@ class CPU_impl {
         "INT_STOPWATCH_SLOT",
         "INT_CLOCK_TIMER_SLOT",
     ];
-
-    var g_breakpoints as Array<Breakpoint> = [];
 
     var call_depth as U32 = 0;
 
@@ -257,21 +251,21 @@ class CPU_impl {
         var g_cpu as CPU_impl;
         function initialize(cpu as CPU_impl) { g_cpu = cpu; }
 
-        function get_pc() as U13  { return g_cpu.pc; }
+        function get_pc() as U13 { return g_cpu.pc; }
         function set_pc(in as U13) as Void { g_cpu.pc = in; }
-        function get_x() as U12  { return g_cpu.x; }
+        function get_x() as U12 { return g_cpu.x; }
         function set_x(in as U12) as Void { g_cpu.x = in; }
-        function get_y() as U12  { return g_cpu.y; }
+        function get_y() as U12 { return g_cpu.y; }
         function set_y(in as U12) as Void { g_cpu.y = in; }
-        function get_a() as U4   { return g_cpu.a; }
+        function get_a() as U4 { return g_cpu.a; }
         function set_a(in as U4) as Void { g_cpu.a = in; }
-        function get_b() as U4   { return g_cpu.b; }
+        function get_b() as U4 { return g_cpu.b; }
         function set_b(in as U4) as Void { g_cpu.b = in; }
-        function get_np() as U5   { return g_cpu.np; }
+        function get_np() as U5 { return g_cpu.np; }
         function set_np(in as U5) as Void { g_cpu.np = in; }
-        function get_sp() as U8   { return g_cpu.sp; }
+        function get_sp() as U8 { return g_cpu.sp; }
         function set_sp(in as U8) as Void { g_cpu.sp = in; }
-        function get_flags() as U4   { return g_cpu.flags; }
+        function get_flags() as U4 { return g_cpu.flags; }
         function set_flags(in as U4) as Void { g_cpu.flags = in; }
         function get_tick_counter() as U32 { return g_cpu.tick_counter; }
         function set_tick_counter(in as U32) as Void { g_cpu.tick_counter = in; }
@@ -301,19 +295,19 @@ class CPU_impl {
         function set_prog_timer_rld(in as U8) as Void { g_cpu.prog_timer_rld = in; }
         function get_call_depth() as U32 { return g_cpu.call_depth; }
         function set_call_depth(in as U32) as Void { g_cpu.call_depth = in; }
-        function get_interrupts() as Array<Interrupt> { return g_cpu.interrupts; }
-        function set_interrupts(in as Array<Interrupt>) as Void { g_cpu.interrupts = in; }
+        function get_interrupts() as Interrupts { return g_cpu.interrupts; }
+        function set_interrupts(in as Interrupts) as Void { g_cpu.interrupts = in; }
         function get_cpu_halted() as Bool { return g_cpu.cpu_halted; }
         function set_cpu_halted(in as Bool) as Void { g_cpu.cpu_halted = in; }
         function get_memory() as Memory { return g_cpu.memory; }
         function set_memory(in as Memory) as Void { g_cpu.memory = in; }
     }
 
-    function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
+    function add_bp(list as Breakpoints, addr as U13) as Void {
         list.add(new Breakpoint(addr));
     }
 
-    function free_bp(list as Array<Breakpoint>) as Void {
+    function free_bp(list as Breakpoints) as Void {
         while (list.size() > 0) {
             list.remove(list[0]);
         }
@@ -1501,7 +1495,7 @@ class CPU_impl {
     }
 
     /* The E0C6S46 supported instructions */
-    var ops as Array<Op> = [
+    var ops as Ops = [
         new Op("PSET #0x%02X            ",  0xE40, MASK_7B,  0, 0,     5,  method(:op_pset_cb)),     // PSET
         new Op("JP   #0x%02X            ",  0x000, MASK_4B,  0, 0,     5,  method(:op_jp_cb)),       // JP
         new Op("JP   C #0x%02X          ",  0x200, MASK_4B,  0, 0,     5,  method(:op_jp_c_cb)),     // JP_C
@@ -1836,7 +1830,7 @@ class CPU_impl {
         sync_ref_timestamp();
     }
 
-    function init(hal as HAL, hw as HW, program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int {
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as Breakpoints?, freq as U32) as Int {
         g_hal = hal;
         g_hw = hw;
         g_program = program;
@@ -1848,7 +1842,12 @@ class CPU_impl {
         return 0;
     }
 
-    function release() as Void {}
+    function release() as Void {
+        g_hal = (null as HAL);
+        g_hw = (null as HW);
+        g_program = (null as Program);
+        g_breakpoints = null;
+    }
 
     function step() as Int {
         var op;
@@ -1921,11 +1920,13 @@ class CPU_impl {
         }
 
         /* Check if we could pause the execution */
-        while (!cpu_halted && bp_i < g_breakpoints.size()) {
-            if (g_breakpoints[bp_i].addr == pc) {
-                return 1;
+        if (g_breakpoints != null) {
+            while (!cpu_halted && bp_i < g_breakpoints.size()) {
+                if ((g_breakpoints as Breakpoints)[bp_i].addr == pc) {
+                    return 1;
+                }
+                bp_i++;
             }
-            bp_i++;
         }
 
         return 0;

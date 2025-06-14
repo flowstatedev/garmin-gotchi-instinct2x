@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
-
 module tamalib {
 
 class HW_impl {
@@ -29,7 +27,7 @@ class HW_impl {
 
     /* SEG -> LCD mapping */
     /* 51 segments */
-    var seg_pos as ByteArray = [
+    var seg_pos as Bytes = [
         0, 1, 2, 3, 4, 5, 6, 7, 32, 8, 9, 10, 11, 12, 13, 14, 15, 33, 34, 35,
         31, 30, 29, 28, 27, 26, 25, 24, 36, 23, 22, 21, 20, 19, 18, 17, 16, 37,
         38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
@@ -48,7 +46,10 @@ class HW_impl {
         return 0;
     }
 
-    function release() as Void {}
+    function release() as Void {
+        g_hal = (null as HAL);
+        g_cpu = (null as CPU);
+    }
 
     function set_lcd_pin(seg as U8, com as U8, val as U8) as Void {
         if (seg_pos[seg] < LCD_WIDTH) {

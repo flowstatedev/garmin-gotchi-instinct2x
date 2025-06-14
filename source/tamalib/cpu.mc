@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
+using Toybox.Lang;
 
 module tamalib {
 
@@ -41,17 +41,17 @@ const LOW_FOOTPRINT = false;
 
 const MEM_BUFFER_SIZE = MEMORY_SIZE;
 
-function SET_MEMORY(buffer as Memory, n as U12, v as U4)       as Void { buffer[n] = v; }
-function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4)   as Void { SET_MEMORY(buffer, n, v); }
+function SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void { buffer[n] = v; }
+function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
-function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4)    as Void { SET_MEMORY(buffer, n, v); }
+function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 
-function GET_MEMORY(buffer as Memory, n as U12)       as U4 { return buffer[n]; }
-function GET_RAM_MEMORY(buffer as Memory, n as U12)   as U4 { return GET_MEMORY(buffer, n); }
+function GET_MEMORY(buffer as Memory, n as U12) as U4 { return buffer[n]; }
+function GET_RAM_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 function GET_DISP1_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 function GET_DISP2_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
-function GET_IO_MEMORY(buffer as Memory, n as U12)    as U4 { return GET_MEMORY(buffer, n); }
+function GET_IO_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 
 class Breakpoint {
     var addr as U13;
@@ -60,6 +60,8 @@ class Breakpoint {
         me.addr = addr;
     }
 }
+
+typedef Breakpoints as Lang.Array<Breakpoint>;
 
 /* Pins (TODO: add other pins) */
 enum Pin {
@@ -102,6 +104,8 @@ class Interrupt {
     }
 }
 
+typedef Interrupts as Lang.Array<Interrupt>;
+
 typedef State as interface {
     function get_pc() as U13;                        function set_pc(in as U13) as Void;
     function get_x() as U12;                         function set_x(in as U12) as Void;
@@ -125,14 +129,14 @@ typedef State as interface {
     function get_prog_timer_data() as U8;            function set_prog_timer_data(in as U8) as Void;
     function get_prog_timer_rld() as U8;             function set_prog_timer_rld(in as U8) as Void;
     function get_call_depth() as U32;                function set_call_depth(in as U32) as Void;
-    function get_interrupts() as Array<Interrupt>;   function set_interrupts(in as Array<Interrupt>) as Void;
+    function get_interrupts() as Interrupts;         function set_interrupts(in as Interrupts) as Void;
     function get_cpu_halted() as Bool;               function set_cpu_halted(in as Bool) as Void;
     function get_memory() as Memory;                 function set_memory(in as Memory) as Void;
 };
 
 typedef CPU as interface {
-    function add_bp(list as Array<Breakpoint>, addr as U13) as Void;
-    function free_bp(list as Array<Breakpoint>) as Void;
+    function add_bp(list as Breakpoints, addr as U13) as Void;
+    function free_bp(list as Breakpoints) as Void;
     function set_speed(speed as U8) as Void;
     function get_state() as State;
     function get_depth() as U32;
@@ -140,7 +144,7 @@ typedef CPU as interface {
     function sync_ref_timestamp() as Void;
     function refresh_hw() as Void;
     function reset() as Void;
-    function init(hal as HAL, hw as HW, program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int;
+    function init(hal as HAL, hw as HW, program as Program, breakpoints as Breakpoints?, freq as U32) as Int;
     function release() as Void;
     function step() as Int;
 };

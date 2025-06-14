@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
-
 module tamalib {
 
 enum ExecMode {
@@ -33,7 +31,7 @@ enum ExecMode {
 
 typedef Tamalib as interface {
     function release() as Void;
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int;
+    function init(program as Program, breakpoints as Breakpoints?, freq as U32) as Int;
     function set_framerate(framerate as U8) as Void;
     function get_framerate() as U8;
     function register_hal(hal as HAL) as Void;
@@ -46,13 +44,13 @@ typedef Tamalib as interface {
     function step() as Void;
     function mainloop() as Void;
 
-    function set_button(btn, state);
-    function set_speed(speed);
-    function get_state();
-    function refresh_hw();
-    function reset();
-    function add_bp(list, addr);
-    function free_bp(list);
+    function set_button(btn as Button, state as ButtonState) as Void;
+    function set_speed(speed as U8);
+    function get_state() as State;
+    function refresh_hw() as Void;
+    function reset() as Void;
+    function add_bp(list as Breakpoints, addr as U13) as Void;
+    function free_bp(list as Breakpoints) as Void;
 };
 
 }

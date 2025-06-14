@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
-
 module tamalib {
 
 class Tamalib_impl {
@@ -28,25 +26,21 @@ class Tamalib_impl {
 
     var exec_mode as ExecMode = EXEC_MODE_RUN;
     var step_depth as U32 = 0;
-    var screen_ts as Timestamp = 0;
-    var ts_freq as U32 = 0;
+    (:initialized) var screen_ts as Timestamp;
+    (:initialized) var ts_freq as U32;
     var g_framerate as U8 = DEFAULT_FRAMERATE;
 
     (:initialized) var g_hal as HAL;
-    var g_cpu as CPU;
-    var g_hw as HW;
+    var g_cpu as CPU = new CPU_impl() as CPU;
+    var g_hw as HW = new HW_impl() as HW;
 
-    function initialize() {
-        g_cpu = new CPU_impl();
-        g_hw = new HW_impl();
-    }
-
-    function init(program as Program, breakpoints as Array<Breakpoint>, freq as U32) as Int {
+    function init(program as Program, breakpoints as Breakpoints?, freq as U32) as Int {
         var res = 0;
 
         res |= g_cpu.init(g_hal, g_hw, program, breakpoints, freq);
         res |= g_hw.init(g_hal, g_cpu);
 
+        screen_ts = g_hal.get_timestamp();
         ts_freq = freq;
 
         return res;
@@ -152,11 +146,11 @@ class Tamalib_impl {
         g_cpu.reset();
     }
 
-    function add_bp(list as Array<Breakpoint>, addr as U13) as Void {
+    function add_bp(list as Breakpoints, addr as U13) as Void {
         g_cpu.add_bp(list, addr);
     }
 
-    function free_bp(list as Array<Breakpoint>) as Void {
+    function free_bp(list as Breakpoints) as Void {
         g_cpu.free_bp(list);
     }
 

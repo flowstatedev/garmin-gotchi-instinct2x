@@ -8,38 +8,48 @@ using tamalib as tl;
 
 class GarminGotchiView extends WatchUi.View {
 
-    const GAME_LOG_LEVEL_FLAGS = (
+    (:silence_log) const GAME_LOG_LEVEL_FLAGS = 0;
+    (:verbose_log) const GAME_LOG_LEVEL_FLAGS = (
         tl.LOG_ERROR
-        // | tl.LOG_INFO
-        // | tl.LOG_MEMORY
-        // | tl.LOG_CPU
-        // | tl.LOG_INT
+        | tl.LOG_INFO
+        | tl.LOG_MEMORY
+        | tl.LOG_CPU
+        | tl.LOG_INT
     );
-    const GAME_RUN_TIMER_MS = 10;
-    const GAME_RUN_MAX_STEPS = 120;
+
+    const GAME_RUN_TIMER_MS = 50;
+    (:verbose_log) const GAME_RUN_MAX_STEPS = 10;
+    (:silence_log) const GAME_RUN_MAX_STEPS = 150;
     const GAME_DRAW_TIMER_MS = 500;
-    const GAME_FOREGROUND_COLOR = Graphics.COLOR_WHITE;
-    const GAME_BACKGROUND_COLOR = Graphics.COLOR_BLACK;
+    (:standard_colors) const GAME_COLOR_FG = Graphics.COLOR_WHITE;
+    (:inverted_colors) const GAME_COLOR_FG = Graphics.COLOR_BLACK;
+    (:standard_colors) const GAME_COLOR_BG = Graphics.COLOR_BLACK;
+    (:inverted_colors) const GAME_COLOR_BG = Graphics.COLOR_WHITE;
 
     var game as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var game_start_time as tl.Int = System.getTimer();
     var game_run_timer as Timer.Timer = new Timer.Timer();
     var game_draw_timer as Timer.Timer = new Timer.Timer();
-    var game_breakpoints as Array<tl.Breakpoint> = [];
+    var game_breakpoints as tl.Breakpoints? = null;
+
+    (:tama_program) var game_program as tl.Program = tama_program;
+    (:test_program) var game_program as tl.Program = test_program;
 
     (:initialized) var SCREEN as tl.Rect;
     (:initialized) var SUBSCREEN as tl.Circle;
     (:initialized) var MATRIX as tl.Rect;
+    (:initialized) var PIXEL_SIZE as tl.Int;
     (:initialized) var BANNER_TOP as tl.Rect;
     (:initialized) var BANNER_BOTTOM as tl.Rect;
-    (:initialized) var MATRIX_PIXEL_SIZE as tl.Int;
-    var matrix as ByteArray = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
+
+    var matrix as tl.Bytes = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
+    (:initialized) var pixel as tl.Rect;
 
     function initialize() {
         View.initialize();
 
         game.register_hal(me);
-        game.init(tl.program, game_breakpoints, 1000000);
+        game.init(game_program, game_breakpoints, 1000000);
         game.set_speed(0);
     }
 
@@ -73,7 +83,9 @@ class GarminGotchiView extends WatchUi.View {
     // memory.
     function onHide() as Void {
         game.release();
-        game.free_bp(game_breakpoints);
+        if (game_breakpoints != null) {
+            game.free_bp(game_breakpoints);
+        }
     }
 
     /* game logic */
@@ -93,23 +105,24 @@ class GarminGotchiView extends WatchUi.View {
     function compute_layout(dc as Dc) as Void {
         SCREEN = new tl.Rect(0, 0, dc.getWidth(), dc.getHeight());
         SUBSCREEN = tl.bbox_to_circle(WatchUi.getSubscreen() as BoundingBox);
-        MATRIX_PIXEL_SIZE = tl.min(SCREEN.width / tl.LCD_WIDTH, SCREEN.height / tl.LCD_HEIGHT) as tl.Int;
 
-        var MATRIX_WIDTH = tl.min(SCREEN.width, tl.LCD_WIDTH * MATRIX_PIXEL_SIZE) as tl.Int;
-        var MATRIX_HEIGHT = tl.min(SCREEN.height, tl.LCD_HEIGHT * MATRIX_PIXEL_SIZE) as tl.Int;
-        MATRIX = new tl.Rect(
-            (SCREEN.width - MATRIX_WIDTH) / 2,
-            (SCREEN.height - MATRIX_HEIGHT) / 2,
-            MATRIX_WIDTH,
-            MATRIX_HEIGHT
-        );
+        var screen_w = tl.float(SCREEN.width);
+        var screen_h = tl.float(SCREEN.height);
+        var pixel_size = tl.min(screen_w / tl.LCD_WIDTH, screen_w / tl.LCD_HEIGHT) as tl.Float;
+        var matrix_w = tl.min(screen_w, tl.LCD_WIDTH * pixel_size) as tl.Float;
+        var matrix_h = tl.min(screen_w, tl.LCD_HEIGHT * pixel_size) as tl.Float;
+        var matrix_x = (screen_w - matrix_w) / 2;
+        var matrix_y = (screen_h - matrix_h) / 2;
 
+        PIXEL_SIZE = tl.round(pixel_size);
+        pixel = new tl.Rect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
+        MATRIX = new tl.Rect(tl.round(matrix_x), tl.round(matrix_y), tl.round(matrix_w), tl.round(matrix_h));
         BANNER_TOP = new tl.Rect(MATRIX.x, 0, MATRIX.width, MATRIX.y);
         BANNER_BOTTOM = new tl.Rect(MATRIX.x, MATRIX.y + MATRIX.height, MATRIX.width, MATRIX.y);
     }
 
     function clear_screen(dc as Dc) as Void {
-        dc.setColor(GAME_FOREGROUND_COLOR, GAME_BACKGROUND_COLOR);
+        dc.setColor(GAME_COLOR_FG, GAME_COLOR_BG);
         dc.clear();
     }
 
@@ -117,40 +130,25 @@ class GarminGotchiView extends WatchUi.View {
         for (var x = 0; x < tl.LCD_WIDTH; x++) {
             for (var y = 0; y < tl.LCD_HEIGHT; y++) {
                 if (tl.bool(matrix[x + y * tl.LCD_WIDTH])) {
-                    draw_pixel(dc, x, y, GAME_FOREGROUND_COLOR, true);
-                } else {
-                    draw_pixel(dc, x, y, GAME_BACKGROUND_COLOR, false);
+                    draw_pixel(dc, x, y, GAME_COLOR_FG, true);
                 }
             }
         }
     }
 
-    function draw_pixel(dc as Dc, x as tl.Int, y as tl.Int, color as Graphics.ColorValue, fill as tl.Bool) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        if (fill) {
-            dc.fillRectangle(
-                MATRIX.x + (x * MATRIX_PIXEL_SIZE),
-                MATRIX.y + (y * MATRIX_PIXEL_SIZE),
-                MATRIX_PIXEL_SIZE,
-                MATRIX_PIXEL_SIZE
-            );
-        } else {
-            dc.drawRectangle(
-                MATRIX.x + (x * MATRIX_PIXEL_SIZE),
-                MATRIX.y + (y * MATRIX_PIXEL_SIZE),
-                MATRIX_PIXEL_SIZE,
-                MATRIX_PIXEL_SIZE
-            );
-        }
+    function draw_pixel(dc as Dc, x as tl.Int, y as tl.Int, color as ColorValue, fill as tl.Bool) as Void {
+        pixel.x = MATRIX.x + (x * pixel.width);
+        pixel.y = MATRIX.y + (y * pixel.height);
+        draw_rect(dc, pixel, color, fill);
     }
 
     function draw_layout(dc as Dc) as Void {
-        draw_circle(dc, SUBSCREEN, GAME_FOREGROUND_COLOR, true);
-        draw_rect(dc, BANNER_TOP, GAME_FOREGROUND_COLOR, false);
-        draw_rect(dc, BANNER_BOTTOM, GAME_FOREGROUND_COLOR, false);
+        draw_circle(dc, SUBSCREEN, GAME_COLOR_FG, true);
+        draw_rect(dc, BANNER_TOP, GAME_COLOR_FG, false);
+        draw_rect(dc, BANNER_BOTTOM, GAME_COLOR_FG, false);
     }
 
-    function draw_circle(dc as Dc, circle as tl.Circle, color as Graphics.ColorValue, fill as tl.Bool) as Void {
+    function draw_circle(dc as Dc, circle as tl.Circle, color as ColorValue, fill as tl.Bool) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         if (fill) {
             dc.fillCircle(circle.x, circle.y, circle.r);
@@ -159,7 +157,7 @@ class GarminGotchiView extends WatchUi.View {
         }
     }
 
-    function draw_rect(dc as Dc, rect as tl.Rect, color as Graphics.ColorValue, fill as tl.Bool) as Void {
+    function draw_rect(dc as Dc, rect as tl.Rect, color as ColorValue, fill as tl.Bool) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         if (fill) {
             dc.fillRectangle(rect.x, rect.y, rect.width, rect.height);
@@ -172,9 +170,9 @@ class GarminGotchiView extends WatchUi.View {
 
     /* TODO: move game logic to separate class */
 
-    function malloc(size as tl.U32) as Object? { return null; }
+    function malloc(size as tl.U32) as tl.Object? { return null; }
 
-    function free(ptr as Object?) as Void {}
+    function free(ptr as tl.Object?) as Void {}
 
     function halt() as Void {}
 
@@ -182,7 +180,7 @@ class GarminGotchiView extends WatchUi.View {
         return tl.bool(GAME_LOG_LEVEL_FLAGS & (level as tl.Int));
     }
 
-    function log(level as tl.LogLevel, buff as String, args as Array<Object>) as Void {
+    function log(level as tl.LogLevel, buff as tl.String, args as tl.Objects) as Void {
         if (is_log_enabled(level)) {
             tl.printf(buff, args);
         }

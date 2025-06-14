@@ -1,3 +1,19 @@
 project.manifest = manifest.xml
-project.optimization = 2z
-project.typecheck = informative
+project.optimization = 2pz,enable-constant-folding,enable-empty-function-removal,enable-lexical-only-constants,enable-static-branch-elimination
+project.typecheck = strict
+
+base.sourcePath = source
+
+# NOTE: For each build option, only one line must remain uncommented at a time
+
+# use tamagotchi or test program
+base.excludeAnnotations = $(base.excludeAnnotations);test_program
+# base.excludeAnnotations = $(base.excludeAnnotations);tama_program
+
+# disable or enable logging messages (NOTE: emulation runs faster with logging disabled)
+base.excludeAnnotations = $(base.excludeAnnotations);verbose_log
+# base.excludeAnnotations = $(base.excludeAnnotations);silence_log
+
+# use standard color, or inverted color schema
+base.excludeAnnotations = $(base.excludeAnnotations);inverted_colors
+# base.excludeAnnotations = $(base.excludeAnnotations);standard_colors

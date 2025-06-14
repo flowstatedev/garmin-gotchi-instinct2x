@@ -1,12 +1,10 @@
-import Toybox.Lang;
+using Toybox.Lang;
 
 module tamalib {
 
-typedef Num as Int or Float;
-
 function int(val as Bool or Num) as Int {
     switch (val) {
-        case instanceof Boolean:
+        case instanceof Lang.Boolean:
             return (val as Bool) ? 1 : 0;
         default:
             return (val as Num).toNumber();

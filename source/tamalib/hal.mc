@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import Toybox.Lang;
-
 module tamalib {
 
 enum LogLevel {
@@ -45,7 +43,7 @@ typedef HAL as interface {
      * NOTE: Needed only if log messages are required.
      */
     function is_log_enabled(level as LogLevel) as Bool;
-    function log(level as LogLevel, buff as String, args as Array<Object>) as Void;
+    function log(level as LogLevel, buff as String, args as Objects) as Void;
 
     /* Clock related functions
      * NOTE: Timestamps granularity is configured with tamalib_init(), an accuracy

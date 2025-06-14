@@ -1,6 +1,8 @@
-import Toybox.Graphics;
+using Toybox.Graphics as gfx;
 
 module tamalib {
+
+typedef Shape as Circle or Rect;
 
 class Circle {
     var x as Int;
@@ -14,7 +16,7 @@ class Circle {
     }
 }
 
-function bbox_to_circle(box as BoundingBox) as Circle {
+function bbox_to_circle(box as gfx.BoundingBox) as Circle {
     var r = float(box.width) / 2;
     var x = (box.x as Int) + r;
     var y = (box.y as Int) + r;
@@ -35,7 +37,7 @@ class Rect {
     }
 }
 
-function bbox_to_rect(box as BoundingBox) as Rect {
+function bbox_to_rect(box as gfx.BoundingBox) as Rect {
     return new Rect(box.x as Int, box.y as Int, box.width, box.height);
 }
 

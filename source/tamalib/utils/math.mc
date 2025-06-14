@@ -1,5 +1,4 @@
-import Toybox.Lang;
-import Toybox.Math;
+using Toybox.Math;
 
 module tamalib {
 
