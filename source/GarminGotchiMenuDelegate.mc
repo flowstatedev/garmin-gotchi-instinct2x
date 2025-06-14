@@ -1,13 +1,12 @@
-import Toybox.Lang;
-import Toybox.System;
-import Toybox.WatchUi;
+using Toybox.WatchUi as ui;
+using Toybox.Lang;
 
-class GarminGotchiMenuDelegate extends WatchUi.MenuInputDelegate {
+class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
 
     function initialize() {
         MenuInputDelegate.initialize();
     }
 
-    function onMenuItem(item as Symbol) as Void {}
+    function onMenuItem(item as Lang.Symbol) as Void {}
 
 }

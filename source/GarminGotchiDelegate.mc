@@ -1,14 +1,14 @@
-import Toybox.Lang;
-import Toybox.WatchUi;
+using Toybox.WatchUi as ui;
+using Toybox.Lang;
 
-class GarminGotchiDelegate extends WatchUi.BehaviorDelegate {
+class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
     function initialize() {
         BehaviorDelegate.initialize();
     }
 
-    function onMenu() as Boolean {
-        WatchUi.pushView(new Rez.Menus.MainMenu(), new GarminGotchiMenuDelegate(), WatchUi.SLIDE_UP);
+    function onMenu() as Lang.Boolean {
+        ui.pushView(new Rez.Menus.MainMenu(), new GarminGotchiMenuDelegate(), ui.SLIDE_UP);
         return true;
     }
 

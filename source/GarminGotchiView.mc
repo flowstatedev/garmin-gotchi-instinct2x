@@ -1,12 +1,10 @@
-import Toybox.Graphics;
-import Toybox.WatchUi;
-import Toybox.Timer;
-import Toybox.Lang;
-import Toybox.Math;
+using Toybox.Graphics as gfx;
+using Toybox.WatchUi as ui;
+using Toybox.Timer as time;
 
 using tamalib as tl;
 
-class GarminGotchiView extends WatchUi.View {
+class GarminGotchiView extends ui.View {
 
     (:silence_log) const GAME_LOG_LEVEL_FLAGS = 0;
     (:verbose_log) const GAME_LOG_LEVEL_FLAGS = (
@@ -21,15 +19,15 @@ class GarminGotchiView extends WatchUi.View {
     (:verbose_log) const GAME_RUN_MAX_STEPS = 10;
     (:silence_log) const GAME_RUN_MAX_STEPS = 150;
     const GAME_DRAW_TIMER_MS = 500;
-    (:standard_colors) const GAME_COLOR_FG = Graphics.COLOR_WHITE;
-    (:inverted_colors) const GAME_COLOR_FG = Graphics.COLOR_BLACK;
-    (:standard_colors) const GAME_COLOR_BG = Graphics.COLOR_BLACK;
-    (:inverted_colors) const GAME_COLOR_BG = Graphics.COLOR_WHITE;
+    (:standard_colors) const GAME_COLOR_FG = gfx.COLOR_WHITE;
+    (:inverted_colors) const GAME_COLOR_FG = gfx.COLOR_BLACK;
+    (:standard_colors) const GAME_COLOR_BG = gfx.COLOR_BLACK;
+    (:inverted_colors) const GAME_COLOR_BG = gfx.COLOR_WHITE;
 
     var game as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var game_start_time as tl.Int = System.getTimer();
-    var game_run_timer as Timer.Timer = new Timer.Timer();
-    var game_draw_timer as Timer.Timer = new Timer.Timer();
+    var game_run_timer as time.Timer = new time.Timer();
+    var game_draw_timer as time.Timer = new time.Timer();
     var game_breakpoints as tl.Breakpoints? = null;
 
     (:tama_program) var game_program as tl.Program = tama_program;
@@ -54,7 +52,7 @@ class GarminGotchiView extends WatchUi.View {
     }
 
     // Load your resources here
-    function onLayout(dc as Dc) as Void {
+    function onLayout(dc as gfx.Dc) as Void {
         setLayout(Rez.Layouts.MainLayout(dc));
 
         compute_layout(dc);
@@ -69,7 +67,7 @@ class GarminGotchiView extends WatchUi.View {
     function onShow() as Void {}
 
     // Update the view
-    function onUpdate(dc as Dc) as Void {
+    function onUpdate(dc as gfx.Dc) as Void {
         // Call the parent onUpdate function to redraw the layout
         View.onUpdate(dc);
 
@@ -102,9 +100,9 @@ class GarminGotchiView extends WatchUi.View {
 
     // TODO: move app graphics logic to separate class
 
-    function compute_layout(dc as Dc) as Void {
+    function compute_layout(dc as gfx.Dc) as Void {
         SCREEN = new tl.Rect(0, 0, dc.getWidth(), dc.getHeight());
-        SUBSCREEN = tl.bbox_to_circle(WatchUi.getSubscreen() as BoundingBox);
+        SUBSCREEN = tl.bbox_to_circle(ui.getSubscreen() as gfx.BoundingBox);
 
         var screen_w = tl.float(SCREEN.width);
         var screen_h = tl.float(SCREEN.height);
@@ -121,12 +119,12 @@ class GarminGotchiView extends WatchUi.View {
         BANNER_BOTTOM = new tl.Rect(MATRIX.x, MATRIX.y + MATRIX.height, MATRIX.width, MATRIX.y);
     }
 
-    function clear_screen(dc as Dc) as Void {
+    function clear_screen(dc as gfx.Dc) as Void {
         dc.setColor(GAME_COLOR_FG, GAME_COLOR_BG);
         dc.clear();
     }
 
-    function draw_matrix(dc as Dc) as Void {
+    function draw_matrix(dc as gfx.Dc) as Void {
         for (var x = 0; x < tl.LCD_WIDTH; x++) {
             for (var y = 0; y < tl.LCD_HEIGHT; y++) {
                 if (tl.bool(matrix[x + y * tl.LCD_WIDTH])) {
@@ -136,20 +134,20 @@ class GarminGotchiView extends WatchUi.View {
         }
     }
 
-    function draw_pixel(dc as Dc, x as tl.Int, y as tl.Int, color as ColorValue, fill as tl.Bool) as Void {
+    function draw_pixel(dc as gfx.Dc, x as tl.Int, y as tl.Int, color as gfx.ColorValue, fill as tl.Bool) as Void {
         pixel.x = MATRIX.x + (x * pixel.width);
         pixel.y = MATRIX.y + (y * pixel.height);
         draw_rect(dc, pixel, color, fill);
     }
 
-    function draw_layout(dc as Dc) as Void {
+    function draw_layout(dc as gfx.Dc) as Void {
         draw_circle(dc, SUBSCREEN, GAME_COLOR_FG, true);
         draw_rect(dc, BANNER_TOP, GAME_COLOR_FG, false);
         draw_rect(dc, BANNER_BOTTOM, GAME_COLOR_FG, false);
     }
 
-    function draw_circle(dc as Dc, circle as tl.Circle, color as ColorValue, fill as tl.Bool) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    function draw_circle(dc as gfx.Dc, circle as tl.Circle, color as gfx.ColorValue, fill as tl.Bool) as Void {
+        dc.setColor(color, gfx.COLOR_TRANSPARENT);
         if (fill) {
             dc.fillCircle(circle.x, circle.y, circle.r);
         } else {
@@ -157,8 +155,8 @@ class GarminGotchiView extends WatchUi.View {
         }
     }
 
-    function draw_rect(dc as Dc, rect as tl.Rect, color as ColorValue, fill as tl.Bool) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    function draw_rect(dc as gfx.Dc, rect as tl.Rect, color as gfx.ColorValue, fill as tl.Bool) as Void {
+        dc.setColor(color, gfx.COLOR_TRANSPARENT);
         if (fill) {
             dc.fillRectangle(rect.x, rect.y, rect.width, rect.height);
         } else {
@@ -196,7 +194,7 @@ class GarminGotchiView extends WatchUi.View {
     }
 
     function update_screen() as Void {
-        WatchUi.requestUpdate();
+        ui.requestUpdate();
     }
 
     function set_lcd_matrix(x as tl.U8, y as tl.U8, val as tl.Bool) as Void {
