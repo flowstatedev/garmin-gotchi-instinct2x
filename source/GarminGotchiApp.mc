@@ -20,7 +20,7 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
-        return [ new GarminGotchiView(game), new GarminGotchiDelegate() ];
+        return [ new GarminGotchiView(game), new GarminGotchiDelegate(game) ];
     }
 
 }

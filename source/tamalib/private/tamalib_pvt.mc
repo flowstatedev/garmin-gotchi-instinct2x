@@ -134,7 +134,7 @@ class Tamalib_impl {
         g_cpu.set_speed(speed);
     }
 
-    function get_state() as State {
+    function get_state() as CPUState {
         return g_cpu.get_state();
     }
 

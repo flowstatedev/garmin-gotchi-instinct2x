@@ -46,7 +46,7 @@ typedef Tamalib as interface {
 
     function set_button(btn as Button, state as ButtonState) as Void;
     function set_speed(speed as U8);
-    function get_state() as State;
+    function get_state() as CPUState;
     function refresh_hw() as Void;
     function reset() as Void;
     function add_bp(list as Breakpoints, addr as U13) as Void;

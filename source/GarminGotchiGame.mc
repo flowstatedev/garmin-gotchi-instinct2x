@@ -1,14 +1,15 @@
 using Toybox.Graphics as gfx;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
+using Toybox.Lang;
 
 using tamalib as tl;
 
 class GarminGotchiGame {
 
     (:silence_log) const LOG_LEVEL_FLAGS = 0;
-    (:verbose_log) const LOG_LEVEL_FLAGS = (
-        tl.LOG_ERROR
+    (:verbose_log) const LOG_LEVEL_FLAGS = (0
+        | tl.LOG_ERROR
         | tl.LOG_INFO
         | tl.LOG_MEMORY
         | tl.LOG_CPU
@@ -24,22 +25,50 @@ class GarminGotchiGame {
     (:verbose_log) const RUN_MAX_STEPS = 10;
     (:silence_log) const RUN_MAX_STEPS = 150;
 
+    typedef ButtonMapping as Lang.Dictionary<ui.Key, tl.Button>;
+    const BUTTON_MAPPING as ButtonMapping = {
+        ui.KEY_DOWN  => tl.BTN_LEFT,
+        ui.KEY_ENTER => tl.BTN_MIDDLE,
+        ui.KEY_UP    => tl.BTN_RIGHT,
+        ui.KEY_ESC   => tl.BTN_TAP
+    } as ButtonMapping;
+
+    typedef ButtonStateMapping as Lang.Dictionary<ui.KeyPressType, tl.ButtonState>;
+    const BUTTON_STATE_MAPPING as ButtonStateMapping = {
+        ui.PRESS_TYPE_DOWN => tl.BTN_STATE_PRESSED,
+        ui.PRESS_TYPE_UP   => tl.BTN_STATE_RELEASED
+    } as ButtonStateMapping;
+
+    var graphics as GarminGotchiGraphics = new GarminGotchiGraphics();
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var start_time as tl.Int = System.getTimer();
     var run_timer as time.Timer = new time.Timer();
     var draw_timer as time.Timer = new time.Timer();
     var breakpoints as tl.Breakpoints? = null;
 
-    (:tama_program) var program as tl.Program = tama_program;
-    (:test_program) var program as tl.Program = test_program;
+    (:tama_program) const program as tl.Program = tama_program;
+    (:test_program) const program as tl.Program = test_program;
 
     var matrix as tl.Bytes = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
-    var graphics as GarminGotchiGraphics = new GarminGotchiGraphics();
+    var icons as tl.Bytes = new [tl.ICON_NUM]b;
+
+    class ButtonEvent {
+        var button as tl.Button;
+        var state as tl.ButtonState;
+
+        function initialize(button as tl.Button, state as tl.ButtonState) {
+            me.button = button;
+            me.state = state;
+        }
+    }
+    typedef Events as Lang.Array<ButtonEvent>;
+    var button_events as Events = [];
 
     function init() as Void {
         emulator.register_hal(me);
         emulator.init(program, breakpoints, CLOCK_FREQ);
         emulator.set_speed(SPEED_RATIO);
+        emulator.set_exec_mode(tl.EXEC_MODE_RUN);
     }
 
     function compute_layout(dc as gfx.Dc) as Void {
@@ -51,10 +80,6 @@ class GarminGotchiGame {
         draw_timer.start(method(:update_screen), DRAW_TIMER_MS, true);
     }
 
-    function draw(dc as gfx.Dc) as Void {
-        graphics.draw(dc);
-    }
-
     function stop() as Void {
         run_timer.stop();
         draw_timer.stop();
@@ -64,8 +89,38 @@ class GarminGotchiGame {
         }
     }
 
+    function draw(dc as gfx.Dc) as Void {
+        graphics.draw(dc);
+    }
+
+    function press_left() as Void {
+        press_button(tl.BTN_LEFT);
+    }
+
+    function press_middle() as Void {
+        press_button(tl.BTN_MIDDLE);
+    }
+
+    function press_right() as Void {
+        press_button(tl.BTN_RIGHT);
+    }
+
+    function press_tap() as Void {
+        press_button(tl.BTN_TAP);
+    }
+
+    function press_button(button as tl.Button) as Void {
+        button_events.add(new ButtonEvent(button, tl.BTN_STATE_PRESSED));
+        button_events.add(new ButtonEvent(button, tl.BTN_STATE_RELEASED));
+    }
+
     function run_max_steps() as Void {
+        var ret = 0;
         for (var i = 0; i < RUN_MAX_STEPS; i++) {
+            ret = handler();
+            if (ret != 0) {
+                log(tl.LOG_ERROR, "Runtime error: handler() returned %d\n", [ret]);
+            }
             emulator.step();
         }
     }
@@ -104,7 +159,7 @@ class GarminGotchiGame {
     }
 
     function set_lcd_icon(icon as tl.U8, val as tl.Bool) as Void {
-        /* TODO */
+        icons[icon] = tl.int(val);
     }
 
     function set_frequency(freq as tl.U32) as Void {
@@ -116,7 +171,10 @@ class GarminGotchiGame {
     }
 
     function handler() as tl.Int {
-        /* TODO */
+        if (button_events.size() == 0) { return 0; }
+        var event = button_events[0];
+        emulator.set_button(event.button, event.state);
+        button_events.remove(event);
         return 0;
     }
 

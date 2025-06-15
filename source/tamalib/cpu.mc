@@ -106,7 +106,7 @@ class Interrupt {
 
 typedef Interrupts as Lang.Array<Interrupt>;
 
-typedef State as interface {
+typedef CPUState as interface {
     function get_pc() as U13;                        function set_pc(in as U13) as Void;
     function get_x() as U12;                         function set_x(in as U12) as Void;
     function get_y() as U12;                         function set_y(in as U12) as Void;
@@ -138,7 +138,7 @@ typedef CPU as interface {
     function add_bp(list as Breakpoints, addr as U13) as Void;
     function free_bp(list as Breakpoints) as Void;
     function set_speed(speed as U8) as Void;
-    function get_state() as State;
+    function get_state() as CPUState;
     function get_depth() as U32;
     function set_input_pin(pin as Pin, state as PinState) as Void;
     function sync_ref_timestamp() as Void;

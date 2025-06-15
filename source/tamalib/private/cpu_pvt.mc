@@ -317,7 +317,7 @@ class CPU_impl {
         speed_ratio = speed;
     }
 
-    function get_state() as State {
+    function get_state() as CPUState {
         return new State_impl(me);
     }
 
