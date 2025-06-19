@@ -190,6 +190,18 @@ class CPU_impl {
 
     typedef InputPorts as Lang.Array<InputPort>;
 
+    class MemoryRange {
+        var addr as U12;
+        var size as U12;
+
+        function initialize(addr as U12, size as U12) {
+            me.addr = addr;
+            me.size = size;
+        }
+    }
+
+    typedef MemoryRanges as Lang.Array<MemoryRange>;
+
     (:initialized) var g_hal as HAL;
     (:initialized) var g_hw as HW;
     (:initialized) var g_program as Program;
@@ -203,8 +215,20 @@ class CPU_impl {
 
     (:initialized) var flags as U4;
 
-    var memory as Memory = new [MEM_BUFFER_SIZE]b as Memory;
-    var inputs as InputPorts = [new InputPort(0), new InputPort(0)];
+    var memory as Memory = new [MEM_BUFFER_SIZE]b;
+
+    var inputs as InputPorts = [
+        new InputPort(0),
+        new InputPort(0),
+    ];
+
+    var refresh_locs as MemoryRanges = [
+        new MemoryRange(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), /* Display Memory 1 */
+        new MemoryRange(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), /* Display Memory 2 */
+        new MemoryRange(REG_BUZZER_CTRL1, 1),                  /* Buzzer frequency */
+        new MemoryRange(REG_R40_R43_BZ_OUTPUT_PORT, 1),        /* Buzzer enabled */
+    ];
+
     var interrupts as Interrupts = [
         new Interrupt(0x0, 0x0, false, 0x0C), // Prog timer
         new Interrupt(0x0, 0x0, false, 0x0A), // Serial interface
@@ -246,6 +270,7 @@ class CPU_impl {
     var cpu_halted as Bool = false;
     var cpu_frequency as U32 = OSC1_FREQUENCY; // in hz
     var scaled_cycle_accumulator as U32 = 0;
+    var previous_cycles as U8 = 0;
 
     class State_impl {
         var g_cpu as CPU_impl;
@@ -538,13 +563,13 @@ class CPU_impl {
             case REG_SERIAL_INT_MASKS:
                 /* Serial interface interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_K10_K13_SLOT].mask_reg = v;
+                interrupts[INT_SERIAL_SLOT].mask_reg = v;
                 break;
 
             case REG_K00_K03_INT_MASKS:
                 /* Input (K00-K03) interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_SERIAL_SLOT].mask_reg = v;
+                interrupts[INT_K00_K03_SLOT].mask_reg = v;
                 break;
 
             case REG_K10_K13_INT_MASKS:
@@ -730,24 +755,7 @@ class CPU_impl {
         g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
     }
 
-    class Range {
-        var addr as U12;
-        var size as U12;
-
-        function initialize(addr as U12, size as U12) {
-            me.addr = addr;
-            me.size = size;
-        }
-    }
-
     function refresh_hw() as Void {
-        var refresh_locs = [
-            new Range(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), /* Display Memory 1 */
-            new Range(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), /* Display Memory 2 */
-            new Range(REG_BUZZER_CTRL1, 1),                  /* Buzzer frequency */
-            new Range(REG_R40_R43_BZ_OUTPUT_PORT, 1),        /* Buzzer enabled */
-        ];
-
         for (var i = 0; i < refresh_locs.size(); i++) {
             for (var n = refresh_locs[i].addr; n < (refresh_locs[i].addr + refresh_locs[i].size); n++) {
                 set_memory(n, GET_MEMORY(memory, n));
@@ -1853,7 +1861,6 @@ class CPU_impl {
         var op;
         var i = 0;
         var bp_i = 0;
-        var previous_cycles = 0;
 
         if (!cpu_halted) {
             var prg_i = pc * 2;
