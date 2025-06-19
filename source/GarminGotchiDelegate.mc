@@ -1,4 +1,5 @@
 using Toybox.WatchUi as ui;
+using Toybox.Timer as time;
 using Toybox.Lang;
 
 class GarminGotchiDelegate extends ui.BehaviorDelegate {
@@ -6,11 +7,12 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     var game as GarminGotchiGame;
  
     function initialize(game as GarminGotchiGame) {
-        ui.BehaviorDelegate.initialize();
+        BehaviorDelegate.initialize();
         me.game = game;
     }
 
     function onMenu() as Lang.Boolean {
+        /** TODO: add logic for saving/resuming game */
         ui.pushView(new Rez.Menus.MainMenu(), new GarminGotchiMenuDelegate(), ui.SLIDE_UP);
         return true;
     }
@@ -21,12 +23,12 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function onNextPage() as Lang.Boolean {
-        game.press_right();
+        game.press_middle();
         return true;
     }
 
     function onSelect() as Lang.Boolean {
-        game.press_middle();
+        game.press_right();
         return true;
     }
 
