@@ -70,7 +70,7 @@ class GarminGotchiGame {
     }
 
     function compute_layout(dc as gfx.Dc) as Void {
-        graphics.init(dc, matrix);
+        graphics.init(dc, matrix, icons);
     }
 
     function draw(dc as gfx.Dc) as Void {

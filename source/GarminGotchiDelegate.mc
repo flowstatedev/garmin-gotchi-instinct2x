@@ -13,7 +13,7 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
     function onMenu() as Lang.Boolean {
         /** TODO: add logic for saving/resuming game */
-        ui.pushView(new Rez.Menus.MainMenu(), new GarminGotchiMenuDelegate(), ui.SLIDE_UP);
+        ui.pushView(new Rez.Menus.Menu(), new GarminGotchiMenuDelegate(), ui.SLIDE_UP);
         return true;
     }
 

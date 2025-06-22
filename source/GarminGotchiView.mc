@@ -11,7 +11,7 @@ class GarminGotchiView extends ui.View {
     }
 
     function onLayout(dc as gfx.Dc) as Void {
-        setLayout(Rez.Layouts.MainLayout(dc));
+        setLayout(Rez.Layouts.Layout(dc));
         game.compute_layout(dc);
     }
 
