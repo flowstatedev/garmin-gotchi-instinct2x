@@ -28,6 +28,17 @@ enum LogLevel {
     LOG_INT    = (0x1 << 4),
 }
 
+function LogLevel_toString(level as LogLevel) as String {
+    switch (level as Int) {
+        case LOG_ERROR:  return "ERROR";
+        case LOG_INFO:   return "INFO";
+        case LOG_MEMORY: return "MEMORY";
+        case LOG_CPU:    return "CPU";
+        case LOG_INT:    return "INT";
+        default:         return "UNKNOWN";
+    }
+}
+
 typedef HAL as interface {
     /* Memory allocation functions
      * NOTE: Needed only if breakpoints support is required.
