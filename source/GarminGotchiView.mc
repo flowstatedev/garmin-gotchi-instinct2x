@@ -10,14 +10,14 @@ class GarminGotchiView extends ui.View {
 
     const DRAW_TIMER_PERIOD_MS = 500;
 
-    var game as GarminGotchiApp;
-    var draw_timer as time.Timer = new time.Timer();
-
     (:standard_colors) const FOREGROUND_COLOR  = gfx.COLOR_WHITE;
     (:inverted_colors) const FOREGROUND_COLOR  = gfx.COLOR_BLACK;
     (:standard_colors) const BACKGROUND_COLOR  = gfx.COLOR_BLACK;
     (:inverted_colors) const BACKGROUND_COLOR  = gfx.COLOR_WHITE;
                        const TRANSPARENT_COLOR = gfx.COLOR_TRANSPARENT;
+                       const PIXEL_COLOR       = BACKGROUND_COLOR;
+                       const GRID_COLOR        = FOREGROUND_COLOR;
+                       const ICON_COLOR        = FOREGROUND_COLOR;
 
     (:initialized) var SCREEN as tl.Rect;
     (:initialized) var SUBSCREEN_RECT as tl.Rect;
@@ -29,6 +29,9 @@ class GarminGotchiView extends ui.View {
 
     typedef BitmapResources as Lang.Array<ui.BitmapResource>;
     (:initialized) var ICON_BITMAPS as BitmapResources;
+
+    var game as GarminGotchiApp;
+    var draw_timer as time.Timer = new time.Timer();
 
     function initialize(game as GarminGotchiApp) {
         View.initialize();
@@ -101,29 +104,30 @@ class GarminGotchiView extends ui.View {
         for (var x = 0; x < tl.LCD_WIDTH; x++) {
             for (var y = 0; y < tl.LCD_HEIGHT; y++) {
                 if (tl.bool(game.matrix[x + y * tl.LCD_WIDTH])) {
-                    draw_pixel(dc, x, y, FOREGROUND_COLOR, true);
+                    draw_pixel(dc, x, y);
                 }
             }
         }
     }
 
-    function draw_pixel(dc as gfx.Dc, x as tl.Int, y as tl.Int, color as gfx.ColorValue, fill as tl.Bool) as Void {
+    function draw_pixel(dc as gfx.Dc, x as tl.Int, y as tl.Int) as Void {
         var pixel = new tl.Rect(
             MATRIX.x + (x * PIXEL_SIZE),
             MATRIX.y + (y * PIXEL_SIZE),
             PIXEL_SIZE,
             PIXEL_SIZE
         );
-        draw_rect(dc, pixel, color, fill);
+        draw_rect(dc, pixel, PIXEL_COLOR, true);
     }
 
     function draw_layout(dc as gfx.Dc) as Void {
-        draw_rect(dc, BANNER_TOP, FOREGROUND_COLOR, false);
-        draw_rect(dc, BANNER_BOTTOM, FOREGROUND_COLOR, false);
+        draw_rect(dc, BANNER_TOP, BACKGROUND_COLOR, false);
+        draw_rect(dc, BANNER_BOTTOM, BACKGROUND_COLOR, false);
         draw_circle(dc, SUBSCREEN_CIRCLE, BACKGROUND_COLOR, true);
     }
 
     function draw_icon(dc as gfx.Dc) as Void {
+        dc.setColor(ICON_COLOR, TRANSPARENT_COLOR);
         for (var i = 0; i < game.icons.size(); i++) {
             if (game.icons[i] != 0) {
                 dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, ICON_BITMAPS[i]);

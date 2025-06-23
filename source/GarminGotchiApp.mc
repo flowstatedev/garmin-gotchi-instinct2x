@@ -32,7 +32,6 @@ class GarminGotchiApp extends app.AppBase {
 
     function initialize() {
         AppBase.initialize();
-
         emulator.register_hal(me);
         emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
         emulator.set_speed(SPEED_RATIO);
