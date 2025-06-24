@@ -24,18 +24,17 @@ class GarminGotchiApp extends app.AppBase {
     (:tama_program) const PROGRAM as tl.Program = tama_program;
     (:test_program) const PROGRAM as tl.Program = test_program;
 
-    var start_time as tl.Timestamp = sys.getTimer();
-    var run_timer as time.Timer = new time.Timer();
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
-    var breakpoints as tl.Breakpoints? = null;
+    var breakpoints as tl.Breakpoints?;
     var matrix as tl.Bytes = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
     var icons as tl.Bytes = new [tl.ICON_NUM]b;
+    var button_events as tl.Bytes = []b;
+    var start_time as tl.Timestamp = sys.getTimer();
+    var run_timer as time.Timer = new time.Timer();
 
     function initialize() {
         AppBase.initialize();
-        emulator.register_hal(me);
-        emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
-        emulator.set_speed(SPEED_RATIO);
+        reset_execution();
     }
 
     function onStart(state as Lang.Dictionary?) as Void {
@@ -48,6 +47,24 @@ class GarminGotchiApp extends app.AppBase {
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
         return [ new GarminGotchiView(me), new GarminGotchiDelegate(me) ];
+    }
+
+    function reset_execution() as Void {
+        breakpoints = null;
+        for (var i = 0; i < tl.LCD_WIDTH * tl.LCD_HEIGHT; i++) {
+            matrix[i] = 0;
+        }
+        for (var i = 0; i < tl.ICON_NUM; i++) {
+            icons[i] = 0;
+        }
+        while (button_events.size() > 0) {
+            button_events.remove(button_events[0]);
+        }
+        start_time = sys.getTimer();
+
+        emulator.register_hal(me);
+        emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
+        emulator.set_speed(SPEED_RATIO);
     }
 
     function start_execution() as Void {

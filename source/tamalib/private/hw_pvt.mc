@@ -22,16 +22,16 @@ module tamalib {
 
 class HW_impl {
 
-    (:initialized) var g_hal as HAL;
-    (:initialized) var g_cpu as CPU;
-
     /* SEG -> LCD mapping */
     /* 51 segments */
-    var seg_pos as Bytes = [
+    const seg_pos as Bytes = [
         0, 1, 2, 3, 4, 5, 6, 7, 32, 8, 9, 10, 11, 12, 13, 14, 15, 33, 34, 35,
         31, 30, 29, 28, 27, 26, 25, 24, 36, 23, 22, 21, 20, 19, 18, 17, 16, 37,
         38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
     ]b;
+
+    (:initialized) var g_hal as HAL;
+    (:initialized) var g_cpu as CPU;
 
     function init(hal as HAL, cpu as CPU) as Int {
         g_hal = hal;

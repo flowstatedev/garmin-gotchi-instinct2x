@@ -16,7 +16,6 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
     var game as GarminGotchiApp;
     var button_timer as time.Timer = new time.Timer();
-    var button_events as tl.Bytes = []b;
 
     function initialize(game as GarminGotchiApp) {
         BehaviorDelegate.initialize();
@@ -50,12 +49,12 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function button_timer_callback() as Void {
-        if (button_events.size() == 0) { return; }
+        if (game.button_events.size() == 0) { return; }
 
-        var event = button_events[0];
+        var event = game.button_events[0];
         var button = decode_button_name(event);
         var state = decode_button_state(event);
-        button_events.remove(event);
+        game.button_events.remove(event);
 
         game.log(tl.LOG_INFO, "Button %s has been %s\n", [
             tl.Button_toString(button),
@@ -65,8 +64,8 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function add_button_event(button as tl.Button) as Void {
-        button_events.add(encode_button(button, tl.BTN_STATE_PRESSED));
-        button_events.add(encode_button(button, tl.BTN_STATE_RELEASED));
+        game.button_events.add(encode_button(button, tl.BTN_STATE_PRESSED));
+        game.button_events.add(encode_button(button, tl.BTN_STATE_RELEASED));
     }
 
     function encode_button(button as tl.Button, state as tl.ButtonState) as tl.U8 {

@@ -25,7 +25,6 @@ module tamalib {
 class CPU_impl {
 
     const TICK_FREQUENCY = 32768; // Hz
-
     const OSC1_FREQUENCY = TICK_FREQUENCY; // Hz
     const OSC3_FREQUENCY = 1000000; // Hz
 
@@ -222,7 +221,7 @@ class CPU_impl {
         new InputPort(0),
     ];
 
-    var refresh_locs as MemoryRanges = [
+    const refresh_locs as MemoryRanges = [
         new MemoryRange(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), /* Display Memory 1 */
         new MemoryRange(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), /* Display Memory 2 */
         new MemoryRange(REG_BUZZER_CTRL1, 1),                  /* Buzzer frequency */
@@ -238,7 +237,7 @@ class CPU_impl {
         new Interrupt(0x0, 0x0, false, 0x02), // Clock timer
     ];
 
-    var interrupt_names as Strings = [
+    const interrupt_names as Strings = [
         "INT_PROG_TIMER_SLOT",
         "INT_SERIAL_SLOT",
         "INT_K10_K13_SLOT",
