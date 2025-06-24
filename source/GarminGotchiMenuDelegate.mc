@@ -14,14 +14,15 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
 
     function onMenuItem(item as Lang.Symbol) as Void {
         switch (item) {
+            case :MenuSave:
+                save();
             case :MenuResume:
                 break;
 
             case :MenuSaveAndExit:
                 save();
             case :MenuExit:
-                exit();
-                break;
+                sys.exit();
 
             case :MenuRestart:
                 restart();
@@ -43,11 +44,6 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
 
     function restart() as Void {
         game.reset_execution();
-    }
-
-    function exit() as Void {
-        game.stop_execution();
-        sys.exit();
     }
 
     function save() as Void {
