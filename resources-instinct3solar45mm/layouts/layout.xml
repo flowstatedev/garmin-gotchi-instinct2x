@@ -1,11 +1,11 @@
 <layout id="Layout" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <bitmap id="Background"     filename="../drawables/background.png"       visible="true"/>
-    <bitmap id="IconFood"       filename="../drawables/icons/food.png"       visible="false"/>
-    <bitmap id="IconLight"      filename="../drawables/icons/light.png"      visible="false"/>
-    <bitmap id="IconGame"       filename="../drawables/icons/game.png"       visible="false"/>
-    <bitmap id="IconMedicine"   filename="../drawables/icons/medicine.png"   visible="false"/>
-    <bitmap id="IconBathroom"   filename="../drawables/icons/bathroom.png"   visible="false"/>
-    <bitmap id="IconMeter"      filename="../drawables/icons/meter.png"      visible="false"/>
-    <bitmap id="IconDiscipline" filename="../drawables/icons/discipline.png" visible="false"/>
-    <bitmap id="IconAttention"  filename="../drawables/icons/attention.png"  visible="false"/>
+    <bitmap id="IconFood"       filename="../drawables/icons/food.png"       visible="false" dithering="none"/>
+    <bitmap id="IconLight"      filename="../drawables/icons/light.png"      visible="false" dithering="none"/>
+    <bitmap id="IconGame"       filename="../drawables/icons/game.png"       visible="false" dithering="none"/>
+    <bitmap id="IconMedicine"   filename="../drawables/icons/medicine.png"   visible="false" dithering="none"/>
+    <bitmap id="IconBathroom"   filename="../drawables/icons/bathroom.png"   visible="false" dithering="none"/>
+    <bitmap id="IconMeter"      filename="../drawables/icons/meter.png"      visible="false" dithering="none"/>
+    <bitmap id="IconDiscipline" filename="../drawables/icons/discipline.png" visible="false" dithering="none"/>
+    <bitmap id="IconAttention"  filename="../drawables/icons/attention.png"  visible="false" dithering="none"/>
 </layout>
