@@ -13,7 +13,3 @@ base.excludeAnnotations = $(base.excludeAnnotations);test_program
 # disable or enable logging messages (NOTE: emulation runs faster with logging disabled)
 base.excludeAnnotations = $(base.excludeAnnotations);verbose_log
 # base.excludeAnnotations = $(base.excludeAnnotations);silence_log
-
-# use standard color, or inverted color schema
-base.excludeAnnotations = $(base.excludeAnnotations);inverted_colors
-# base.excludeAnnotations = $(base.excludeAnnotations);standard_colors

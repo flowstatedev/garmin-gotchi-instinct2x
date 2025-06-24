@@ -272,7 +272,7 @@ class CPU_impl {
     var scaled_cycle_accumulator as U32 = 0;
     var previous_cycles as U8 = 0;
 
-    class State_impl {
+    class CPUState_impl {
         var g_cpu as CPU_impl;
         function initialize(cpu as CPU_impl) { g_cpu = cpu; }
 
@@ -343,7 +343,7 @@ class CPU_impl {
     }
 
     function get_state() as CPUState {
-        return new State_impl(me);
+        return new CPUState_impl(me);
     }
 
     function get_depth() as U32 {

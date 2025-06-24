@@ -6,7 +6,13 @@ using tamalib as tl;
 
 class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
-    const BUTTON_TIMER_PERIOD_MS = 100;
+    const BUTTON_TIMER_PERIOD_MS as tl.Int = 100;
+    const BUTTON_FIELD_BITS      as tl.Int = 4;
+    const BUTTON_FIELD_MASK      as tl.Int = ((1 << BUTTON_FIELD_BITS) - 1);
+    const BUTTON_NAME_LSB        as tl.Int = (1 * BUTTON_FIELD_BITS);
+    const BUTTON_NAME_MASK       as tl.Int = (BUTTON_FIELD_MASK << BUTTON_NAME_LSB);
+    const BUTTON_STATE_LSB       as tl.Int = (0 * BUTTON_FIELD_BITS);
+    const BUTTON_STATE_MASK      as tl.Int = (BUTTON_FIELD_MASK << BUTTON_STATE_LSB);
 
     var game as GarminGotchiApp;
     var button_timer as time.Timer = new time.Timer();
@@ -19,8 +25,7 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function onMenu() as Lang.Boolean {
-        /** TODO: add logic for saving/resuming game */
-        ui.pushView(new Rez.Menus.Menu(), new GarminGotchiMenuDelegate(), ui.SLIDE_UP);
+        ui.pushView(new Rez.Menus.Menu(), new GarminGotchiMenuDelegate(game), ui.SLIDE_UP);
         return true;
     }
 
@@ -65,15 +70,15 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function encode_button(button as tl.Button, state as tl.ButtonState) as tl.U8 {
-        return ((button << 4) | state);
+        return ((button << BUTTON_NAME_LSB) | (state << BUTTON_STATE_LSB)) as tl.U8;
     }
 
     function decode_button_name(byte as tl.U8) as tl.Button {
-        return ((byte & 0xF0) >> 4) as tl.Button;
+        return ((byte & BUTTON_NAME_MASK) >> BUTTON_NAME_LSB) as tl.Button;
     }
 
     function decode_button_state(byte as tl.U8) as tl.ButtonState {
-        return (byte & 0x0F) as tl.ButtonState;
+        return ((byte & BUTTON_STATE_MASK) >> BUTTON_STATE_LSB) as tl.ButtonState;
     }
 
 }

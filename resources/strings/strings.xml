@@ -2,5 +2,6 @@
     <string id="AppName"   >GarminGotchi</string>
     <string id="MenuResume">Resume</string>
     <string id="MenuSave"  >Save</string>
+    <string id="MenuLoad"  >Load</string>
     <string id="MenuExit"  >Exit</string>
 </strings>

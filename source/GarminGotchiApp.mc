@@ -1,4 +1,5 @@
 using Toybox.Application as app;
+using Toybox.System as sys;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
 using Toybox.Lang;
@@ -23,7 +24,7 @@ class GarminGotchiApp extends app.AppBase {
     (:tama_program) const PROGRAM as tl.Program = tama_program;
     (:test_program) const PROGRAM as tl.Program = test_program;
 
-    var start_time as tl.Timestamp = System.getTimer();
+    var start_time as tl.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var breakpoints as tl.Breakpoints? = null;
@@ -35,23 +36,36 @@ class GarminGotchiApp extends app.AppBase {
         emulator.register_hal(me);
         emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
         emulator.set_speed(SPEED_RATIO);
-        emulator.set_exec_mode(tl.EXEC_MODE_RUN);
     }
 
     function onStart(state as Lang.Dictionary?) as Void {
-        run_timer.start(method(:run_timer_callback), RUN_TIMER_PERIOD_MS, true);
+        start_execution();
     }
 
     function onStop(state as Lang.Dictionary?) as Void {
-        run_timer.stop();
-        emulator.release();
-        if (breakpoints != null) {
-            emulator.free_bp(breakpoints);
-        }
+        stop_execution();
     }
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
         return [ new GarminGotchiView(me), new GarminGotchiDelegate(me) ];
+    }
+
+    function start_execution() as Void {
+        emulator.set_exec_mode(tl.EXEC_MODE_RUN);
+        run_timer.start(method(:run_timer_callback), RUN_TIMER_PERIOD_MS, true);
+    }
+
+    function pause_execution() as Void {
+        emulator.set_exec_mode(tl.EXEC_MODE_PAUSE);
+        run_timer.stop();
+    }
+
+    function stop_execution() as Void {
+        pause_execution();
+        emulator.release();
+        if (breakpoints != null) {
+            emulator.free_bp(breakpoints);
+        }
     }
 
     function run_timer_callback() as Void {
@@ -59,6 +73,8 @@ class GarminGotchiApp extends app.AppBase {
             emulator.step();
         }
     }
+
+    /** NOTE: HAL interface API implementations */
 
     function malloc(size as tl.U32) as tl.Object? { return null; }
 
@@ -82,7 +98,7 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function get_timestamp() as tl.Timestamp {
-        return System.getTimer() - start_time;
+        return sys.getTimer() - start_time;
     }
 
     function update_screen() as Void {
