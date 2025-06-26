@@ -6,13 +6,15 @@ using tamalib as tl;
 
 class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
-    const BUTTON_TIMER_PERIOD_MS as tl.Int = 100;
-    const BUTTON_FIELD_BITS      as tl.Int = 4;
-    const BUTTON_FIELD_MASK      as tl.Int = ((1 << BUTTON_FIELD_BITS) - 1);
-    const BUTTON_NAME_LSB        as tl.Int = (1 * BUTTON_FIELD_BITS);
-    const BUTTON_NAME_MASK       as tl.Int = (BUTTON_FIELD_MASK << BUTTON_NAME_LSB);
-    const BUTTON_STATE_LSB       as tl.Int = (0 * BUTTON_FIELD_BITS);
-    const BUTTON_STATE_MASK      as tl.Int = (BUTTON_FIELD_MASK << BUTTON_STATE_LSB);
+    const BUTTON_TIMER_PERIOD_MS = 100;
+    const BUTTON_FIELD_BITS      = 4;
+    const BUTTON_FIELD_MASK      = (1 << BUTTON_FIELD_BITS) - 1;
+    const BUTTON_NAME_POS        = 1;
+    const BUTTON_NAME_LSB        = (BUTTON_NAME_POS * BUTTON_FIELD_BITS);
+    const BUTTON_NAME_MASK       = (BUTTON_FIELD_MASK << BUTTON_NAME_LSB);
+    const BUTTON_STATE_POS       = 0;
+    const BUTTON_STATE_LSB       = (BUTTON_STATE_POS * BUTTON_FIELD_BITS);
+    const BUTTON_STATE_MASK      = (BUTTON_FIELD_MASK << BUTTON_STATE_LSB);
 
     var game as GarminGotchiApp;
     var button_timer as time.Timer = new time.Timer();

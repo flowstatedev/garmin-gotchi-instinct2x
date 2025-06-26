@@ -8,21 +8,21 @@ using tamalib as tl;
 
 class GarminGotchiApp extends app.AppBase {
 
-    (:silence_log) const LOG_LEVEL_FLAGS as tl.Int = 0;
-    (:verbose_log) const LOG_LEVEL_FLAGS as tl.Int = (0
+    (:silence_log) const LOG_LEVEL_FLAGS = 0;
+    (:verbose_log) const LOG_LEVEL_FLAGS = (0
         | tl.LOG_ERROR
         | tl.LOG_INFO
         | tl.LOG_MEMORY
         | tl.LOG_CPU
         | tl.LOG_INT
     );
-    const RUN_TIMER_PERIOD_MS as tl.Int = 50;
-    const SPEED_RATIO as tl.Int = 0;
-    const CLOCK_FREQ as tl.Int = 1000000;
     (:verbose_log) const RUN_MAX_STEPS = 10;
-    (:silence_log) const RUN_MAX_STEPS = 150;
-    (:tama_program) const PROGRAM as tl.Program = tama_program;
-    (:test_program) const PROGRAM as tl.Program = test_program;
+    (:silence_log) const RUN_MAX_STEPS = 155;
+    (:tama_program) const PROGRAM = tama_program;
+    (:test_program) const PROGRAM = test_program;
+    const RUN_TIMER_PERIOD_MS = 50;
+    const SPEED_RATIO = 0;
+    const CLOCK_FREQ = 1000000;
 
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var breakpoints as tl.Breakpoints?;
@@ -34,22 +34,22 @@ class GarminGotchiApp extends app.AppBase {
 
     function initialize() {
         AppBase.initialize();
-        reset_execution();
+        reset();
     }
 
     function onStart(state as Lang.Dictionary?) as Void {
-        start_execution();
+        start();
     }
 
     function onStop(state as Lang.Dictionary?) as Void {
-        stop_execution();
+        stop();
     }
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
         return [ new GarminGotchiView(me), new GarminGotchiDelegate(me) ];
     }
 
-    function reset_execution() as Void {
+    function reset() as Void {
         breakpoints = null;
         for (var i = 0; i < tl.LCD_WIDTH * tl.LCD_HEIGHT; i++) {
             matrix[i] = 0;
@@ -67,22 +67,30 @@ class GarminGotchiApp extends app.AppBase {
         emulator.set_speed(SPEED_RATIO);
     }
 
-    function start_execution() as Void {
+    function start() as Void {
         emulator.set_exec_mode(tl.EXEC_MODE_RUN);
         run_timer.start(method(:run_timer_callback), RUN_TIMER_PERIOD_MS, true);
     }
 
-    function pause_execution() as Void {
+    function pause() as Void {
         emulator.set_exec_mode(tl.EXEC_MODE_PAUSE);
         run_timer.stop();
     }
 
-    function stop_execution() as Void {
-        pause_execution();
+    function stop() as Void {
+        pause();
         emulator.release();
         if (breakpoints != null) {
             emulator.free_bp(breakpoints);
         }
+    }
+
+    function save() as Void {
+        tl.save_state(emulator.get_state());
+    }
+
+    function load() as Void {
+        tl.load_state(emulator.get_state());
     }
 
     function run_timer_callback() as Void {

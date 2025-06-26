@@ -9,45 +9,35 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
     function initialize(game as GarminGotchiApp) {
         MenuInputDelegate.initialize();
         me.game = game;
-        pause();
+
+        game.pause();
     }
 
     function onMenuItem(item as Lang.Symbol) as Void {
         switch (item) {
-            case :MenuSave:
-                save();
             case :MenuResume:
                 break;
 
-            case :MenuSaveAndExit:
-                save();
+            case :MenuSave:
+                game.save();
+                break;
+
+            case :MenuLoad:
+                game.load();
+                break;
+
             case :MenuExit:
                 sys.exit();
 
             case :MenuRestart:
-                restart();
+                game.reset();
                 break;
 
             default:
                 break;
         }
-        resume();
-    }
 
-    function resume() as Void {
-        game.start_execution();
-    }
-
-    function pause() as Void {
-        game.pause_execution();
-    }
-
-    function restart() as Void {
-        game.reset_execution();
-    }
-
-    function save() as Void {
-        /** TODO: save game state here */
+        game.start();
     }
 
 }
