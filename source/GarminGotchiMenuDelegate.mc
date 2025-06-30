@@ -18,6 +18,10 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
             case :MenuResume:
                 break;
 
+            case :MenuSound:
+                game.sound_toggle();
+                break;
+
             case :MenuSave:
                 game.save();
                 break;

@@ -1,4 +1,5 @@
 using Toybox.Application as app;
+using Toybox.Attention as att;
 using Toybox.System as sys;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
@@ -23,12 +24,15 @@ class GarminGotchiApp extends app.AppBase {
     const RUN_TIMER_PERIOD_MS = 50;
     const SPEED_RATIO = 0;
     const CLOCK_FREQ = 1000000;
+    const SOUND_DURATION_MS = 250;
 
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
     var breakpoints as tl.Breakpoints? = null;
     var matrix as tl.Bytes = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
     var icons as tl.Bytes = new [tl.ICON_NUM]b;
     var button_events as tl.Bytes = []b;
+    var sound_profile as Lang.Array<att.ToneProfile> = [];
+    var is_sound_enabled as tl.Bool = true;
     var start_time as tl.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
 
@@ -94,6 +98,14 @@ class GarminGotchiApp extends app.AppBase {
         tl.load_state(emulator.get_state());
     }
 
+    function sound_toggle() as Void {
+        is_sound_enabled = !is_sound_enabled;
+    }
+
+    function is_sound_playable(en as tl.Bool) as tl.Bool {
+        return (en) && (is_sound_enabled) && (att has :ToneProfile) && (sound_profile.size() > 0);
+    }
+
     function run_timer_callback() as Void {
         for (var i = 0; i < RUN_MAX_STEPS; i++) {
             emulator.step();
@@ -140,11 +152,13 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function set_frequency(freq as tl.U32) as Void {
-        /* TODO */
+        sound_profile = [new att.ToneProfile(freq / 10, SOUND_DURATION_MS)];
     }
 
     function play_frequency(en as tl.Bool) as Void {
-        /* TODO */
+        if (is_sound_playable(en)) {
+            att.playTone({:toneProfile => sound_profile});
+        }
     }
 
     function handler() as tl.Int {

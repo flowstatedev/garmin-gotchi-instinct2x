@@ -1,5 +1,6 @@
 <menu id="Menu" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <menu-item id="MenuResume"  label="@Strings.MenuResume"/>
+    <menu-item id="MenuSound"   label="@Strings.MenuSound"/>
     <menu-item id="MenuSave"    label="@Strings.MenuSave"/>
     <menu-item id="MenuLoad"    label="@Strings.MenuLoad"/>
     <menu-item id="MenuExit"    label="@Strings.MenuExit"/>
