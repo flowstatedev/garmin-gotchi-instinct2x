@@ -25,7 +25,7 @@ class GarminGotchiApp extends app.AppBase {
     const CLOCK_FREQ = 1000000;
 
     var emulator as tl.Tamalib = new tl.Tamalib_impl() as tl.Tamalib;
-    var breakpoints as tl.Breakpoints?;
+    var breakpoints as tl.Breakpoints? = null;
     var matrix as tl.Bytes = new [tl.LCD_WIDTH * tl.LCD_HEIGHT]b;
     var icons as tl.Bytes = new [tl.ICON_NUM]b;
     var button_events as tl.Bytes = []b;
@@ -34,7 +34,7 @@ class GarminGotchiApp extends app.AppBase {
 
     function initialize() {
         AppBase.initialize();
-        reset();
+        load();
     }
 
     function onStart(state as Lang.Dictionary?) as Void {
@@ -90,6 +90,7 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function load() as Void {
+        reset();
         tl.load_state(emulator.get_state());
     }
 

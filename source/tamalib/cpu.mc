@@ -22,12 +22,6 @@ using Toybox.Lang;
 
 module tamalib {
 
-const MEMORY_SIZE = 4096; // 4096 x 4 bits
-
-const E0C6S46_SUPPORT = true;
-const E0C6S48_SUPPORT = true;
-
-/* E0C6S48 (compatible with E0C6S46) */
 const MEM_RAM_ADDR      = 0x000;
 const MEM_RAM_SIZE      = 0x300; // 768 x 4 bits of RAM
 const MEM_DISPLAY1_ADDR = 0xE00;
@@ -37,17 +31,24 @@ const MEM_DISPLAY2_SIZE = 0x066; // 102 x 4 bits of RAM
 const MEM_IO_ADDR       = 0xF00;
 const MEM_IO_SIZE       = 0x080;
 
-const LOW_FOOTPRINT = false;
+const MEM_SIZE = 4096; // 4096 x 4 bits
+const MEM_BUFFER_SIZE = MEM_SIZE / 2;
 
-const MEM_BUFFER_SIZE = MEMORY_SIZE;
-
-function SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void { buffer[n] = v; }
+function SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void {
+    var byte = n / 2;
+    var shift = 4 * (n & 0x1);
+    buffer[byte] = (buffer[byte] & (0xF << (4 - shift))) | (v << shift);
+}
 function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 
-function GET_MEMORY(buffer as Memory, n as U12) as U4 { return buffer[n]; }
+function GET_MEMORY(buffer as Memory, n as U12) as U4 {
+    var byte = n / 2;
+    var shift = 4 * (n & 0x1);
+    return (buffer[byte] >> shift) & 0xF;
+}
 function GET_RAM_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 function GET_DISP1_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 function GET_DISP2_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
