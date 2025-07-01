@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
@@ -62,7 +62,7 @@ class Breakpoint {
     }
 }
 
-typedef Breakpoints as Lang.Array<Breakpoint>;
+typedef Breakpoints as std.Array<Breakpoint>;
 
 /* Pins (TODO: add other pins) */
 enum Pin {
@@ -105,34 +105,34 @@ class Interrupt {
     }
 }
 
-typedef Interrupts as Lang.Array<Interrupt>;
+typedef Interrupts as std.Array<Interrupt>;
 
 typedef CPUState as interface {
-    function get_pc() as U13;                        function set_pc(in as U13) as Void;
-    function get_x() as U12;                         function set_x(in as U12) as Void;
-    function get_y() as U12;                         function set_y(in as U12) as Void;
-    function get_a() as U4;                          function set_a(in as U4) as Void;
-    function get_b() as U4;                          function set_b(in as U4) as Void;
-    function get_np() as U5;                         function set_np(in as U5) as Void;
-    function get_sp() as U8;                         function set_sp(in as U8) as Void;
-    function get_flags() as U4;                      function set_flags(in as U4) as Void;
-    function get_tick_counter() as U32;              function set_tick_counter(in as U32) as Void;
-    function get_clk_timer_2hz_timestamp() as U32;   function set_clk_timer_2hz_timestamp(in as U32) as Void;
-    function get_clk_timer_4hz_timestamp() as U32;   function set_clk_timer_4hz_timestamp(in as U32) as Void;
-    function get_clk_timer_8hz_timestamp() as U32;   function set_clk_timer_8hz_timestamp(in as U32) as Void;
-    function get_clk_timer_16hz_timestamp() as U32;  function set_clk_timer_16hz_timestamp(in as U32) as Void;
-    function get_clk_timer_32hz_timestamp() as U32;  function set_clk_timer_32hz_timestamp(in as U32) as Void;
-    function get_clk_timer_64hz_timestamp() as U32;  function set_clk_timer_64hz_timestamp(in as U32) as Void;
-    function get_clk_timer_128hz_timestamp() as U32; function set_clk_timer_128hz_timestamp(in as U32) as Void;
-    function get_clk_timer_256hz_timestamp() as U32; function set_clk_timer_256hz_timestamp(in as U32) as Void;
-    function get_prog_timer_timestamp() as U32;      function set_prog_timer_timestamp(in as U32) as Void;
-    function get_prog_timer_enabled() as Bool;       function set_prog_timer_enabled(in as Bool) as Void;
-    function get_prog_timer_data() as U8;            function set_prog_timer_data(in as U8) as Void;
-    function get_prog_timer_rld() as U8;             function set_prog_timer_rld(in as U8) as Void;
-    function get_call_depth() as U32;                function set_call_depth(in as U32) as Void;
-    function get_interrupts() as Interrupts;         function set_interrupts(in as Interrupts) as Void;
-    function get_cpu_halted() as Bool;               function set_cpu_halted(in as Bool) as Void;
-    function get_memory() as Memory;                 function set_memory(in as Memory) as Void;
+    function get_pc()                        as U13;        function set_pc(                       in as U13)        as Void;
+    function get_x()                         as U12;        function set_x(                        in as U12)        as Void;
+    function get_y()                         as U12;        function set_y(                        in as U12)        as Void;
+    function get_a()                         as U4;         function set_a(                        in as U4)         as Void;
+    function get_b()                         as U4;         function set_b(                        in as U4)         as Void;
+    function get_np()                        as U5;         function set_np(                       in as U5)         as Void;
+    function get_sp()                        as U8;         function set_sp(                       in as U8)         as Void;
+    function get_flags()                     as U4;         function set_flags(                    in as U4)         as Void;
+    function get_tick_counter()              as U32;        function set_tick_counter(             in as U32)        as Void;
+    function get_clk_timer_2hz_timestamp()   as U32;        function set_clk_timer_2hz_timestamp(  in as U32)        as Void;
+    function get_clk_timer_4hz_timestamp()   as U32;        function set_clk_timer_4hz_timestamp(  in as U32)        as Void;
+    function get_clk_timer_8hz_timestamp()   as U32;        function set_clk_timer_8hz_timestamp(  in as U32)        as Void;
+    function get_clk_timer_16hz_timestamp()  as U32;        function set_clk_timer_16hz_timestamp( in as U32)        as Void;
+    function get_clk_timer_32hz_timestamp()  as U32;        function set_clk_timer_32hz_timestamp( in as U32)        as Void;
+    function get_clk_timer_64hz_timestamp()  as U32;        function set_clk_timer_64hz_timestamp( in as U32)        as Void;
+    function get_clk_timer_128hz_timestamp() as U32;        function set_clk_timer_128hz_timestamp(in as U32)        as Void;
+    function get_clk_timer_256hz_timestamp() as U32;        function set_clk_timer_256hz_timestamp(in as U32)        as Void;
+    function get_prog_timer_timestamp()      as U32;        function set_prog_timer_timestamp(     in as U32)        as Void;
+    function get_prog_timer_enabled()        as Bool;       function set_prog_timer_enabled(       in as Bool)       as Void;
+    function get_prog_timer_data()           as U8;         function set_prog_timer_data(          in as U8)         as Void;
+    function get_prog_timer_rld()            as U8;         function set_prog_timer_rld(           in as U8)         as Void;
+    function get_call_depth()                as U32;        function set_call_depth(               in as U32)        as Void;
+    function get_interrupts()                as Interrupts; function set_interrupts(               in as Interrupts) as Void;
+    function get_cpu_halted()                as Bool;       function set_cpu_halted(               in as Bool)       as Void;
+    function get_memory()                    as Memory;     function set_memory(                   in as Memory)     as Void;
 };
 
 typedef CPU as interface {

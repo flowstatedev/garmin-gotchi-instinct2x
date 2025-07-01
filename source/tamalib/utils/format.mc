@@ -1,5 +1,5 @@
 using Toybox.System as sys;
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
@@ -23,7 +23,7 @@ class Fmt {
         }
     }
 
-    typedef IndexTuples as Lang.Array<IndexTuple>;
+    typedef IndexTuples as std.Array<IndexTuple>;
 
     var _base_format as String;
     var _param_formats as Strings;
@@ -36,7 +36,7 @@ class Fmt {
 
     function convert(params as Objects) as String {
         params = _apply_param_formats(params, _param_formats);
-        return format(_base_format, params as Lang.Array);
+        return format(_base_format, params as std.Array);
     }
 
     function _find_c_format_indexes(c_fmt as String) as IndexTuples {
@@ -99,8 +99,8 @@ class Fmt {
         for (var fmt_i = 0; fmt_i < formats.size(); fmt_i++) {
             var param = params[fmt_i];
             switch (param) {
-                case instanceof Lang.Float:
-                case instanceof Lang.Number:
+                case instanceof std.Float:
+                case instanceof std.Number:
                     str_arr.add((param as Float or Int).format(formats[fmt_i]));
                     break;
                 default:

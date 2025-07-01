@@ -2,19 +2,27 @@ using Toybox.Application as app;
 using Toybox.Graphics as gfx;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
-using Toybox.Lang;
+using Toybox.Lang as std;
 
-using tamalib as tl;
+using tamalib as tama;
 
 class GarminGotchiView extends ui.View {
 
+    typedef BitmapResources as std.Array<ui.BitmapResource>;
+
     const DRAW_TIMER_PERIOD_MS = 500;
-    (:initialized) var SCREEN as tl.Rect;
-    (:initialized) var SUBSCREEN_RECT as tl.Rect;
-    (:initialized) var SUBSCREEN_CIRCLE as tl.Circle;
-    (:initialized) var MATRIX as tl.Rect;
-    (:initialized) var PIXEL_SIZE as tl.Int;
-    typedef BitmapResources as Lang.Array<ui.BitmapResource>;
+
+    (:standard_colors) const COLOR_WHITE = gfx.COLOR_WHITE;
+    (:inverted_colors) const COLOR_WHITE = gfx.COLOR_BLACK;
+    (:standard_colors) const COLOR_BLACK = gfx.COLOR_BLACK;
+    (:inverted_colors) const COLOR_BLACK = gfx.COLOR_WHITE;
+                       const COLOR_EMPTY = gfx.COLOR_TRANSPARENT;
+
+    (:initialized) var SCREEN as tama.Rect;
+    (:initialized) var SUBSCREEN_RECT as tama.Rect;
+    (:initialized) var SUBSCREEN_CIRCLE as tama.Circle;
+    (:initialized) var MATRIX as tama.Rect;
+    (:initialized) var PIXEL_SIZE as tama.Int;
     (:initialized) var ICON_BITMAPS as BitmapResources;
 
     var game as GarminGotchiApp;
@@ -44,13 +52,13 @@ class GarminGotchiView extends ui.View {
     }
 
     function compute_layout(dc as gfx.Dc) as Void {
-        SCREEN = new tl.Rect(0, 0, dc.getWidth(), dc.getHeight());
-        SUBSCREEN_RECT = tl.bbox_to_rect(ui.getSubscreen() as gfx.BoundingBox);
-        SUBSCREEN_CIRCLE = tl.bbox_to_circle(ui.getSubscreen() as gfx.BoundingBox);
-        PIXEL_SIZE = tl.min(SCREEN.width / tl.LCD_WIDTH, SCREEN.height / tl.LCD_HEIGHT) as tl.Int;
-        var MATRIX_WIDTH = tl.min(SCREEN.width, tl.LCD_WIDTH * PIXEL_SIZE) as tl.Int;
-        var MATRIX_HEIGHT = tl.min(SCREEN.height, tl.LCD_HEIGHT * PIXEL_SIZE) as tl.Int;
-        MATRIX = new tl.Rect(
+        SCREEN = new tama.Rect(0, 0, dc.getWidth(), dc.getHeight());
+        SUBSCREEN_RECT = tama.bbox_to_rect(ui.getSubscreen() as gfx.BoundingBox);
+        SUBSCREEN_CIRCLE = tama.bbox_to_circle(ui.getSubscreen() as gfx.BoundingBox);
+        PIXEL_SIZE = tama.min(SCREEN.width / tama.LCD_WIDTH, SCREEN.height / tama.LCD_HEIGHT) as tama.Int;
+        var MATRIX_WIDTH = tama.min(SCREEN.width, tama.LCD_WIDTH * PIXEL_SIZE) as tama.Int;
+        var MATRIX_HEIGHT = tama.min(SCREEN.height, tama.LCD_HEIGHT * PIXEL_SIZE) as tama.Int;
+        MATRIX = new tama.Rect(
             (SCREEN.width - MATRIX_WIDTH) / 2,
             (SCREEN.height - MATRIX_HEIGHT) / 2,
             MATRIX_WIDTH,
@@ -80,36 +88,36 @@ class GarminGotchiView extends ui.View {
     }
 
     function clear_screen(dc as gfx.Dc) as Void {
-        dc.setColor(gfx.COLOR_WHITE, gfx.COLOR_TRANSPARENT);
+        dc.setColor(COLOR_WHITE, COLOR_EMPTY);
         dc.clear();
     }
 
     function clear_subscreen(dc as gfx.Dc) as Void {
-        draw_circle(dc, SUBSCREEN_CIRCLE, gfx.COLOR_BLACK, true);
+        draw_circle(dc, SUBSCREEN_CIRCLE, COLOR_BLACK, true);
     }
 
     function draw_matrix(dc as gfx.Dc) as Void {
-        for (var x = 0; x < tl.LCD_WIDTH; x++) {
-            for (var y = 0; y < tl.LCD_HEIGHT; y++) {
-                if (tl.bool(game.matrix[x + y * tl.LCD_WIDTH])) {
+        for (var x = 0; x < tama.LCD_WIDTH; x++) {
+            for (var y = 0; y < tama.LCD_HEIGHT; y++) {
+                if (tama.bool(game.matrix[x + y * tama.LCD_WIDTH])) {
                     draw_pixel(dc, x, y);
                 }
             }
         }
     }
 
-    function draw_pixel(dc as gfx.Dc, x as tl.Int, y as tl.Int) as Void {
-        var pixel = new tl.Rect(
+    function draw_pixel(dc as gfx.Dc, x as tama.Int, y as tama.Int) as Void {
+        var pixel = new tama.Rect(
             MATRIX.x + (x * PIXEL_SIZE),
             MATRIX.y + (y * PIXEL_SIZE),
             PIXEL_SIZE,
             PIXEL_SIZE
         );
-        draw_rect(dc, pixel, gfx.COLOR_BLACK, true);
+        draw_rect(dc, pixel, COLOR_BLACK, true);
     }
 
     function draw_icon(dc as gfx.Dc) as Void {
-        dc.setColor(gfx.COLOR_WHITE, gfx.COLOR_TRANSPARENT);
+        dc.setColor(COLOR_WHITE, COLOR_EMPTY);
         for (var i = 0; i < game.icons.size(); i++) {
             if (game.icons[i] != 0) {
                 dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, ICON_BITMAPS[i]);
@@ -118,8 +126,8 @@ class GarminGotchiView extends ui.View {
         }
     }
 
-    function draw_circle(dc as gfx.Dc, circle as tl.Circle, color as gfx.ColorValue, fill as tl.Bool) as Void {
-        dc.setColor(color, gfx.COLOR_TRANSPARENT);
+    function draw_circle(dc as gfx.Dc, circle as tama.Circle, color as gfx.ColorValue, fill as tama.Bool) as Void {
+        dc.setColor(color, COLOR_EMPTY);
         if (fill) {
             dc.fillCircle(circle.x, circle.y, circle.r);
         } else {
@@ -127,8 +135,8 @@ class GarminGotchiView extends ui.View {
         }
     }
 
-    function draw_rect(dc as gfx.Dc, rect as tl.Rect, color as gfx.ColorValue, fill as tl.Bool) as Void {
-        dc.setColor(color, gfx.COLOR_TRANSPARENT);
+    function draw_rect(dc as gfx.Dc, rect as tama.Rect, color as gfx.ColorValue, fill as tama.Bool) as Void {
+        dc.setColor(color, COLOR_EMPTY);
         if (fill) {
             dc.fillRectangle(rect.x, rect.y, rect.width, rect.height);
         } else {

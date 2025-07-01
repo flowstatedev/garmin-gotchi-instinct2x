@@ -1,10 +1,10 @@
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
 function int(val as Bool or Num) as Int {
     switch (val) {
-        case instanceof Lang.Boolean:
+        case instanceof std.Boolean:
             return (val as Bool) ? 1 : 0;
         default:
             return (val as Num).toNumber();

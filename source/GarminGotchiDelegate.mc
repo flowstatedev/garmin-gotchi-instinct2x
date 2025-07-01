@@ -1,8 +1,8 @@
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
-using Toybox.Lang;
+using Toybox.Lang as std;
 
-using tamalib as tl;
+using tamalib as tama;
 
 class GarminGotchiDelegate extends ui.BehaviorDelegate {
 
@@ -25,28 +25,28 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
         me.button_timer.start(method(:button_timer_callback), BUTTON_TIMER_PERIOD_MS, true);
     }
 
-    function onMenu() as Lang.Boolean {
+    function onMenu() as std.Boolean {
         ui.pushView(new Rez.Menus.Menu(), new GarminGotchiMenuDelegate(game), ui.SLIDE_UP);
         return true;
     }
 
-    function onPreviousPage() as Lang.Boolean {
-        add_button_event(tl.BTN_LEFT);
+    function onPreviousPage() as std.Boolean {
+        add_button_event(tama.BTN_LEFT);
         return true;
     }
 
-    function onNextPage() as Lang.Boolean {
-        add_button_event(tl.BTN_RIGHT);
+    function onNextPage() as std.Boolean {
+        add_button_event(tama.BTN_RIGHT);
         return true;
     }
 
-    function onSelect() as Lang.Boolean {
-        add_button_event(tl.BTN_MIDDLE);
+    function onSelect() as std.Boolean {
+        add_button_event(tama.BTN_MIDDLE);
         return true;
     }
 
-    function onBack() as Lang.Boolean {
-        add_button_event(tl.BTN_TAP);
+    function onBack() as std.Boolean {
+        add_button_event(tama.BTN_TAP);
         return true;
     }
 
@@ -58,28 +58,28 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
         var state = decode_button_state(event);
         game.button_events.remove(event);
 
-        game.log(tl.LOG_INFO, "Button %s has been %s\n", [
-            tl.Button_toString(button),
-            tl.ButtonState_toString(state),
+        game.log(tama.LOG_INFO, "Button %s has been %s\n", [
+            tama.Button_toString(button),
+            tama.ButtonState_toString(state),
         ]);
         game.emulator.set_button(button, state);
     }
 
-    function add_button_event(button as tl.Button) as Void {
-        game.button_events.add(encode_button(button, tl.BTN_STATE_PRESSED));
-        game.button_events.add(encode_button(button, tl.BTN_STATE_RELEASED));
+    function add_button_event(button as tama.Button) as Void {
+        game.button_events.add(encode_button(button, tama.BTN_STATE_PRESSED));
+        game.button_events.add(encode_button(button, tama.BTN_STATE_RELEASED));
     }
 
-    function encode_button(button as tl.Button, state as tl.ButtonState) as tl.U8 {
-        return ((button << BUTTON_NAME_LSB) | (state << BUTTON_STATE_LSB)) as tl.U8;
+    function encode_button(button as tama.Button, state as tama.ButtonState) as tama.U8 {
+        return ((button << BUTTON_NAME_LSB) | (state << BUTTON_STATE_LSB)) as tama.U8;
     }
 
-    function decode_button_name(byte as tl.U8) as tl.Button {
-        return ((byte & BUTTON_NAME_MASK) >> BUTTON_NAME_LSB) as tl.Button;
+    function decode_button_name(byte as tama.U8) as tama.Button {
+        return ((byte & BUTTON_NAME_MASK) >> BUTTON_NAME_LSB) as tama.Button;
     }
 
-    function decode_button_state(byte as tl.U8) as tl.ButtonState {
-        return ((byte & BUTTON_STATE_MASK) >> BUTTON_STATE_LSB) as tl.ButtonState;
+    function decode_button_state(byte as tama.U8) as tama.ButtonState {
+        return ((byte & BUTTON_STATE_MASK) >> BUTTON_STATE_LSB) as tama.ButtonState;
     }
 
 }

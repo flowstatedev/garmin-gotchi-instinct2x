@@ -18,15 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
 class CPU_impl {
 
-    const TICK_FREQUENCY = 32768; // Hz
+    const TICK_FREQUENCY = 32768;          // Hz
     const OSC1_FREQUENCY = TICK_FREQUENCY; // Hz
-    const OSC3_FREQUENCY = 1000000; // Hz
+    const OSC3_FREQUENCY = 1000000;        // Hz
 
     const TIMER_2HZ_PERIOD   = (TICK_FREQUENCY / 2);   // in ticks
     const TIMER_4HZ_PERIOD   = (TICK_FREQUENCY / 4);   // in ticks
@@ -82,10 +82,10 @@ class CPU_impl {
     const FLAG_D = (0x1 << 2);
     const FLAG_I = (0x1 << 3);
 
-    function C() as Bool { return !!bool(flags & FLAG_C); }
-    function Z() as Bool { return !!bool(flags & FLAG_Z); }
-    function D() as Bool { return !!bool(flags & FLAG_D); }
-    function I() as Bool { return !!bool(flags & FLAG_I); }
+    function C() as Bool { return bool(flags & FLAG_C); }
+    function Z() as Bool { return bool(flags & FLAG_Z); }
+    function D() as Bool { return bool(flags & FLAG_D); }
+    function I() as Bool { return bool(flags & FLAG_I); }
 
     function SET_C()   as Void { flags |=  FLAG_C; }
     function CLEAR_C() as Void { flags &= ~FLAG_C; }
@@ -177,7 +177,7 @@ class CPU_impl {
         }
     }
 
-    typedef Ops as Lang.Array<Op>;
+    typedef Ops as std.Array<Op>;
 
     class InputPort {
         var states as U4;
@@ -187,7 +187,7 @@ class CPU_impl {
         }
     }
 
-    typedef InputPorts as Lang.Array<InputPort>;
+    typedef InputPorts as std.Array<InputPort>;
 
     class MemoryRange {
         var addr as U12;
@@ -199,7 +199,7 @@ class CPU_impl {
         }
     }
 
-    typedef MemoryRanges as Lang.Array<MemoryRange>;
+    typedef MemoryRanges as std.Array<MemoryRange>;
 
     (:initialized) var g_hal as HAL;
     (:initialized) var g_hw as HW;
@@ -222,10 +222,10 @@ class CPU_impl {
     ];
 
     const refresh_locs as MemoryRanges = [
-        new MemoryRange(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), /* Display Memory 1 */
-        new MemoryRange(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), /* Display Memory 2 */
-        new MemoryRange(REG_BUZZER_CTRL1, 1),                  /* Buzzer frequency */
-        new MemoryRange(REG_R40_R43_BZ_OUTPUT_PORT, 1),        /* Buzzer enabled */
+        new MemoryRange(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), // Display Memory 1
+        new MemoryRange(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), // Display Memory 2
+        new MemoryRange(REG_BUZZER_CTRL1, 1),                  // Buzzer frequency
+        new MemoryRange(REG_R40_R43_BZ_OUTPUT_PORT, 1),        // Buzzer enabled
     ];
 
     var interrupts as Interrupts = [
@@ -248,15 +248,15 @@ class CPU_impl {
 
     var call_depth as U32 = 0;
 
-    var clk_timer_2hz_timestamp as U32 = 0; // in ticks
-    var clk_timer_4hz_timestamp as U32 = 0; // in ticks
-    var clk_timer_8hz_timestamp as U32 = 0; // in ticks
-    var clk_timer_16hz_timestamp as U32 = 0; // in ticks
-    var clk_timer_32hz_timestamp as U32 = 0; // in ticks
-    var clk_timer_64hz_timestamp as U32 = 0; // in ticks
+    var clk_timer_2hz_timestamp as U32 = 0;   // in ticks
+    var clk_timer_4hz_timestamp as U32 = 0;   // in ticks
+    var clk_timer_8hz_timestamp as U32 = 0;   // in ticks
+    var clk_timer_16hz_timestamp as U32 = 0;  // in ticks
+    var clk_timer_32hz_timestamp as U32 = 0;  // in ticks
+    var clk_timer_64hz_timestamp as U32 = 0;  // in ticks
     var clk_timer_128hz_timestamp as U32 = 0; // in ticks
     var clk_timer_256hz_timestamp as U32 = 0; // in ticks
-    var prog_timer_timestamp as U32 = 0; // in ticks
+    var prog_timer_timestamp as U32 = 0;      // in ticks
     var prog_timer_enabled as Bool = false;
     var prog_timer_data as U8 = 0;
     var prog_timer_rld as U8 = 0;
@@ -267,7 +267,7 @@ class CPU_impl {
     (:initialized) var ref_ts as Timestamp;
 
     var cpu_halted as Bool = false;
-    var cpu_frequency as U32 = OSC1_FREQUENCY; // in hz
+    (:initialized) var cpu_frequency as U32; // in hz
     var scaled_cycle_accumulator as U32 = 0;
     var previous_cycles as U8 = 0;
 
@@ -275,56 +275,31 @@ class CPU_impl {
         var g_cpu as CPU_impl;
         function initialize(cpu as CPU_impl) { g_cpu = cpu; }
 
-        function get_pc() as U13 { return g_cpu.pc; }
-        function set_pc(in as U13) as Void { g_cpu.pc = in; }
-        function get_x() as U12 { return g_cpu.x; }
-        function set_x(in as U12) as Void { g_cpu.x = in; }
-        function get_y() as U12 { return g_cpu.y; }
-        function set_y(in as U12) as Void { g_cpu.y = in; }
-        function get_a() as U4 { return g_cpu.a; }
-        function set_a(in as U4) as Void { g_cpu.a = in; }
-        function get_b() as U4 { return g_cpu.b; }
-        function set_b(in as U4) as Void { g_cpu.b = in; }
-        function get_np() as U5 { return g_cpu.np; }
-        function set_np(in as U5) as Void { g_cpu.np = in; }
-        function get_sp() as U8 { return g_cpu.sp; }
-        function set_sp(in as U8) as Void { g_cpu.sp = in; }
-        function get_flags() as U4 { return g_cpu.flags; }
-        function set_flags(in as U4) as Void { g_cpu.flags = in; }
-        function get_tick_counter() as U32 { return g_cpu.tick_counter; }
-        function set_tick_counter(in as U32) as Void { g_cpu.tick_counter = in; }
-        function get_clk_timer_2hz_timestamp() as U32 { return g_cpu.clk_timer_2hz_timestamp; }
-        function set_clk_timer_2hz_timestamp(in as U32) as Void { g_cpu.clk_timer_2hz_timestamp = in; }
-        function get_clk_timer_4hz_timestamp() as U32 { return g_cpu.clk_timer_4hz_timestamp; }
-        function set_clk_timer_4hz_timestamp(in as U32) as Void { g_cpu.clk_timer_4hz_timestamp = in; }
-        function get_clk_timer_8hz_timestamp() as U32 { return g_cpu.clk_timer_8hz_timestamp; }
-        function set_clk_timer_8hz_timestamp(in as U32) as Void { g_cpu.clk_timer_8hz_timestamp = in; }
-        function get_clk_timer_16hz_timestamp() as U32 { return g_cpu.clk_timer_16hz_timestamp; }
-        function set_clk_timer_16hz_timestamp(in as U32) as Void { g_cpu.clk_timer_16hz_timestamp = in; }
-        function get_clk_timer_32hz_timestamp() as U32 { return g_cpu.clk_timer_32hz_timestamp; }
-        function set_clk_timer_32hz_timestamp(in as U32) as Void { g_cpu.clk_timer_32hz_timestamp = in; }
-        function get_clk_timer_64hz_timestamp() as U32 { return g_cpu.clk_timer_64hz_timestamp; }
-        function set_clk_timer_64hz_timestamp(in as U32) as Void { g_cpu.clk_timer_64hz_timestamp = in; }
-        function get_clk_timer_128hz_timestamp() as U32 { return g_cpu.clk_timer_128hz_timestamp; }
-        function set_clk_timer_128hz_timestamp(in as U32) as Void { g_cpu.clk_timer_128hz_timestamp = in; }
-        function get_clk_timer_256hz_timestamp() as U32 { return g_cpu.clk_timer_256hz_timestamp; }
-        function set_clk_timer_256hz_timestamp(in as U32) as Void { g_cpu.clk_timer_256hz_timestamp = in; }
-        function get_prog_timer_timestamp() as U32 { return g_cpu.prog_timer_timestamp; }
-        function set_prog_timer_timestamp(in as U32) as Void { g_cpu.prog_timer_timestamp = in; }
-        function get_prog_timer_enabled() as Bool { return g_cpu.prog_timer_enabled; }
-        function set_prog_timer_enabled(in as Bool) as Void { g_cpu.prog_timer_enabled = in; }
-        function get_prog_timer_data() as U8 { return g_cpu.prog_timer_data; }
-        function set_prog_timer_data(in as U8) as Void { g_cpu.prog_timer_data = in; }
-        function get_prog_timer_rld() as U8 { return g_cpu.prog_timer_rld; }
-        function set_prog_timer_rld(in as U8) as Void { g_cpu.prog_timer_rld = in; }
-        function get_call_depth() as U32 { return g_cpu.call_depth; }
-        function set_call_depth(in as U32) as Void { g_cpu.call_depth = in; }
-        function get_interrupts() as Interrupts { return g_cpu.interrupts; }
-        function set_interrupts(in as Interrupts) as Void { g_cpu.interrupts = in; }
-        function get_cpu_halted() as Bool { return g_cpu.cpu_halted; }
-        function set_cpu_halted(in as Bool) as Void { g_cpu.cpu_halted = in; }
-        function get_memory() as Memory { return g_cpu.memory; }
-        function set_memory(in as Memory) as Void { g_cpu.memory = in; }
+        function get_pc()                        as U13        { return g_cpu.pc;                        } function set_pc(                       in as U13)        as Void { g_cpu.pc = in;                        }
+        function get_x()                         as U12        { return g_cpu.x;                         } function set_x(                        in as U12)        as Void { g_cpu.x = in;                         }
+        function get_y()                         as U12        { return g_cpu.y;                         } function set_y(                        in as U12)        as Void { g_cpu.y = in;                         }
+        function get_a()                         as U4         { return g_cpu.a;                         } function set_a(                        in as U4)         as Void { g_cpu.a = in;                         }
+        function get_b()                         as U4         { return g_cpu.b;                         } function set_b(                        in as U4)         as Void { g_cpu.b = in;                         }
+        function get_np()                        as U5         { return g_cpu.np;                        } function set_np(                       in as U5)         as Void { g_cpu.np = in;                        }
+        function get_sp()                        as U8         { return g_cpu.sp;                        } function set_sp(                       in as U8)         as Void { g_cpu.sp = in;                        }
+        function get_flags()                     as U4         { return g_cpu.flags;                     } function set_flags(                    in as U4)         as Void { g_cpu.flags = in;                     }
+        function get_tick_counter()              as U32        { return g_cpu.tick_counter;              } function set_tick_counter(             in as U32)        as Void { g_cpu.tick_counter = in;              }
+        function get_clk_timer_2hz_timestamp()   as U32        { return g_cpu.clk_timer_2hz_timestamp;   } function set_clk_timer_2hz_timestamp(  in as U32)        as Void { g_cpu.clk_timer_2hz_timestamp = in;   }
+        function get_clk_timer_4hz_timestamp()   as U32        { return g_cpu.clk_timer_4hz_timestamp;   } function set_clk_timer_4hz_timestamp(  in as U32)        as Void { g_cpu.clk_timer_4hz_timestamp = in;   }
+        function get_clk_timer_8hz_timestamp()   as U32        { return g_cpu.clk_timer_8hz_timestamp;   } function set_clk_timer_8hz_timestamp(  in as U32)        as Void { g_cpu.clk_timer_8hz_timestamp = in;   }
+        function get_clk_timer_16hz_timestamp()  as U32        { return g_cpu.clk_timer_16hz_timestamp;  } function set_clk_timer_16hz_timestamp( in as U32)        as Void { g_cpu.clk_timer_16hz_timestamp = in;  }
+        function get_clk_timer_32hz_timestamp()  as U32        { return g_cpu.clk_timer_32hz_timestamp;  } function set_clk_timer_32hz_timestamp( in as U32)        as Void { g_cpu.clk_timer_32hz_timestamp = in;  }
+        function get_clk_timer_64hz_timestamp()  as U32        { return g_cpu.clk_timer_64hz_timestamp;  } function set_clk_timer_64hz_timestamp( in as U32)        as Void { g_cpu.clk_timer_64hz_timestamp = in;  }
+        function get_clk_timer_128hz_timestamp() as U32        { return g_cpu.clk_timer_128hz_timestamp; } function set_clk_timer_128hz_timestamp(in as U32)        as Void { g_cpu.clk_timer_128hz_timestamp = in; }
+        function get_clk_timer_256hz_timestamp() as U32        { return g_cpu.clk_timer_256hz_timestamp; } function set_clk_timer_256hz_timestamp(in as U32)        as Void { g_cpu.clk_timer_256hz_timestamp = in; }
+        function get_prog_timer_timestamp()      as U32        { return g_cpu.prog_timer_timestamp;      } function set_prog_timer_timestamp(     in as U32)        as Void { g_cpu.prog_timer_timestamp = in;      }
+        function get_prog_timer_enabled()        as Bool       { return g_cpu.prog_timer_enabled;        } function set_prog_timer_enabled(       in as Bool)       as Void { g_cpu.prog_timer_enabled = in;        }
+        function get_prog_timer_data()           as U8         { return g_cpu.prog_timer_data;           } function set_prog_timer_data(          in as U8)         as Void { g_cpu.prog_timer_data = in;           }
+        function get_prog_timer_rld()            as U8         { return g_cpu.prog_timer_rld;            } function set_prog_timer_rld(           in as U8)         as Void { g_cpu.prog_timer_rld = in;            }
+        function get_call_depth()                as U32        { return g_cpu.call_depth;                } function set_call_depth(               in as U32)        as Void { g_cpu.call_depth = in;                }
+        function get_interrupts()                as Interrupts { return g_cpu.interrupts;                } function set_interrupts(               in as Interrupts) as Void { g_cpu.interrupts = in;                }
+        function get_cpu_halted()                as Bool       { return g_cpu.cpu_halted;                } function set_cpu_halted(               in as Bool)       as Void { g_cpu.cpu_halted = in;                }
+        function get_memory()                    as Memory     { return g_cpu.memory;                    } function set_memory(                   in as Memory)     as Void { g_cpu.memory = in;                    }
     }
 
     function add_bp(list as Breakpoints, addr as U13) as Void {
@@ -527,7 +502,7 @@ class CPU_impl {
 
             case REG_PROG_TIMER_CTRL:
                 /* Prog timer stop/run/reset */
-                return int(!!prog_timer_enabled);
+                return int(prog_timer_enabled);
 
             case REG_PROG_TIMER_CLK_SEL:
                 /* Prog timer clock selection */
@@ -1502,115 +1477,115 @@ class CPU_impl {
     }
 
     /* The E0C6S46 supported instructions */
-    var ops as Ops = [
-        new Op("PSET #0x%02X            ",  0xE40, MASK_7B,  0, 0,     5,  method(:op_pset_cb)),     // PSET
-        new Op("JP   #0x%02X            ",  0x000, MASK_4B,  0, 0,     5,  method(:op_jp_cb)),       // JP
-        new Op("JP   C #0x%02X          ",  0x200, MASK_4B,  0, 0,     5,  method(:op_jp_c_cb)),     // JP_C
-        new Op("JP   NC #0x%02X         ",  0x300, MASK_4B,  0, 0,     5,  method(:op_jp_nc_cb)),    // JP_NC
-        new Op("JP   Z #0x%02X          ",  0x600, MASK_4B,  0, 0,     5,  method(:op_jp_z_cb)),     // JP_Z
-        new Op("JP   NZ #0x%02X         ",  0x700, MASK_4B,  0, 0,     5,  method(:op_jp_nz_cb)),    // JP_NZ
-        new Op("JPBA                  ",    0xFE8, MASK_12B, 0, 0,     5,  method(:op_jpba_cb)),     // JPBA
-        new Op("CALL #0x%02X            ",  0x400, MASK_4B,  0, 0,     7,  method(:op_call_cb)),     // CALL
-        new Op("CALZ #0x%02X            ",  0x500, MASK_4B,  0, 0,     7,  method(:op_calz_cb)),     // CALZ
-        new Op("RET                   ",    0xFDF, MASK_12B, 0, 0,     7,  method(:op_ret_cb)),      // RET
-        new Op("RETS                  ",    0xFDE, MASK_12B, 0, 0,     12, method(:op_rets_cb)),     // RETS
-        new Op("RETD #0x%02X            ",  0x100, MASK_4B,  0, 0,     12, method(:op_retd_cb)),     // RETD
-        new Op("NOP5                  ",    0xFFB, MASK_12B, 0, 0,     5,  method(:op_nop5_cb)),     // NOP5
-        new Op("NOP7                  ",    0xFFF, MASK_12B, 0, 0,     7,  method(:op_nop7_cb)),     // NOP7
-        new Op("HALT                  ",    0xFF8, MASK_12B, 0, 0,     5,  method(:op_halt_cb)),     // HALT
-        new Op("INC  X #0x%02X          ",  0xEE0, MASK_12B, 0, 0,     5,  method(:op_inc_x_cb)),    // INC_X
-        new Op("INC  Y #0x%02X          ",  0xEF0, MASK_12B, 0, 0,     5,  method(:op_inc_y_cb)),    // INC_Y
-        new Op("LD   X #0x%02X          ",  0xB00, MASK_4B,  0, 0,     5,  method(:op_ld_x_cb)),     // LD_X
-        new Op("LD   Y #0x%02X          ",  0x800, MASK_4B,  0, 0,     5,  method(:op_ld_y_cb)),     // LD_Y
-        new Op("LD   XP R(%X)          ",   0xE80, MASK_10B, 0, 0,     5,  method(:op_ld_xp_r_cb)),  // LD_XP_R
-        new Op("LD   XH R(%X)          ",   0xE84, MASK_10B, 0, 0,     5,  method(:op_ld_xh_r_cb)),  // LD_XH_R
-        new Op("LD   XL R(%X)          ",   0xE88, MASK_10B, 0, 0,     5,  method(:op_ld_xl_r_cb)),  // LD_XL_R
-        new Op("LD   YP R(%X)          ",   0xE90, MASK_10B, 0, 0,     5,  method(:op_ld_yp_r_cb)),  // LD_YP_R
-        new Op("LD   YH R(%X)          ",   0xE94, MASK_10B, 0, 0,     5,  method(:op_ld_yh_r_cb)),  // LD_YH_R
-        new Op("LD   YL R(%X)          ",   0xE98, MASK_10B, 0, 0,     5,  method(:op_ld_yl_r_cb)),  // LD_YL_R
-        new Op("LD   R(%X) XP          ",   0xEA0, MASK_10B, 0, 0,     5,  method(:op_ld_r_xp_cb)),  // LD_R_XP
-        new Op("LD   R(%X) XH          ",   0xEA4, MASK_10B, 0, 0,     5,  method(:op_ld_r_xh_cb)),  // LD_R_XH
-        new Op("LD   R(%X) XL          ",   0xEA8, MASK_10B, 0, 0,     5,  method(:op_ld_r_xl_cb)),  // LD_R_XL
-        new Op("LD   R(%X) YP          ",   0xEB0, MASK_10B, 0, 0,     5,  method(:op_ld_r_yp_cb)),  // LD_R_YP
-        new Op("LD   R(%X) YH          ",   0xEB4, MASK_10B, 0, 0,     5,  method(:op_ld_r_yh_cb)),  // LD_R_YH
-        new Op("LD   R(%X) YL          ",   0xEB8, MASK_10B, 0, 0,     5,  method(:op_ld_r_yl_cb)),  // LD_R_YL
-        new Op("ADC  XH #0x%02X         ",  0xA00, MASK_8B,  0, 0,     7,  method(:op_adc_xh_cb)),   // ADC_XH
-        new Op("ADC  XL #0x%02X         ",  0xA10, MASK_8B,  0, 0,     7,  method(:op_adc_xl_cb)),   // ADC_XL
-        new Op("ADC  YH #0x%02X         ",  0xA20, MASK_8B,  0, 0,     7,  method(:op_adc_yh_cb)),   // ADC_YH
-        new Op("ADC  YL #0x%02X         ",  0xA30, MASK_8B,  0, 0,     7,  method(:op_adc_yl_cb)),   // ADC_YL
-        new Op("CP   XH #0x%02X         ",  0xA40, MASK_8B,  0, 0,     7,  method(:op_cp_xh_cb)),    // CP_XH
-        new Op("CP   XL #0x%02X         ",  0xA50, MASK_8B,  0, 0,     7,  method(:op_cp_xl_cb)),    // CP_XL
-        new Op("CP   YH #0x%02X         ",  0xA60, MASK_8B,  0, 0,     7,  method(:op_cp_yh_cb)),    // CP_YH
-        new Op("CP   YL #0x%02X         ",  0xA70, MASK_8B,  0, 0,     7,  method(:op_cp_yl_cb)),    // CP_YL
-        new Op("LD   R(%X) #0x%02X       ", 0xE00, MASK_6B,  4, 0x030, 5,  method(:op_ld_r_i_cb)),   // LD_R_I
-        new Op("LD   R(%X) Q(%X)        ",  0xEC0, MASK_8B,  2, 0x00C, 5,  method(:op_ld_r_q_cb)),   // LD_R_Q
-        new Op("LD   A M(#0x%02X)       ",  0xFA0, MASK_8B,  0, 0,     5,  method(:op_ld_a_mn_cb)),  // LD_A_MN
-        new Op("LD   B M(#0x%02X)       ",  0xFB0, MASK_8B,  0, 0,     5,  method(:op_ld_b_mn_cb)),  // LD_B_MN
-        new Op("LD   M(#0x%02X) A       ",  0xF80, MASK_8B,  0, 0,     5,  method(:op_ld_mn_a_cb)),  // LD_MN_A
-        new Op("LD   M(#0x%02X) B       ",  0xF90, MASK_8B,  0, 0,     5,  method(:op_ld_mn_b_cb)),  // LD_MN_B
-        new Op("LDPX MX #0x%02X         ",  0xE60, MASK_8B,  0, 0,     5,  method(:op_ldpx_mx_cb)),  // LDPX_MX
-        new Op("LDPX R(%X) Q(%X)        ",  0xEE0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpx_r_cb)),   // LDPX_R
-        new Op("LDPY MY #0x%02X         ",  0xE70, MASK_8B,  0, 0,     5,  method(:op_ldpy_my_cb)),  // LDPY_MY
-        new Op("LDPY R(%X) Q(%X)        ",  0xEF0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpy_r_cb)),   // LDPY_R
-        new Op("LBPX #0x%02X            ",  0x900, MASK_4B,  0, 0,     5,  method(:op_lbpx_cb)),     // LBPX
-        new Op("SET  #0x%02X            ",  0xF40, MASK_8B,  0, 0,     7,  method(:op_set_cb)),      // SET
-        new Op("RST  #0x%02X            ",  0xF50, MASK_8B,  0, 0,     7,  method(:op_rst_cb)),      // RST
-        new Op("SCF                   ",    0xF41, MASK_12B, 0, 0,     7,  method(:op_scf_cb)),      // SCF
-        new Op("RCF                   ",    0xF5E, MASK_12B, 0, 0,     7,  method(:op_rcf_cb)),      // RCF
-        new Op("SZF                   ",    0xF42, MASK_12B, 0, 0,     7,  method(:op_szf_cb)),      // SZF
-        new Op("RZF                   ",    0xF5D, MASK_12B, 0, 0,     7,  method(:op_rzf_cb)),      // RZF
-        new Op("SDF                   ",    0xF44, MASK_12B, 0, 0,     7,  method(:op_sdf_cb)),      // SDF
-        new Op("RDF                   ",    0xF5B, MASK_12B, 0, 0,     7,  method(:op_rdf_cb)),      // RDF
-        new Op("EI                    ",    0xF48, MASK_12B, 0, 0,     7,  method(:op_ei_cb)),       // EI
-        new Op("DI                    ",    0xF57, MASK_12B, 0, 0,     7,  method(:op_di_cb)),       // DI
-        new Op("INC  SP               ",    0xFDB, MASK_12B, 0, 0,     5,  method(:op_inc_sp_cb)),   // INC_SP
-        new Op("DEC  SP               ",    0xFCB, MASK_12B, 0, 0,     5,  method(:op_dec_sp_cb)),   // DEC_SP
-        new Op("PUSH R(%X)             ",   0xFC0, MASK_10B, 0, 0,     5,  method(:op_push_r_cb)),   // PUSH_R
-        new Op("PUSH XP               ",    0xFC4, MASK_12B, 0, 0,     5,  method(:op_push_xp_cb)),  // PUSH_XP
-        new Op("PUSH XH               ",    0xFC5, MASK_12B, 0, 0,     5,  method(:op_push_xh_cb)),  // PUSH_XH
-        new Op("PUSH XL               ",    0xFC6, MASK_12B, 0, 0,     5,  method(:op_push_xl_cb)),  // PUSH_XL
-        new Op("PUSH YP               ",    0xFC7, MASK_12B, 0, 0,     5,  method(:op_push_yp_cb)),  // PUSH_YP
-        new Op("PUSH YH               ",    0xFC8, MASK_12B, 0, 0,     5,  method(:op_push_yh_cb)),  // PUSH_YH
-        new Op("PUSH YL               ",    0xFC9, MASK_12B, 0, 0,     5,  method(:op_push_yl_cb)),  // PUSH_YL
-        new Op("PUSH F                ",    0xFCA, MASK_12B, 0, 0,     5,  method(:op_push_f_cb)),   // PUSH_F
-        new Op("POP  R(%X)             ",   0xFD0, MASK_10B, 0, 0,     5,  method(:op_pop_r_cb)),    // POP_R
-        new Op("POP  XP               ",    0xFD4, MASK_12B, 0, 0,     5,  method(:op_pop_xp_cb)),   // POP_XP
-        new Op("POP  XH               ",    0xFD5, MASK_12B, 0, 0,     5,  method(:op_pop_xh_cb)),   // POP_XH
-        new Op("POP  XL               ",    0xFD6, MASK_12B, 0, 0,     5,  method(:op_pop_xl_cb)),   // POP_XL
-        new Op("POP  YP               ",    0xFD7, MASK_12B, 0, 0,     5,  method(:op_pop_yp_cb)),   // POP_YP
-        new Op("POP  YH               ",    0xFD8, MASK_12B, 0, 0,     5,  method(:op_pop_yh_cb)),   // POP_YH
-        new Op("POP  YL               ",    0xFD9, MASK_12B, 0, 0,     5,  method(:op_pop_yl_cb)),   // POP_YL
-        new Op("POP  F                ",    0xFDA, MASK_12B, 0, 0,     5,  method(:op_pop_f_cb)),    // POP_F
+    const OPS as Ops = [
+        new Op("PSET #0x%02X            ",  0xE40, MASK_7B,  0, 0,     5,  method(:op_pset_cb)    ), // PSET
+        new Op("JP   #0x%02X            ",  0x000, MASK_4B,  0, 0,     5,  method(:op_jp_cb)      ), // JP
+        new Op("JP   C #0x%02X          ",  0x200, MASK_4B,  0, 0,     5,  method(:op_jp_c_cb)    ), // JP_C
+        new Op("JP   NC #0x%02X         ",  0x300, MASK_4B,  0, 0,     5,  method(:op_jp_nc_cb)   ), // JP_NC
+        new Op("JP   Z #0x%02X          ",  0x600, MASK_4B,  0, 0,     5,  method(:op_jp_z_cb)    ), // JP_Z
+        new Op("JP   NZ #0x%02X         ",  0x700, MASK_4B,  0, 0,     5,  method(:op_jp_nz_cb)   ), // JP_NZ
+        new Op("JPBA                  ",    0xFE8, MASK_12B, 0, 0,     5,  method(:op_jpba_cb)    ), // JPBA
+        new Op("CALL #0x%02X            ",  0x400, MASK_4B,  0, 0,     7,  method(:op_call_cb)    ), // CALL
+        new Op("CALZ #0x%02X            ",  0x500, MASK_4B,  0, 0,     7,  method(:op_calz_cb)    ), // CALZ
+        new Op("RET                   ",    0xFDF, MASK_12B, 0, 0,     7,  method(:op_ret_cb)     ), // RET
+        new Op("RETS                  ",    0xFDE, MASK_12B, 0, 0,     12, method(:op_rets_cb)    ), // RETS
+        new Op("RETD #0x%02X            ",  0x100, MASK_4B,  0, 0,     12, method(:op_retd_cb)    ), // RETD
+        new Op("NOP5                  ",    0xFFB, MASK_12B, 0, 0,     5,  method(:op_nop5_cb)    ), // NOP5
+        new Op("NOP7                  ",    0xFFF, MASK_12B, 0, 0,     7,  method(:op_nop7_cb)    ), // NOP7
+        new Op("HALT                  ",    0xFF8, MASK_12B, 0, 0,     5,  method(:op_halt_cb)    ), // HALT
+        new Op("INC  X #0x%02X          ",  0xEE0, MASK_12B, 0, 0,     5,  method(:op_inc_x_cb)   ), // INC_X
+        new Op("INC  Y #0x%02X          ",  0xEF0, MASK_12B, 0, 0,     5,  method(:op_inc_y_cb)   ), // INC_Y
+        new Op("LD   X #0x%02X          ",  0xB00, MASK_4B,  0, 0,     5,  method(:op_ld_x_cb)    ), // LD_X
+        new Op("LD   Y #0x%02X          ",  0x800, MASK_4B,  0, 0,     5,  method(:op_ld_y_cb)    ), // LD_Y
+        new Op("LD   XP R(%X)          ",   0xE80, MASK_10B, 0, 0,     5,  method(:op_ld_xp_r_cb) ), // LD_XP_R
+        new Op("LD   XH R(%X)          ",   0xE84, MASK_10B, 0, 0,     5,  method(:op_ld_xh_r_cb) ), // LD_XH_R
+        new Op("LD   XL R(%X)          ",   0xE88, MASK_10B, 0, 0,     5,  method(:op_ld_xl_r_cb) ), // LD_XL_R
+        new Op("LD   YP R(%X)          ",   0xE90, MASK_10B, 0, 0,     5,  method(:op_ld_yp_r_cb) ), // LD_YP_R
+        new Op("LD   YH R(%X)          ",   0xE94, MASK_10B, 0, 0,     5,  method(:op_ld_yh_r_cb) ), // LD_YH_R
+        new Op("LD   YL R(%X)          ",   0xE98, MASK_10B, 0, 0,     5,  method(:op_ld_yl_r_cb) ), // LD_YL_R
+        new Op("LD   R(%X) XP          ",   0xEA0, MASK_10B, 0, 0,     5,  method(:op_ld_r_xp_cb) ), // LD_R_XP
+        new Op("LD   R(%X) XH          ",   0xEA4, MASK_10B, 0, 0,     5,  method(:op_ld_r_xh_cb) ), // LD_R_XH
+        new Op("LD   R(%X) XL          ",   0xEA8, MASK_10B, 0, 0,     5,  method(:op_ld_r_xl_cb) ), // LD_R_XL
+        new Op("LD   R(%X) YP          ",   0xEB0, MASK_10B, 0, 0,     5,  method(:op_ld_r_yp_cb) ), // LD_R_YP
+        new Op("LD   R(%X) YH          ",   0xEB4, MASK_10B, 0, 0,     5,  method(:op_ld_r_yh_cb) ), // LD_R_YH
+        new Op("LD   R(%X) YL          ",   0xEB8, MASK_10B, 0, 0,     5,  method(:op_ld_r_yl_cb) ), // LD_R_YL
+        new Op("ADC  XH #0x%02X         ",  0xA00, MASK_8B,  0, 0,     7,  method(:op_adc_xh_cb)  ), // ADC_XH
+        new Op("ADC  XL #0x%02X         ",  0xA10, MASK_8B,  0, 0,     7,  method(:op_adc_xl_cb)  ), // ADC_XL
+        new Op("ADC  YH #0x%02X         ",  0xA20, MASK_8B,  0, 0,     7,  method(:op_adc_yh_cb)  ), // ADC_YH
+        new Op("ADC  YL #0x%02X         ",  0xA30, MASK_8B,  0, 0,     7,  method(:op_adc_yl_cb)  ), // ADC_YL
+        new Op("CP   XH #0x%02X         ",  0xA40, MASK_8B,  0, 0,     7,  method(:op_cp_xh_cb)   ), // CP_XH
+        new Op("CP   XL #0x%02X         ",  0xA50, MASK_8B,  0, 0,     7,  method(:op_cp_xl_cb)   ), // CP_XL
+        new Op("CP   YH #0x%02X         ",  0xA60, MASK_8B,  0, 0,     7,  method(:op_cp_yh_cb)   ), // CP_YH
+        new Op("CP   YL #0x%02X         ",  0xA70, MASK_8B,  0, 0,     7,  method(:op_cp_yl_cb)   ), // CP_YL
+        new Op("LD   R(%X) #0x%02X       ", 0xE00, MASK_6B,  4, 0x030, 5,  method(:op_ld_r_i_cb)  ), // LD_R_I
+        new Op("LD   R(%X) Q(%X)        ",  0xEC0, MASK_8B,  2, 0x00C, 5,  method(:op_ld_r_q_cb)  ), // LD_R_Q
+        new Op("LD   A M(#0x%02X)       ",  0xFA0, MASK_8B,  0, 0,     5,  method(:op_ld_a_mn_cb) ), // LD_A_MN
+        new Op("LD   B M(#0x%02X)       ",  0xFB0, MASK_8B,  0, 0,     5,  method(:op_ld_b_mn_cb) ), // LD_B_MN
+        new Op("LD   M(#0x%02X) A       ",  0xF80, MASK_8B,  0, 0,     5,  method(:op_ld_mn_a_cb) ), // LD_MN_A
+        new Op("LD   M(#0x%02X) B       ",  0xF90, MASK_8B,  0, 0,     5,  method(:op_ld_mn_b_cb) ), // LD_MN_B
+        new Op("LDPX MX #0x%02X         ",  0xE60, MASK_8B,  0, 0,     5,  method(:op_ldpx_mx_cb) ), // LDPX_MX
+        new Op("LDPX R(%X) Q(%X)        ",  0xEE0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpx_r_cb)  ), // LDPX_R
+        new Op("LDPY MY #0x%02X         ",  0xE70, MASK_8B,  0, 0,     5,  method(:op_ldpy_my_cb) ), // LDPY_MY
+        new Op("LDPY R(%X) Q(%X)        ",  0xEF0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpy_r_cb)  ), // LDPY_R
+        new Op("LBPX #0x%02X            ",  0x900, MASK_4B,  0, 0,     5,  method(:op_lbpx_cb)    ), // LBPX
+        new Op("SET  #0x%02X            ",  0xF40, MASK_8B,  0, 0,     7,  method(:op_set_cb)     ), // SET
+        new Op("RST  #0x%02X            ",  0xF50, MASK_8B,  0, 0,     7,  method(:op_rst_cb)     ), // RST
+        new Op("SCF                   ",    0xF41, MASK_12B, 0, 0,     7,  method(:op_scf_cb)     ), // SCF
+        new Op("RCF                   ",    0xF5E, MASK_12B, 0, 0,     7,  method(:op_rcf_cb)     ), // RCF
+        new Op("SZF                   ",    0xF42, MASK_12B, 0, 0,     7,  method(:op_szf_cb)     ), // SZF
+        new Op("RZF                   ",    0xF5D, MASK_12B, 0, 0,     7,  method(:op_rzf_cb)     ), // RZF
+        new Op("SDF                   ",    0xF44, MASK_12B, 0, 0,     7,  method(:op_sdf_cb)     ), // SDF
+        new Op("RDF                   ",    0xF5B, MASK_12B, 0, 0,     7,  method(:op_rdf_cb)     ), // RDF
+        new Op("EI                    ",    0xF48, MASK_12B, 0, 0,     7,  method(:op_ei_cb)      ), // EI
+        new Op("DI                    ",    0xF57, MASK_12B, 0, 0,     7,  method(:op_di_cb)      ), // DI
+        new Op("INC  SP               ",    0xFDB, MASK_12B, 0, 0,     5,  method(:op_inc_sp_cb)  ), // INC_SP
+        new Op("DEC  SP               ",    0xFCB, MASK_12B, 0, 0,     5,  method(:op_dec_sp_cb)  ), // DEC_SP
+        new Op("PUSH R(%X)             ",   0xFC0, MASK_10B, 0, 0,     5,  method(:op_push_r_cb)  ), // PUSH_R
+        new Op("PUSH XP               ",    0xFC4, MASK_12B, 0, 0,     5,  method(:op_push_xp_cb) ), // PUSH_XP
+        new Op("PUSH XH               ",    0xFC5, MASK_12B, 0, 0,     5,  method(:op_push_xh_cb) ), // PUSH_XH
+        new Op("PUSH XL               ",    0xFC6, MASK_12B, 0, 0,     5,  method(:op_push_xl_cb) ), // PUSH_XL
+        new Op("PUSH YP               ",    0xFC7, MASK_12B, 0, 0,     5,  method(:op_push_yp_cb) ), // PUSH_YP
+        new Op("PUSH YH               ",    0xFC8, MASK_12B, 0, 0,     5,  method(:op_push_yh_cb) ), // PUSH_YH
+        new Op("PUSH YL               ",    0xFC9, MASK_12B, 0, 0,     5,  method(:op_push_yl_cb) ), // PUSH_YL
+        new Op("PUSH F                ",    0xFCA, MASK_12B, 0, 0,     5,  method(:op_push_f_cb)  ), // PUSH_F
+        new Op("POP  R(%X)             ",   0xFD0, MASK_10B, 0, 0,     5,  method(:op_pop_r_cb)   ), // POP_R
+        new Op("POP  XP               ",    0xFD4, MASK_12B, 0, 0,     5,  method(:op_pop_xp_cb)  ), // POP_XP
+        new Op("POP  XH               ",    0xFD5, MASK_12B, 0, 0,     5,  method(:op_pop_xh_cb)  ), // POP_XH
+        new Op("POP  XL               ",    0xFD6, MASK_12B, 0, 0,     5,  method(:op_pop_xl_cb)  ), // POP_XL
+        new Op("POP  YP               ",    0xFD7, MASK_12B, 0, 0,     5,  method(:op_pop_yp_cb)  ), // POP_YP
+        new Op("POP  YH               ",    0xFD8, MASK_12B, 0, 0,     5,  method(:op_pop_yh_cb)  ), // POP_YH
+        new Op("POP  YL               ",    0xFD9, MASK_12B, 0, 0,     5,  method(:op_pop_yl_cb)  ), // POP_YL
+        new Op("POP  F                ",    0xFDA, MASK_12B, 0, 0,     5,  method(:op_pop_f_cb)   ), // POP_F
         new Op("LD   SPH R(%X)         ",   0xFE0, MASK_10B, 0, 0,     5,  method(:op_ld_sph_r_cb)), // LD_SPH_R
         new Op("LD   SPL R(%X)         ",   0xFF0, MASK_10B, 0, 0,     5,  method(:op_ld_spl_r_cb)), // LD_SPL_R
         new Op("LD   R(%X) SPH     ",       0xFE4, MASK_10B, 0, 0,     5,  method(:op_ld_r_sph_cb)), // LD_R_SPH
         new Op("LD   R(%X) SPL     ",       0xFF4, MASK_10B, 0, 0,     5,  method(:op_ld_r_spl_cb)), // LD_R_SPL
-        new Op("ADD  R(%X) #0x%02X       ", 0xC00, MASK_6B,  4, 0x030, 7,  method(:op_add_r_i_cb)),  // ADD_R_I
-        new Op("ADD  R(%X) Q(%X)        ",  0xA80, MASK_8B,  2, 0x00C, 7,  method(:op_add_r_q_cb)),  // ADD_R_Q
-        new Op("ADC  R(%X) #0x%02X       ", 0xC40, MASK_6B,  4, 0x030, 7,  method(:op_adc_r_i_cb)),  // ADC_R_I
-        new Op("ADC  R(%X) Q(%X)        ",  0xA90, MASK_8B,  2, 0x00C, 7,  method(:op_adc_r_q_cb)),  // ADC_R_Q
-        new Op("SUB  R(%X) Q(%X)        ",  0xAA0, MASK_8B,  2, 0x00C, 7,  method(:op_sub_cb)),      // SUB
-        new Op("SBC  R(%X) #0x%02X       ", 0xD40, MASK_6B,  4, 0x030, 7,  method(:op_sbc_r_i_cb)),  // SBC_R_I
-        new Op("SBC  R(%X) Q(%X)        ",  0xAB0, MASK_8B,  2, 0x00C, 7,  method(:op_sbc_r_q_cb)),  // SBC_R_Q
-        new Op("AND  R(%X) #0x%02X       ", 0xC80, MASK_6B,  4, 0x030, 7,  method(:op_and_r_i_cb)),  // AND_R_I
-        new Op("AND  R(%X) Q(%X)        ",  0xAC0, MASK_8B,  2, 0x00C, 7,  method(:op_and_r_q_cb)),  // AND_R_Q
-        new Op("OR   R(%X) #0x%02X       ", 0xCC0, MASK_6B,  4, 0x030, 7,  method(:op_or_r_i_cb)),   // OR_R_I
-        new Op("OR   R(%X) Q(%X)        ",  0xAD0, MASK_8B,  2, 0x00C, 7,  method(:op_or_r_q_cb)),   // OR_R_Q
-        new Op("XOR  R(%X) #0x%02X       ", 0xD00, MASK_6B,  4, 0x030, 7,  method(:op_xor_r_i_cb)),  // XOR_R_I
-        new Op("XOR  R(%X) Q(%X)        ",  0xAE0, MASK_8B,  2, 0x00C, 7,  method(:op_xor_r_q_cb)),  // XOR_R_Q
-        new Op("CP   R(%X) #0x%02X       ", 0xDC0, MASK_6B,  4, 0x030, 7,  method(:op_cp_r_i_cb)),   // CP_R_I
-        new Op("CP   R(%X) Q(%X)        ",  0xF00, MASK_8B,  2, 0x00C, 7,  method(:op_cp_r_q_cb)),   // CP_R_Q
-        new Op("FAN  R(%X) #0x%02X       ", 0xD80, MASK_6B,  4, 0x030, 7,  method(:op_fan_r_i_cb)),  // FAN_R_I
-        new Op("FAN  R(%X) Q(%X)        ",  0xF10, MASK_8B,  2, 0x00C, 7,  method(:op_fan_r_q_cb)),  // FAN_R_Q
-        new Op("RLC  R(%X)             ",   0xAF0, MASK_8B,  0, 0,     7,  method(:op_rlc_cb)),      // RLC
-        new Op("RRC  R(%X)             ",   0xE8C, MASK_10B, 0, 0,     5,  method(:op_rrc_cb)),      // RRC
-        new Op("INC  M(#0x%02X)         ",  0xF60, MASK_8B,  0, 0,     7,  method(:op_inc_mn_cb)),   // INC_MN
-        new Op("DEC  M(#0x%02X)         ",  0xF70, MASK_8B,  0, 0,     7,  method(:op_dec_mn_cb)),   // DEC_MN
-        new Op("ACPX R(%X)             ",   0xF28, MASK_10B, 0, 0,     7,  method(:op_acpx_cb)),     // ACPX
-        new Op("ACPY R(%X)             ",   0xF2C, MASK_10B, 0, 0,     7,  method(:op_acpy_cb)),     // ACPY
-        new Op("SCPX R(%X)             ",   0xF38, MASK_10B, 0, 0,     7,  method(:op_scpx_cb)),     // SCPX
-        new Op("SCPY R(%X)             ",   0xF3C, MASK_10B, 0, 0,     7,  method(:op_scpy_cb)),     // SCPY
-        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb))       // NOT
+        new Op("ADD  R(%X) #0x%02X       ", 0xC00, MASK_6B,  4, 0x030, 7,  method(:op_add_r_i_cb) ), // ADD_R_I
+        new Op("ADD  R(%X) Q(%X)        ",  0xA80, MASK_8B,  2, 0x00C, 7,  method(:op_add_r_q_cb) ), // ADD_R_Q
+        new Op("ADC  R(%X) #0x%02X       ", 0xC40, MASK_6B,  4, 0x030, 7,  method(:op_adc_r_i_cb) ), // ADC_R_I
+        new Op("ADC  R(%X) Q(%X)        ",  0xA90, MASK_8B,  2, 0x00C, 7,  method(:op_adc_r_q_cb) ), // ADC_R_Q
+        new Op("SUB  R(%X) Q(%X)        ",  0xAA0, MASK_8B,  2, 0x00C, 7,  method(:op_sub_cb)     ), // SUB
+        new Op("SBC  R(%X) #0x%02X       ", 0xD40, MASK_6B,  4, 0x030, 7,  method(:op_sbc_r_i_cb) ), // SBC_R_I
+        new Op("SBC  R(%X) Q(%X)        ",  0xAB0, MASK_8B,  2, 0x00C, 7,  method(:op_sbc_r_q_cb) ), // SBC_R_Q
+        new Op("AND  R(%X) #0x%02X       ", 0xC80, MASK_6B,  4, 0x030, 7,  method(:op_and_r_i_cb) ), // AND_R_I
+        new Op("AND  R(%X) Q(%X)        ",  0xAC0, MASK_8B,  2, 0x00C, 7,  method(:op_and_r_q_cb) ), // AND_R_Q
+        new Op("OR   R(%X) #0x%02X       ", 0xCC0, MASK_6B,  4, 0x030, 7,  method(:op_or_r_i_cb)  ), // OR_R_I
+        new Op("OR   R(%X) Q(%X)        ",  0xAD0, MASK_8B,  2, 0x00C, 7,  method(:op_or_r_q_cb)  ), // OR_R_Q
+        new Op("XOR  R(%X) #0x%02X       ", 0xD00, MASK_6B,  4, 0x030, 7,  method(:op_xor_r_i_cb) ), // XOR_R_I
+        new Op("XOR  R(%X) Q(%X)        ",  0xAE0, MASK_8B,  2, 0x00C, 7,  method(:op_xor_r_q_cb) ), // XOR_R_Q
+        new Op("CP   R(%X) #0x%02X       ", 0xDC0, MASK_6B,  4, 0x030, 7,  method(:op_cp_r_i_cb)  ), // CP_R_I
+        new Op("CP   R(%X) Q(%X)        ",  0xF00, MASK_8B,  2, 0x00C, 7,  method(:op_cp_r_q_cb)  ), // CP_R_Q
+        new Op("FAN  R(%X) #0x%02X       ", 0xD80, MASK_6B,  4, 0x030, 7,  method(:op_fan_r_i_cb) ), // FAN_R_I
+        new Op("FAN  R(%X) Q(%X)        ",  0xF10, MASK_8B,  2, 0x00C, 7,  method(:op_fan_r_q_cb) ), // FAN_R_Q
+        new Op("RLC  R(%X)             ",   0xAF0, MASK_8B,  0, 0,     7,  method(:op_rlc_cb)     ), // RLC
+        new Op("RRC  R(%X)             ",   0xE8C, MASK_10B, 0, 0,     5,  method(:op_rrc_cb)     ), // RRC
+        new Op("INC  M(#0x%02X)         ",  0xF60, MASK_8B,  0, 0,     7,  method(:op_inc_mn_cb)  ), // INC_MN
+        new Op("DEC  M(#0x%02X)         ",  0xF70, MASK_8B,  0, 0,     7,  method(:op_dec_mn_cb)  ), // DEC_MN
+        new Op("ACPX R(%X)             ",   0xF28, MASK_10B, 0, 0,     7,  method(:op_acpx_cb)    ), // ACPX
+        new Op("ACPY R(%X)             ",   0xF2C, MASK_10B, 0, 0,     7,  method(:op_acpy_cb)    ), // ACPY
+        new Op("SCPX R(%X)             ",   0xF38, MASK_10B, 0, 0,     7,  method(:op_scpx_cb)    ), // SCPX
+        new Op("SCPY R(%X)             ",   0xF3C, MASK_10B, 0, 0,     7,  method(:op_scpy_cb)    ), // SCPY
+        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb)     ), // NOT
     ];
 
 
@@ -1682,12 +1657,12 @@ class CPU_impl {
             g_hal.log(LOG_CPU, "<<< ", []);
         }
 
-        if (ops[op_num].mask_arg0 != 0) {
+        if (OPS[op_num].mask_arg0 != 0) {
             /* Two arguments */
-            g_hal.log(LOG_CPU, ops[op_num].log, [(op & ops[op_num].mask_arg0) >> ops[op_num].shift_arg0, op & ~(ops[op_num].mask | ops[op_num].mask_arg0)]);
+            g_hal.log(LOG_CPU, OPS[op_num].log, [(op & OPS[op_num].mask_arg0) >> OPS[op_num].shift_arg0, op & ~(OPS[op_num].mask | OPS[op_num].mask_arg0)]);
         } else {
             /* One argument */
-            g_hal.log(LOG_CPU, ops[op_num].log, [(op & ~ops[op_num].mask) >> ops[op_num].shift_arg0]);
+            g_hal.log(LOG_CPU, OPS[op_num].log, [(op & ~OPS[op_num].mask) >> OPS[op_num].shift_arg0]);
         }
 
         if (call_depth < 10) {
@@ -1867,8 +1842,8 @@ class CPU_impl {
 
             /* Lookup the OP code */
             var op_found = false;
-            for (i = 0; i < ops.size(); i++) {
-                if ((op & ops[i].mask) == ops[i].code) {
+            for (i = 0; i < OPS.size(); i++) {
+                if ((op & OPS[i].mask) == OPS[i].code) {
                     op_found = true;
                     break;
                 }
@@ -1891,19 +1866,19 @@ class CPU_impl {
             ref_ts = wait_for_cycles(ref_ts, previous_cycles);
 
             /* Process the OP code */
-            if (ops[i].cb != null) {
-                if (ops[i].mask_arg0 != 0) {
+            if (OPS[i].cb != null) {
+                if (OPS[i].mask_arg0 != 0) {
                     /* Two arguments */
-                    ops[i].cb.invoke((op & ops[i].mask_arg0) >> ops[i].shift_arg0, op & ~(ops[i].mask | ops[i].mask_arg0));
+                    OPS[i].cb.invoke((op & OPS[i].mask_arg0) >> OPS[i].shift_arg0, op & ~(OPS[i].mask | OPS[i].mask_arg0));
                 } else {
                     /* One arguments */
-                    ops[i].cb.invoke((op & ~ops[i].mask) >> ops[i].shift_arg0, 0);
+                    OPS[i].cb.invoke((op & ~OPS[i].mask) >> OPS[i].shift_arg0, 0);
                 }
             }
 
             /* Prepare for the next instruction */
             pc = next_pc;
-            previous_cycles = ops[i].cycles;
+            previous_cycles = OPS[i].cycles;
 
             if (i != 0) {
                 /* OP code is not PSET, reset NP */

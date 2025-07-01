@@ -18,20 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
 /* Standard types */
-typedef Bool as Lang.Boolean;
-typedef Int as Lang.Number;
-typedef Float as Lang.Float;
+typedef Bool as std.Boolean;
+typedef Int as std.Number;
+typedef Float as std.Float;
 typedef Num as Int or Float;
-typedef Bytes as Lang.ByteArray;
-typedef Object as Lang.Object;
-typedef Objects as Lang.Array<Object>;
-typedef String as Lang.String;
-typedef Strings as Lang.Array<String>;
+typedef Bytes as std.ByteArray;
+typedef Object as std.Object;
+typedef Objects as std.Array<Object>;
+typedef String as std.String;
+typedef Strings as std.Array<String>;
 
 /* HAL types */
 typedef U4 as Int;

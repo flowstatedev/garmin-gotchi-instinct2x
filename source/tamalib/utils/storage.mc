@@ -1,5 +1,5 @@
 using Toybox.Application as app;
-using Toybox.Lang;
+using Toybox.Lang as std;
 
 module tamalib {
 
@@ -61,28 +61,28 @@ function is_state_saved() as Bool {
 }
 
 function save_state_variables(state as CPUState) as Void {
-    app.Storage.setValue( STORAGE_KEY_PC,                        state.get_pc()                        );
-    app.Storage.setValue( STORAGE_KEY_X,                         state.get_x()                         );
-    app.Storage.setValue( STORAGE_KEY_Y,                         state.get_y()                         );
-    app.Storage.setValue( STORAGE_KEY_A,                         state.get_a()                         );
-    app.Storage.setValue( STORAGE_KEY_B,                         state.get_b()                         );
-    app.Storage.setValue( STORAGE_KEY_NP,                        state.get_np()                        );
-    app.Storage.setValue( STORAGE_KEY_SP,                        state.get_sp()                        );
-    app.Storage.setValue( STORAGE_KEY_FLAGS,                     state.get_flags()                     );
-    app.Storage.setValue( STORAGE_KEY_TICK_COUNTER,              state.get_tick_counter()              );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP,   state.get_clk_timer_2hz_timestamp()   );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP,   state.get_clk_timer_4hz_timestamp()   );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP,   state.get_clk_timer_8hz_timestamp()   );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP,  state.get_clk_timer_16hz_timestamp()  );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP,  state.get_clk_timer_32hz_timestamp()  );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP,  state.get_clk_timer_64hz_timestamp()  );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP, state.get_clk_timer_128hz_timestamp() );
-    app.Storage.setValue( STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP, state.get_clk_timer_256hz_timestamp() );
-    app.Storage.setValue( STORAGE_KEY_PROG_TIMER_TIMESTAMP,      state.get_prog_timer_timestamp()      );
-    app.Storage.setValue( STORAGE_KEY_PROG_TIMER_ENABLED,        state.get_prog_timer_enabled()        );
-    app.Storage.setValue( STORAGE_KEY_PROG_TIMER_DATA,           state.get_prog_timer_data()           );
-    app.Storage.setValue( STORAGE_KEY_PROG_TIMER_RLD,            state.get_prog_timer_rld()            );
-    app.Storage.setValue( STORAGE_KEY_CALL_DEPTH,                state.get_call_depth()                );
+    app.Storage.setValue(STORAGE_KEY_PC,                        state.get_pc()                       );
+    app.Storage.setValue(STORAGE_KEY_X,                         state.get_x()                        );
+    app.Storage.setValue(STORAGE_KEY_Y,                         state.get_y()                        );
+    app.Storage.setValue(STORAGE_KEY_A,                         state.get_a()                        );
+    app.Storage.setValue(STORAGE_KEY_B,                         state.get_b()                        );
+    app.Storage.setValue(STORAGE_KEY_NP,                        state.get_np()                       );
+    app.Storage.setValue(STORAGE_KEY_SP,                        state.get_sp()                       );
+    app.Storage.setValue(STORAGE_KEY_FLAGS,                     state.get_flags()                    );
+    app.Storage.setValue(STORAGE_KEY_TICK_COUNTER,              state.get_tick_counter()             );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP,   state.get_clk_timer_2hz_timestamp()  );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP,   state.get_clk_timer_4hz_timestamp()  );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP,   state.get_clk_timer_8hz_timestamp()  );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP,  state.get_clk_timer_16hz_timestamp() );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP,  state.get_clk_timer_32hz_timestamp() );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP,  state.get_clk_timer_64hz_timestamp() );
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP, state.get_clk_timer_128hz_timestamp());
+    app.Storage.setValue(STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP, state.get_clk_timer_256hz_timestamp());
+    app.Storage.setValue(STORAGE_KEY_PROG_TIMER_TIMESTAMP,      state.get_prog_timer_timestamp()     );
+    app.Storage.setValue(STORAGE_KEY_PROG_TIMER_ENABLED,        state.get_prog_timer_enabled()       );
+    app.Storage.setValue(STORAGE_KEY_PROG_TIMER_DATA,           state.get_prog_timer_data()          );
+    app.Storage.setValue(STORAGE_KEY_PROG_TIMER_RLD,            state.get_prog_timer_rld()           );
+    app.Storage.setValue(STORAGE_KEY_CALL_DEPTH,                state.get_call_depth()               );
 }
 
 function save_state_interrupts(state as CPUState) as Void {
@@ -100,14 +100,14 @@ function save_state_interrupts(state as CPUState) as Void {
 }
 
 function save_state_memory_ram(state as CPUState) as Void {
-    _save_state_memory(state, STORAGE_KEY_MEMORY_RAM, MEM_RAM_ADDR, MEM_RAM_SIZE);
+    save_state_memory(state, STORAGE_KEY_MEMORY_RAM, MEM_RAM_ADDR, MEM_RAM_SIZE);
 }
 
 function save_state_memory_io(state as CPUState) as Void {
-    _save_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
+    save_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function _save_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
+function save_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
     var encodings = new [mem_size / 8];
     for (var i = 0; i < encodings.size(); i++) {
@@ -123,33 +123,33 @@ function _save_state_memory(state as CPUState, storage_key as String, mem_addr a
 }
 
 function load_state_variables(state as CPUState) as Void {
-    state.set_pc(                        app.Storage.getValue(STORAGE_KEY_PC)                        as U13  );
-    state.set_x(                         app.Storage.getValue(STORAGE_KEY_X)                         as U12  );
-    state.set_y(                         app.Storage.getValue(STORAGE_KEY_Y)                         as U12  );
-    state.set_a(                         app.Storage.getValue(STORAGE_KEY_A)                         as U4   );
-    state.set_b(                         app.Storage.getValue(STORAGE_KEY_B)                         as U4   );
-    state.set_np(                        app.Storage.getValue(STORAGE_KEY_NP)                        as U5   );
-    state.set_sp(                        app.Storage.getValue(STORAGE_KEY_SP)                        as U8   );
-    state.set_flags(                     app.Storage.getValue(STORAGE_KEY_FLAGS)                     as U4   );
-    state.set_tick_counter(              app.Storage.getValue(STORAGE_KEY_TICK_COUNTER)              as U32  );
-    state.set_clk_timer_2hz_timestamp(   app.Storage.getValue(STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP)   as U32  );
-    state.set_clk_timer_4hz_timestamp(   app.Storage.getValue(STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP)   as U32  );
-    state.set_clk_timer_8hz_timestamp(   app.Storage.getValue(STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP)   as U32  );
-    state.set_clk_timer_16hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP)  as U32  );
-    state.set_clk_timer_32hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP)  as U32  );
-    state.set_clk_timer_64hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP)  as U32  );
-    state.set_clk_timer_128hz_timestamp( app.Storage.getValue(STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP) as U32  );
-    state.set_clk_timer_256hz_timestamp( app.Storage.getValue(STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP) as U32  );
-    state.set_prog_timer_timestamp(      app.Storage.getValue(STORAGE_KEY_PROG_TIMER_TIMESTAMP)      as U32  );
-    state.set_prog_timer_enabled(        app.Storage.getValue(STORAGE_KEY_PROG_TIMER_ENABLED)        as Bool );
-    state.set_prog_timer_data(           app.Storage.getValue(STORAGE_KEY_PROG_TIMER_DATA)           as U8   );
-    state.set_prog_timer_rld(            app.Storage.getValue(STORAGE_KEY_PROG_TIMER_RLD)            as U8   );
-    state.set_call_depth(                app.Storage.getValue(STORAGE_KEY_CALL_DEPTH)                as U32  );
+    state.set_pc(                       app.Storage.getValue(STORAGE_KEY_PC)                        as U13 );
+    state.set_x(                        app.Storage.getValue(STORAGE_KEY_X)                         as U12 );
+    state.set_y(                        app.Storage.getValue(STORAGE_KEY_Y)                         as U12 );
+    state.set_a(                        app.Storage.getValue(STORAGE_KEY_A)                         as U4  );
+    state.set_b(                        app.Storage.getValue(STORAGE_KEY_B)                         as U4  );
+    state.set_np(                       app.Storage.getValue(STORAGE_KEY_NP)                        as U5  );
+    state.set_sp(                       app.Storage.getValue(STORAGE_KEY_SP)                        as U8  );
+    state.set_flags(                    app.Storage.getValue(STORAGE_KEY_FLAGS)                     as U4  );
+    state.set_tick_counter(             app.Storage.getValue(STORAGE_KEY_TICK_COUNTER)              as U32 );
+    state.set_clk_timer_2hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP)   as U32 );
+    state.set_clk_timer_4hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP)   as U32 );
+    state.set_clk_timer_8hz_timestamp(  app.Storage.getValue(STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP)   as U32 );
+    state.set_clk_timer_16hz_timestamp( app.Storage.getValue(STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP)  as U32 );
+    state.set_clk_timer_32hz_timestamp( app.Storage.getValue(STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP)  as U32 );
+    state.set_clk_timer_64hz_timestamp( app.Storage.getValue(STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP)  as U32 );
+    state.set_clk_timer_128hz_timestamp(app.Storage.getValue(STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP) as U32 );
+    state.set_clk_timer_256hz_timestamp(app.Storage.getValue(STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP) as U32 );
+    state.set_prog_timer_timestamp(     app.Storage.getValue(STORAGE_KEY_PROG_TIMER_TIMESTAMP)      as U32 );
+    state.set_prog_timer_enabled(       app.Storage.getValue(STORAGE_KEY_PROG_TIMER_ENABLED)        as Bool);
+    state.set_prog_timer_data(          app.Storage.getValue(STORAGE_KEY_PROG_TIMER_DATA)           as U8  );
+    state.set_prog_timer_rld(           app.Storage.getValue(STORAGE_KEY_PROG_TIMER_RLD)            as U8  );
+    state.set_call_depth(               app.Storage.getValue(STORAGE_KEY_CALL_DEPTH)                as U32 );
 }
 
 function load_state_interrupts(state as CPUState) as Void {
     var interrupts = state.get_interrupts();
-    var encodings = app.Storage.getValue(STORAGE_KEY_INTERRUPTS) as Lang.Array<U32>;
+    var encodings = app.Storage.getValue(STORAGE_KEY_INTERRUPTS) as std.Array<U32>;
     for (var i = 0; i < INT_SLOT_NUM; i++) {
         interrupts[i].factor_flag_reg = ((encodings[i] >> 24) & 0x0F);
         interrupts[i].mask_reg =        ((encodings[i] >> 16) & 0x0F);
@@ -159,16 +159,16 @@ function load_state_interrupts(state as CPUState) as Void {
 }
 
 function load_state_memory_ram(state as CPUState) as Void {
-    _load_state_memory(state, STORAGE_KEY_MEMORY_RAM, MEM_RAM_ADDR, MEM_RAM_SIZE);
+    load_state_memory(state, STORAGE_KEY_MEMORY_RAM, MEM_RAM_ADDR, MEM_RAM_SIZE);
 }
 
 function load_state_memory_io(state as CPUState) as Void {
-    _load_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
+    load_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function _load_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
+function load_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
-    var encodings = app.Storage.getValue(storage_key) as Lang.Array<U32>;
+    var encodings = app.Storage.getValue(storage_key) as std.Array<U32>;
     for (var i = 0; i < mem_size / 8; i++) {
         var addr = (mem_addr / 2) + (i * 4);
         memory[addr + 0] = (encodings[i] >> 24) & 0xFF;
