@@ -4,7 +4,7 @@
 **GarminGotchi** is a complete rewrite of the original [tamalib](https://github.com/jcrona/tamalib) project (portable Tamagotchi emulator) from C to Garmin's [Monkey C](https://developer.garmin.com/connect-iq/monkey-c/) language, developed specifically for the [Garmin Instinct 3 Solar 45mm](https://www.garmin.com/p/1315317/) smartwatch. It brings your nostalgic digital pet back to life right on your wrist.
 
 <p align="center">
-    <img src="./images/ciq_screenshot_2.png" width="32.8%">
+    <img src="./images/ciq_recording.gif" width="32.8%">
 </p>
 
 ## 🎮 Features
