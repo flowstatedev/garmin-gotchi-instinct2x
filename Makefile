@@ -11,8 +11,6 @@ DEV_KEY  := $(KEY_DIR)/developer_key.der
 MANIFEST := ./manifest.xml
 JUNGLE   := ./monkey.jungle
 
-CIQ_WAIT := 30 # [s]
-
 SRC := $(shell find $(SRC_DIR) -name *.mc)
 RES := $(shell find $(RES_DIR) $(RES_DIR)-$(DEVICE) -type f)
 
@@ -22,12 +20,11 @@ key: $(DEV_KEY)
 
 app: $(PROGRAM)
 
-sim: $(PROGRAM) | ciq
+sim: $(PROGRAM)
 	monkeydo $(PROGRAM) $(DEVICE)
 
 ciq:
 	connectiq &
-	sleep $(CIQ_WAIT)
 
 $(BIN_DIR)/%.prg: $(SRC) $(RES) $(MANIFEST) $(JUNGLE) $(DEV_KEY) | $(BIN_DIR)
 	monkeyc -d $(DEVICE) -f $(JUNGLE) -o $@ -y $(DEV_KEY)
