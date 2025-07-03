@@ -27,7 +27,7 @@ ciq:
 	connectiq &
 
 $(BIN_DIR)/%.prg: $(SRC) $(RES) $(MANIFEST) $(JUNGLE) $(DEV_KEY) | $(BIN_DIR)
-	monkeyc -d $(DEVICE) -f $(JUNGLE) -o $@ -y $(DEV_KEY)
+	monkeyc -d $(DEVICE) -f $(JUNGLE) -o $@ -y $(DEV_KEY) -w -r
 
 $(KEY_DIR)/%.der: $(KEY_DIR)/%.pem | $(KEY_DIR)
 	openssl pkcs8 -topk8 -inform PEM -outform DER -in $< -out $@ -nocrypt
