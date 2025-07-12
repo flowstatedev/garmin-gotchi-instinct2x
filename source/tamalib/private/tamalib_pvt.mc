@@ -146,11 +146,13 @@ class Tamalib_impl {
         g_cpu.reset();
     }
 
-    function add_bp(list as Breakpoints, addr as U13) as Void {
+    (:release) function add_bp(list as Breakpoints, addr as U13) as Void {}
+    (:debug)   function add_bp(list as Breakpoints, addr as U13) as Void {
         g_cpu.add_bp(list, addr);
     }
 
-    function free_bp(list as Breakpoints) as Void {
+    (:release) function free_bp(list as Breakpoints) as Void {}
+    (:debug)   function free_bp(list as Breakpoints) as Void {
         g_cpu.free_bp(list);
     }
 

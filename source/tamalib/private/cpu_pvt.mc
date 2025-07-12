@@ -1639,7 +1639,8 @@ class CPU_impl {
         }
     }
 
-    function print_state(op_num as U8, op as U12, addr as U13) as Void {
+    (:silence_log) function print_state(op_num as U8, op as U12, addr as U13) as Void {}
+    (:verbose_log) function print_state(op_num as U8, op as U12, addr as U13) as Void {
         var i;
 
         if (!g_hal.is_log_enabled(LOG_CPU)) {
@@ -1834,7 +1835,6 @@ class CPU_impl {
     function step() as Int {
         var op;
         var i = 0;
-        var bp_i = 0;
 
         if (!cpu_halted) {
             var prg_i = pc * 2;
@@ -1901,7 +1901,13 @@ class CPU_impl {
         }
 
         /* Check if we could pause the execution */
+        return check_breakpoint_pause();
+    }
+
+    (:release) function check_breakpoint_pause() as Int { return 0; }
+    (:debug)   function check_breakpoint_pause() as Int {
         if (g_breakpoints != null) {
+            var bp_i = 0;
             while (!cpu_halted && bp_i < g_breakpoints.size()) {
                 if ((g_breakpoints as Breakpoints)[bp_i].addr == pc) {
                     return 1;

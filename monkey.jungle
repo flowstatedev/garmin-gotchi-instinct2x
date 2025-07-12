@@ -1,5 +1,5 @@
 project.manifest = manifest.xml
-project.optimization = 2pz,enable-constant-folding,enable-empty-function-removal,enable-lexical-only-constants,enable-static-branch-elimination
+project.optimization = 3p,enable-constant-folding,enable-empty-function-removal,enable-lexical-only-constants,enable-static-branch-elimination
 project.typecheck = strict
 
 base.sourcePath = source
@@ -13,6 +13,11 @@ base.excludeAnnotations = $(base.excludeAnnotations);test_program
 # disable or enable logging messages (NOTE: emulation runs faster with logging disabled)
 base.excludeAnnotations = $(base.excludeAnnotations);verbose_log
 # base.excludeAnnotations = $(base.excludeAnnotations);silence_log
+
+# disable or enable sounds
+base.excludeAnnotations = $(base.excludeAnnotations);disable_sounds
+# base.excludeAnnotations = $(base.excludeAnnotations);enable_sounds
+
 
 # invert black and white colors (NOTE: this doesn't affect bitmap resources)
 base.excludeAnnotations = $(base.excludeAnnotations);inverted_colors

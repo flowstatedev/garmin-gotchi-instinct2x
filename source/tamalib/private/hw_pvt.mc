@@ -96,7 +96,8 @@ class HW_impl {
         }
     }
 
-    function set_buzzer_freq(freq as U4) as Void {
+    (:disable_sounds) function set_buzzer_freq(freq as U4) as Void {}
+    (:enable_sounds)  function set_buzzer_freq(freq as U4) as Void {
         var snd_freq = 0;
 
         switch (freq) {
@@ -146,7 +147,8 @@ class HW_impl {
         }
     }
 
-    function enable_buzzer(en as Bool) as Void {
+    (:disable_sounds) function enable_buzzer(en as Bool) as Void {}
+    (:enable_sounds)  function enable_buzzer(en as Bool) as Void {
         g_hal.play_frequency(en);
     }
 }

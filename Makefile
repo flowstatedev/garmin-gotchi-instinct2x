@@ -14,7 +14,7 @@ JUNGLE   := ./monkey.jungle
 SRC := $(shell find $(SRC_DIR) -name *.mc)
 RES := $(shell find $(RES_DIR) $(RES_DIR)-$(DEVICE) -type f)
 
-all: app
+all: key app
 
 key: $(DEV_KEY)
 
@@ -27,7 +27,7 @@ ciq:
 	connectiq &
 
 $(BIN_DIR)/%.prg: $(SRC) $(RES) $(MANIFEST) $(JUNGLE) $(DEV_KEY) | $(BIN_DIR)
-	monkeyc -d $(DEVICE) -f $(JUNGLE) -o $@ -y $(DEV_KEY) -w -r
+	monkeyc -d $(DEVICE) -f $(JUNGLE) -o $@ -y $(DEV_KEY) -w -r -k
 
 $(KEY_DIR)/%.der: $(KEY_DIR)/%.pem | $(KEY_DIR)
 	openssl pkcs8 -topk8 -inform PEM -outform DER -in $< -out $@ -nocrypt
@@ -40,6 +40,6 @@ $(KEY_DIR):
 	mkdir -p $@
 
 clean:
-	rm -rf $(BIN_DIR) $(KEY_DIR)
+	rm -rf $(BIN_DIR)
 
 .PHONY: all key app sim ciq clean
