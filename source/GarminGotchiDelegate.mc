@@ -17,12 +17,11 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     const BUTTON_STATE_MASK      = (BUTTON_FIELD_MASK << BUTTON_STATE_LSB);
 
     var game as GarminGotchiApp;
-    var button_timer as time.Timer = new time.Timer();
+    var button_events as tama.Bytes = []b;
 
     function initialize(game as GarminGotchiApp) {
         BehaviorDelegate.initialize();
         me.game = game;
-        me.button_timer.start(method(:button_timer_callback), BUTTON_TIMER_PERIOD_MS, true);
     }
 
     function onMenu() as std.Boolean {
@@ -50,13 +49,13 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
         return true;
     }
 
-    function button_timer_callback() as Void {
-        if (game.button_events.size() == 0) { return; }
+    function handle_button_events() as Void {
+        if (button_events.size() == 0) { return; }
 
-        var event = game.button_events[0];
+        var event = button_events[0];
         var button = decode_button_name(event);
         var state = decode_button_state(event);
-        game.button_events.remove(event);
+        button_events.remove(event);
 
         game.log(tama.LOG_INFO, "Button %s has been %s\n", [
             tama.Button_toString(button),
@@ -66,8 +65,14 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
     }
 
     function add_button_event(button as tama.Button) as Void {
-        game.button_events.add(encode_button(button, tama.BTN_STATE_PRESSED));
-        game.button_events.add(encode_button(button, tama.BTN_STATE_RELEASED));
+        button_events.add(encode_button(button, tama.BTN_STATE_PRESSED));
+        button_events.add(encode_button(button, tama.BTN_STATE_RELEASED));
+    }
+
+    function clear_button_events() as Void {
+        while (button_events.size() > 0) {
+            button_events.remove(button_events[0]);
+        }
     }
 
     function encode_button(button as tama.Button, state as tama.ButtonState) as tama.U8 {

@@ -1639,8 +1639,8 @@ class CPU_impl {
         }
     }
 
-    (:silence_log) function print_state(op_num as U8, op as U12, addr as U13) as Void {}
-    (:verbose_log) function print_state(op_num as U8, op as U12, addr as U13) as Void {
+    (:disable_log) function print_state(op_num as U8, op as U12, addr as U13) as Void {}
+    (:enable_log)  function print_state(op_num as U8, op as U12, addr as U13) as Void {
         var i;
 
         if (!g_hal.is_log_enabled(LOG_CPU)) {

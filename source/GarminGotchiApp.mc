@@ -10,13 +10,10 @@ using tamalib as tama;
 class GarminGotchiApp extends app.AppBase {
 
     (:enable_sounds) const HAS_TONE_PROFILE as tama.Bool = att has :ToneProfile;
-    (:enable_sounds) typedef ToneProfile as {
-        :toneProfile as $.Toybox.Lang.Array<$.Toybox.Attention.ToneProfile>,
-        :repeatCount as $.Toybox.Lang.Number,
-    };
+    (:enable_sounds) typedef ToneProfile as std.Array<att.ToneProfile>;
+    (:enable_sounds) typedef SoundProfile as {:toneProfile as ToneProfile, :repeatCount as std.Number};
 
-    (:silence_log) const LOG_LEVEL_FLAGS = 0;
-    (:verbose_log) const LOG_LEVEL_FLAGS = (0
+    (:enable_log) const LOG_LEVEL_FLAGS = (0
         | tama.LOG_ERROR
         | tama.LOG_INFO
         | tama.LOG_MEMORY
@@ -24,8 +21,8 @@ class GarminGotchiApp extends app.AppBase {
         | tama.LOG_INT
     );
 
-    (:verbose_log) const RUN_MAX_STEPS       = 10;
-    (:silence_log) const RUN_MAX_STEPS       = 155;
+    (:enable_log)  const RUN_MAX_STEPS       = 10;
+    (:disable_log) const RUN_MAX_STEPS       = 155;
                    const RUN_TIMER_PERIOD_MS = 50;
 
     (:tama_program) const PROGRAM = TAMA_PROGRAM;
@@ -35,14 +32,19 @@ class GarminGotchiApp extends app.AppBase {
     const CLOCK_FREQ        = 1000000;
     const SOUND_DURATION_MS = 250;
 
+    var view as GarminGotchiView     = new GarminGotchiView(me);
+    var ctrl as GarminGotchiDelegate = new GarminGotchiDelegate(me);
+
     var emulator as tama.Tamalib = new tama.Tamalib_impl() as tama.Tamalib;
     var breakpoints as tama.Breakpoints? = null;
     var matrix as tama.Bytes = new [tama.LCD_WIDTH * tama.LCD_HEIGHT]b;
     var icons as tama.Bytes = new [tama.ICON_NUM]b;
-    var button_events as tama.Bytes = []b;
 
-    (:enable_sounds) var sound_profile as ToneProfile? = null;
     (:enable_sounds) var is_sound_enabled as tama.Bool = true;
+    (:enable_sounds) var sound_profile as SoundProfile = {
+        :toneProfile => [new att.ToneProfile(0, SOUND_DURATION_MS)],
+        :repeatCount => 1,
+    };
 
     var start_time as tama.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
@@ -61,7 +63,7 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
-        return [ new GarminGotchiView(me), new GarminGotchiDelegate(me) ];
+        return [view, ctrl];
     }
 
     function reset() as Void {
@@ -72,10 +74,9 @@ class GarminGotchiApp extends app.AppBase {
         for (var i = 0; i < tama.ICON_NUM; i++) {
             icons[i] = 0;
         }
-        while (button_events.size() > 0) {
-            button_events.remove(button_events[0]);
-        }
         start_time = sys.getTimer();
+
+        ctrl.clear_button_events();
 
         emulator.register_hal(me);
         emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
@@ -116,10 +117,11 @@ class GarminGotchiApp extends app.AppBase {
 
     (:disable_sounds) function is_sound_playable(en as tama.Bool) as tama.Bool { return false; }
     (:enable_sounds)  function is_sound_playable(en as tama.Bool) as tama.Bool {
-        return (en) && (is_sound_enabled) && (HAS_TONE_PROFILE) && (sound_profile != null);
+        return (en) && (is_sound_enabled) && (HAS_TONE_PROFILE);
     }
 
     function run_timer_callback() as Void {
+        handler();
         for (var i = 0; i < RUN_MAX_STEPS; i++) {
             emulator.step();
         }
@@ -133,19 +135,20 @@ class GarminGotchiApp extends app.AppBase {
 
     function halt() as Void {}
 
-    (:silence_log) function is_log_enabled(level as tama.LogLevel) as tama.Bool { return false; }
-    (:verbose_log) function is_log_enabled(level as tama.LogLevel) as tama.Bool {
+    (:disable_log) function is_log_enabled(level as tama.LogLevel) as tama.Bool { return false; }
+    (:enable_log)  function is_log_enabled(level as tama.LogLevel) as tama.Bool {
         return tama.bool(LOG_LEVEL_FLAGS & (level as tama.Int));
     }
 
-    (:silence_log) function log(level as tama.LogLevel, buff as tama.String, args as tama.Objects) as Void {}
-    (:verbose_log) function log(level as tama.LogLevel, buff as tama.String, args as tama.Objects) as Void {
+    (:disable_log) function log(level as tama.LogLevel, buff as tama.String, args as tama.Objects) as Void {}
+    (:enable_log)  function log(level as tama.LogLevel, buff as tama.String, args as tama.Objects) as Void {
         if (is_log_enabled(level)) {
             tama.printf(buff, args);
         }
     }
 
-    function sleep_until(ts as tama.Timestamp) as Void {
+    (:disable_sleep) function sleep_until(ts as tama.Timestamp) as Void {}
+    (:enable_sleep)  function sleep_until(ts as tama.Timestamp) as Void {
         var t0 = get_timestamp();
         while (get_timestamp() - t0 < ts) {}
     }
@@ -169,21 +172,20 @@ class GarminGotchiApp extends app.AppBase {
     (:disable_sounds) function set_frequency(freq as tama.U32) as Void {}
     (:enable_sounds)  function set_frequency(freq as tama.U32) as Void {
         if (HAS_TONE_PROFILE) {
-            sound_profile = {
-                :toneProfile => [new att.ToneProfile(freq / 10, SOUND_DURATION_MS)],
-                :repeatCount => 1,
-            };
+            var tone = (sound_profile[:toneProfile] as ToneProfile)[0];
+            tone.frequency = freq / 10;
         }
     }
 
     (:disable_sounds) function play_frequency(en as tama.Bool) as Void {}
     (:enable_sounds)  function play_frequency(en as tama.Bool) as Void {
         if (is_sound_playable(en)) {
-            att.playTone(sound_profile as ToneProfile);
+            att.playTone(sound_profile);
         }
     }
 
     function handler() as tama.Int {
+        ctrl.handle_button_events();
         return 0;
     }
 
