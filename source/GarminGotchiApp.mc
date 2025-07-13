@@ -21,9 +21,11 @@ class GarminGotchiApp extends app.AppBase {
         | tama.LOG_INT
     );
 
-    (:enable_log)  const RUN_MAX_STEPS       = 10;
-    (:disable_log) const RUN_MAX_STEPS       = 155;
-                   const RUN_TIMER_PERIOD_MS = 50;
+    (:enable_log)  const RUN_MAX_STEPS = 10;
+    (:disable_log) const RUN_MAX_STEPS = 160;
+    const RUN_TIMER_PERIOD_MS     = 50;
+    const UPDATE_SCREEN_PERIOD_MS = 500;
+    const UPDATE_SCREEN_THRESHOLD = (UPDATE_SCREEN_PERIOD_MS / RUN_TIMER_PERIOD_MS);
 
     (:tama_program) const PROGRAM = TAMA_PROGRAM;
     (:test_program) const PROGRAM = TEST_PROGRAM;
@@ -39,6 +41,9 @@ class GarminGotchiApp extends app.AppBase {
     var breakpoints as tama.Breakpoints? = null;
     var matrix as tama.Bytes = new [tama.LCD_WIDTH * tama.LCD_HEIGHT]b;
     var icons as tama.Bytes = new [tama.ICON_NUM]b;
+
+    var update_screen_counter as tama.Int = 0;
+    var update_screen_request as tama.Bool = true;
 
     (:enable_sounds) var is_sound_enabled as tama.Bool = true;
     (:enable_sounds) var sound_profile as SoundProfile = {
@@ -122,8 +127,15 @@ class GarminGotchiApp extends app.AppBase {
 
     function run_timer_callback() as Void {
         handler();
+
         for (var i = 0; i < RUN_MAX_STEPS; i++) {
             emulator.step();
+        }
+
+        update_screen_counter++;
+        if (update_screen_counter >= UPDATE_SCREEN_THRESHOLD) {
+            update_screen_counter = 0;
+            update_screen();
         }
     }
 
@@ -158,15 +170,28 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function update_screen() as Void {
-        ui.requestUpdate();
+        if (update_screen_request) {
+            update_screen_request = false;
+            ui.requestUpdate();
+        }
     }
 
     function set_lcd_matrix(x as tama.U8, y as tama.U8, val as tama.Bool) as Void {
-        matrix[x + y * tama.LCD_WIDTH] = tama.int(val);
+        var old_val = matrix[x + y * tama.LCD_WIDTH];
+        var new_val = tama.int(val);
+        if (old_val != new_val) {
+            update_screen_request = true;
+            matrix[x + y * tama.LCD_WIDTH] = new_val;
+        }
     }
 
     function set_lcd_icon(icon as tama.U8, val as tama.Bool) as Void {
-        icons[icon] = tama.int(val);
+        var old_val = icons[icon];
+        var new_val = tama.int(val);
+        if (old_val != new_val) {
+            update_screen_request = true;
+            icons[icon] = new_val;
+        }
     }
 
     (:disable_sounds) function set_frequency(freq as tama.U32) as Void {}

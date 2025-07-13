@@ -10,8 +10,6 @@ class GarminGotchiView extends ui.View {
 
     typedef BitmapResources as std.Array<ui.BitmapResource>;
 
-    const DRAW_TIMER_PERIOD_MS = 500;
-
     (:standard_colors) const COLOR_WHITE = gfx.COLOR_WHITE;
     (:inverted_colors) const COLOR_WHITE = gfx.COLOR_BLACK;
     (:standard_colors) const COLOR_BLACK = gfx.COLOR_BLACK;
@@ -26,7 +24,6 @@ class GarminGotchiView extends ui.View {
     (:initialized) var ICON_BITMAPS as BitmapResources;
 
     var game as GarminGotchiApp;
-    var draw_timer as time.Timer = new time.Timer();
 
     function initialize(game as GarminGotchiApp) {
         View.initialize();
@@ -38,18 +35,14 @@ class GarminGotchiView extends ui.View {
         compute_layout(dc);
     }
 
-    function onShow() as Void {
-        draw_timer.start(method(:draw_timer_callback), DRAW_TIMER_PERIOD_MS, true);
-    }
+    function onShow() as Void {}
 
     function onUpdate(dc as gfx.Dc) as Void {
         View.onUpdate(dc);
         draw_screen(dc);
     }
 
-    function onHide() as Void {
-        draw_timer.stop();
-    }
+    function onHide() as Void {}
 
     function compute_layout(dc as gfx.Dc) as Void {
         SCREEN = new tama.Rect(0, 0, dc.getWidth(), dc.getHeight());

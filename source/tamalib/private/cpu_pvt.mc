@@ -1588,16 +1588,12 @@ class CPU_impl {
         new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb)     ), // NOT
     ];
 
-
     function wait_for_cycles(since as Timestamp, cycles as U8) as Timestamp {
-        var deadline;
-        var ticks_pending;
-
         /* The tick counter always works at TICK_FREQUENCY,
         * while the CPU runs at cpu_frequency
         */
         scaled_cycle_accumulator += cycles * TICK_FREQUENCY;
-        ticks_pending = scaled_cycle_accumulator/cpu_frequency;
+        var ticks_pending = scaled_cycle_accumulator / cpu_frequency;
 
         if (ticks_pending > 0) {
             tick_counter += ticks_pending;
@@ -1609,17 +1605,15 @@ class CPU_impl {
             return g_hal.get_timestamp();
         }
 
-        deadline = since + (cycles * ts_freq)/(cpu_frequency * speed_ratio);
+        var deadline = since + (cycles * ts_freq) / (cpu_frequency * speed_ratio);
         g_hal.sleep_until(deadline);
 
         return deadline;
     }
 
     function process_interrupts() as Void {
-        var i;
-
         /* Process interrupts in priority order */
-        for (i = 0; i < INT_SLOT_NUM; i++) {
+        for (var i = 0; i < INT_SLOT_NUM; i++) {
             if (interrupts[i].triggered) {
                 g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", [interrupt_names[i], i]);
                 SET_M((sp - 1) & 0xFF, PCP());
@@ -1787,8 +1781,6 @@ class CPU_impl {
     }
 
     function reset() as Void {
-        var i;
-
         /* Registers and variables init */
         pc = TO_PC(0, 1, 0x00); // PC starts at bank 0, page 1, step 0
         np = TO_NP(0, 1); // NP starts at page 1
@@ -1800,7 +1792,7 @@ class CPU_impl {
         flags = 0;
 
         /* Init RAM to zeros */
-        for (i = 0; i < MEM_BUFFER_SIZE; i++) {
+        for (var i = 0; i < MEM_BUFFER_SIZE; i++) {
             memory[i] = 0;
         }
 
@@ -1833,12 +1825,11 @@ class CPU_impl {
     }
 
     function step() as Int {
-        var op;
         var i = 0;
 
         if (!cpu_halted) {
             var prg_i = pc * 2;
-            op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
+            var op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
 
             /* Lookup the OP code */
             var op_found = false;
