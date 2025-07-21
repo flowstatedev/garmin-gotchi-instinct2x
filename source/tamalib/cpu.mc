@@ -42,7 +42,7 @@ function SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void {
 // function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 // function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 // function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
-// function /*SET_IO_MEMORY*/SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+// function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 
 function GET_MEMORY(buffer as Memory, n as U12) as U4 {
     var byte = n / 2;

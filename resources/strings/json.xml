@@ -8,7 +8,7 @@
       - json data cannot be directly deserialized to a byte array, only a normal array of objects (which is why we pack the bytes into 32-bit ints)
       - an array of 32-bit integers in Monkey C takes *5 bytes* per element (1 byte is used for the object type), which means
         that we absolutely have to ultimately convert these resources to back to an ByteArray, as we cannot afford to
-        eat the 20% memory penalty
+        eat a 25% memory penalty
       - due to memory and watchdog constraints, we have to split the data up into 4 arrays
     -->
       <jsonData id="TAMA_PROGRAM1">
