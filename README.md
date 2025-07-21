@@ -1,11 +1,13 @@
-# 🐣 garmin-gotchi
+# garmin-gotchi-instinct2x
 
-## NOTE: THIS IS A ROUGH PROOF OF CONCEPT FOR INSTINCT2X
+This is a fork of Gualor/garmin-gotchi with mods to get the app to run on instinct2x. Notes specific to garmin-gotchi-instinct2x follow.
+
+## [garmin-gotchi-instinct2x] THIS IS A ROUGH PROOF OF CONCEPT FOR INSTINCT2X 🚨🚨🚨THIS FORK IS NOT PRODUCTION-READY🚨🚨🚨
 
 This fork contains some *extremely rough* proof-of-concept changes to get the app working for
 instinct2x (a Connect IQ 3 device). The original repo can be found here: https://github.com/Gualor/garmin-gotchi
 
-Without going into too many details, let's just that without any changes, the instinct2x version of this app would've required an additional ~200 KB available
+Without going into too many details, let's just say that without any changes, the instinct2x version of this app would've required an additional ~200 KB available
 application memory to load without modification, due to various differences between CIQ 3 (instinct2x) and CIQ 4 (instinct3solar45mm). But on the contrary, instinct2x
 actually has ~32 KB less memory for `watchApp`s than instinct3solar45mm. Drastic changes had to be made.
 
@@ -31,6 +33,58 @@ instead of being removed, to provide context for new code which is optimized for
 
 For these reasons, at this time these changes will not be submitted back to the original repository - they're simply not fit for production.
 
+## [garmin-gotchi-instinct2x]  Instinct2x / CIQ 3 Porting Challenges
+
+- instinct2x has ~32 KB less memory for `watchApp`s than instinct3solar45mm
+- instinct2x is on Connect IQ 3 (as opposed to instinct3solar45mm, which is on CIQ 4)
+- CIQ 3 lacks the shared graphics pool of CIQ 4. This means that any bitmaps that a CIQ 3 app loads are counted against app memory. Contrast with CIQ 4 apps, which load
+bitmaps into the graphics pool (this does not count against app memory)
+- CIQ 3 has extremely inefficient initialization for constant array/dictionary data
+    - For example, in CIQ 4, 12 KB of bytearray data (such as TAMA_PROGRAM) takes roughly 12 KB in the data section of the PRG
+    - In CIQ 3, the same 12 KB of bytearray data takes a whopping ~150 KB of code (roughly 1200% overhead). This is larger than the amount of memory available to instinct2x for `watchApp`s, which means that the original source does not even compile for instinct2x without error
+
+## [garmin-gotchi-instinct2x] Overview of changes made for instinct2x
+
+- save memory used by large amounts of data: avoid CIQ 3 array initializations and change the representation of certain data
+
+  - `TAMA_PROGRAM` array (tama ROM)
+    - convert byte array to JSON array
+      - pack every 4 bytes of the source array into 1 32-bit integer in the JSON array
+      - split the JSON array into 4 pieces to get around memory / watchdog limitations when the data is loaded at init time
+      - move around certain init code (e.g. view/delegate initialization) to ensure there is enough headroom at init time to load the tama ROM
+      - at init time, read JSON array into a byte array
+      - the original data structure is ultimately preserved (it's still a ByteArray after init time), but we avoid wasting massive amounts of code in initializing the data. IOW, the
+        code that uses TAMA_PROGRAM was not changed.
+
+  - encode `SEG_POS` byte array as hex string
+    - the original data structure is ultimately preserved. This is just another method of avoiding wasteful initialization code. (The code that uses SEG_POS did not change)
+
+  - `OPS` (opcodes) array
+    - remove Op class (objects are expensive)
+    - convert the entire OPS array to a single flat array (nested arrays are expensive)
+    - move the callback method lookup from the opcode definition to the code which handles opcodes (i.e. change `method(:some_symbol)` to `:some_symbol`)
+    - in this case, the code that uses OPS had to change
+
+
+- resolve issue where icon bitmaps consumed twice the memory due to being loaded twice: once in the layout and once in the Monkey C source
+  - remove layout completely (it's not necessary)
+
+- remove dead code
+
+- remove logging code
+
+- fold duplicated code
+
+- manually "inline" certain functions that are only called once
+
+- change storage keys from strings to integers
+
+With all of these changes in place, the app just barely fits under the memory limit for instinct2x.
+
+
+---
+
+# 🐣 garmin-gotchi
 
 ## Tamagotchi Gen 1 Emulator for Garmin Instinct 3
 
