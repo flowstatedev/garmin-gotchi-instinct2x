@@ -1,4 +1,37 @@
 # 🐣 garmin-gotchi
+
+## NOTE: THIS IS A ROUGH PROOF OF CONCEPT FOR INSTINCT2X
+
+This fork contains some *extremely rough* proof-of-concept changes to get the app working for
+instinct2x (a Connect IQ 3 device). The original repo can be found here: https://github.com/Gualor/garmin-gotchi
+
+Without going into too many details, let's just that without any changes, the instinct2x version of this app would've required an additional ~200 KB available
+application memory to load without modification, due to various differences between CIQ 3 (instinct2x) and CIQ 4 (instinct3solar45mm). But on the contrary, instinct2x
+actually has ~32 KB less memory for `watchApp`s than instinct3solar45mm. Drastic changes had to be made.
+
+Some of these changes will almost certainly make the app perform worse on instinct3solar45mm (and any other Connect IQ 4 devices),
+not to mention the fact that they make the source much harder to maintain and understand. For example, `json.xml` is a new file which was generated from
+tama.c/TAMA_PROGRAM (the tama ROM), using a combination of a one-off script (not included here) and some manual edits. In a perfect world, json.xml would be
+automatically generated via a build process (so that you could use any ROM you want), but that doesn't currently happen.
+
+Also in a perfect world, the requisite changes for instinct2x would be applied via conditional compilation (or other means) to ensure that the app would continue
+to run on instinct3solar45mm without any performance changes (or other issues). However, since this is just a proof of concept, the changes for instinct2x have simply been applied unconditionally.
+
+Additionally, some of the build switches in monkey.jungle may not work. For example:
+
+- it is no longer possible to enable logging - logging will always be disabled
+- the test ROM cannot be selected - the tama ROM will always be used
+
+Finally, the new code is kind of a mess. It seems to work [*], but it's not exactly pretty.
+
+- In some cases, dead code has been deliberately left in the source as comments,
+instead of being removed, to provide context for new code which is optimized for instinct2x. This has not been in a consistent manner.
+- Some of the new code uses hardcoded magic numbers
+- [*] Speaking of which, the new code hasn't been extensively tested.
+
+For these reasons, at this time these changes will not be submitted back to the original repository - they're simply not fit for production.
+
+
 ## Tamagotchi Gen 1 Emulator for Garmin Instinct 3
 
 **GarminGotchi** is a complete rewrite of the original [tamalib](https://github.com/jcrona/tamalib) project (portable Tamagotchi emulator) from C to Garmin's [Monkey C](https://developer.garmin.com/connect-iq/monkey-c/) language, developed specifically for the [Garmin Instinct 3 Solar 45mm](https://www.garmin.com/p/1315317/) smartwatch. It brings your nostalgic digital pet back to life right on your wrist.

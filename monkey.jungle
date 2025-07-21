@@ -1,8 +1,11 @@
 project.manifest = manifest.xml
 project.optimization = 3p,enable-constant-folding,enable-empty-function-removal,enable-lexical-only-constants,enable-static-branch-elimination
-project.typecheck = strict
+project.typecheck = gradual
 
 base.sourcePath = source
+
+# instinct2x NOTE: Changing build options is not guaranteed to work.
+# For example, enabling logging is not supported.
 
 # NOTE: for each build option, only one line must remain uncommented at a time,
 #       uncomment the option you want to exclude from the build

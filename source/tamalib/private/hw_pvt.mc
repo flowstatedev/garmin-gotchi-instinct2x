@@ -24,12 +24,22 @@ class HW_impl {
 
     /* SEG -> LCD mapping */
     /* 51 segments */
-    const SEG_POS as Bytes = [
-        0, 1, 2, 3, 4, 5, 6, 7, 32, 8, 9, 10, 11, 12, 13, 14, 15, 33, 34, 35,
-        31, 30, 29, 28, 27, 26, 25, 24, 36, 23, 22, 21, 20, 19, 18, 17, 16, 37,
-        38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
-    ]b;
 
+    // efficient for CIQ 4, terrible for CIQ 3
+    // const SEG_POS as Bytes = [
+    //     0, 1, 2, 3, 4, 5, 6, 7, 32, 8, 9, 10, 11, 12, 13, 14, 15, 33, 34, 35,
+    //     31, 30, 29, 28, 27, 26, 25, 24, 36, 23, 22, 21, 20, 19, 18, 17, 16, 37,
+    //     38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
+    // ]b;
+
+    // efficient for CIQ 3
+    const SEG_POS = StringUtil.convertEncodedString(
+        "00010203040506072008090a0b0c0d0e0f2122231f1e1d1c1b1a191824171615141312111025262728292a2b2c2d2e2f303132",
+        {
+            :fromRepresentation  => StringUtil.REPRESENTATION_STRING_HEX,
+            :toRepresentation  => StringUtil.REPRESENTATION_BYTE_ARRAY
+        }
+    );
     (:initialized) var g_hal as HAL;
     (:initialized) var g_cpu as CPU;
 

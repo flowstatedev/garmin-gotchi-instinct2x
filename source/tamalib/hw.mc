@@ -30,13 +30,13 @@ enum ButtonState {
     BTN_STATE_PRESSED,
 }
 
-function ButtonState_toString(state as ButtonState) as String {
-    switch (state) {
-        case BTN_STATE_PRESSED:  return "PRESSED";
-        case BTN_STATE_RELEASED: return "RELEASED";
-        default:                 return "UNKNOWN";
-    }
-}
+// function ButtonState_toString(state as ButtonState) as String {
+//     switch (state) {
+//         case BTN_STATE_PRESSED:  return "PRESSED";
+//         case BTN_STATE_RELEASED: return "RELEASED";
+//         default:                 return "UNKNOWN";
+//     }
+// }
 
 enum Button {
     BTN_LEFT = 0,
@@ -45,15 +45,15 @@ enum Button {
     BTN_TAP,
 }
 
-function Button_toString(button as Button) as String {
-    switch (button) {
-        case BTN_LEFT:   return "LEFT";
-        case BTN_MIDDLE: return "MIDDLE";
-        case BTN_RIGHT:  return "RIGHT";
-        case BTN_TAP:    return "TAP";
-        default:         return "UNKNOWN";
-    }
-}
+// function Button_toString(button as Button) as String {
+//     switch (button) {
+//         case BTN_LEFT:   return "LEFT";
+//         case BTN_MIDDLE: return "MIDDLE";
+//         case BTN_RIGHT:  return "RIGHT";
+//         case BTN_TAP:    return "TAP";
+//         default:         return "UNKNOWN";
+//     }
+// }
 
 typedef HW as interface {
     function init(hal as HAL, cpu as CPU) as Int;

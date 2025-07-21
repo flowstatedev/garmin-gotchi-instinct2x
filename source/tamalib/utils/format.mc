@@ -1,6 +1,8 @@
 using Toybox.System as sys;
 using Toybox.Lang as std;
 
+/*
+
 module tamalib {
 
 function printf(c_fmt as String, params as Objects) as Void {
@@ -113,3 +115,5 @@ class Fmt {
 }
 
 }
+
+*/

@@ -57,10 +57,10 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
         var state = decode_button_state(event);
         button_events.remove(event);
 
-        game.log(tama.LOG_INFO, "Button %s has been %s\n", [
-            tama.Button_toString(button),
-            tama.ButtonState_toString(state),
-        ]);
+        // game.log(tama.LOG_INFO, "Button %s has been %s\n", [
+        //     tama.Button_toString(button),
+        //     tama.ButtonState_toString(state),
+        // ]);
         game.emulator.set_button(button, state);
     }
 

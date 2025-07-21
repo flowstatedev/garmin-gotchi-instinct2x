@@ -39,20 +39,20 @@ function SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void {
     var shift = 4 * (n & 0x1);
     buffer[byte] = (buffer[byte] & (0xF << (4 - shift))) | (v << shift);
 }
-function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
-function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
-function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
-function SET_IO_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+// function SET_RAM_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+// function SET_DISP1_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+// function SET_DISP2_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
+// function /*SET_IO_MEMORY*/SET_MEMORY(buffer as Memory, n as U12, v as U4) as Void { SET_MEMORY(buffer, n, v); }
 
 function GET_MEMORY(buffer as Memory, n as U12) as U4 {
     var byte = n / 2;
     var shift = 4 * (n & 0x1);
     return (buffer[byte] >> shift) & 0xF;
 }
-function GET_RAM_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
-function GET_DISP1_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
-function GET_DISP2_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
-function GET_IO_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+// function GET_RAM_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+// function GET_DISP1_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+// function GET_DISP2_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
+// function GET_IO_MEMORY(buffer as Memory, n as U12) as U4 { return GET_MEMORY(buffer, n); }
 
 class Breakpoint {
     var addr as U13;

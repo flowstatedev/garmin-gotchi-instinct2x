@@ -3,32 +3,32 @@ using Toybox.Lang as std;
 
 module tamalib {
 
-const STORAGE_KEY_PC                        = "pc";
-const STORAGE_KEY_X                         = "x";
-const STORAGE_KEY_Y                         = "y";
-const STORAGE_KEY_A                         = "a";
-const STORAGE_KEY_B                         = "b";
-const STORAGE_KEY_NP                        = "np";
-const STORAGE_KEY_SP                        = "sp";
-const STORAGE_KEY_FLAGS                     = "flags";
-const STORAGE_KEY_TICK_COUNTER              = "tick_counter";
-const STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP   = "clk_timer_2hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP   = "clk_timer_4hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP   = "clk_timer_8hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP  = "clk_timer_16hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP  = "clk_timer_32hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP  = "clk_timer_64hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP = "clk_timer_128hz_timestamp";
-const STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP = "clk_timer_256hz_timestamp";
-const STORAGE_KEY_PROG_TIMER_TIMESTAMP      = "prog_timer_timestamp";
-const STORAGE_KEY_PROG_TIMER_ENABLED        = "prog_timer_enabled";
-const STORAGE_KEY_PROG_TIMER_DATA           = "prog_timer_data";
-const STORAGE_KEY_PROG_TIMER_RLD            = "prog_timer_rld";
-const STORAGE_KEY_CALL_DEPTH                = "call_depth";
-const STORAGE_KEY_INTERRUPTS                = "interrupts";
-const STORAGE_KEY_MEMORY_RAM                = "memory_ram";
-const STORAGE_KEY_MEMORY_IO                 = "memory_io";
-const STORAGE_KEY_STATE_SAVED               = "state_saved";
+const STORAGE_KEY_PC                        = 0; // "pc";
+const STORAGE_KEY_X                         = 1; // "x";
+const STORAGE_KEY_Y                         = 2; // "y";
+const STORAGE_KEY_A                         = 3; // "a";
+const STORAGE_KEY_B                         = 4; // "b";
+const STORAGE_KEY_NP                        = 5; // "np";
+const STORAGE_KEY_SP                        = 6; // "sp";
+const STORAGE_KEY_FLAGS                     = 7; // "flags";
+const STORAGE_KEY_TICK_COUNTER              = 8; // "tick_counter";
+const STORAGE_KEY_CLK_TIMER_2HZ_TIMESTAMP   = 9; // "clk_timer_2hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_4HZ_TIMESTAMP   = 10; // "clk_timer_4hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_8HZ_TIMESTAMP   = 11; // "clk_timer_8hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_16HZ_TIMESTAMP  = 12; // "clk_timer_16hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_32HZ_TIMESTAMP  = 13; // "clk_timer_32hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_64HZ_TIMESTAMP  = 14; // "clk_timer_64hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_128HZ_TIMESTAMP = 15; // "clk_timer_128hz_timestamp";
+const STORAGE_KEY_CLK_TIMER_256HZ_TIMESTAMP = 16; // "clk_timer_256hz_timestamp";
+const STORAGE_KEY_PROG_TIMER_TIMESTAMP      = 17; // "prog_timer_timestamp";
+const STORAGE_KEY_PROG_TIMER_ENABLED        = 18; // "prog_timer_enabled";
+const STORAGE_KEY_PROG_TIMER_DATA           = 19; // "prog_timer_data";
+const STORAGE_KEY_PROG_TIMER_RLD            = 20; // "prog_timer_rld";
+const STORAGE_KEY_CALL_DEPTH                = 21; // "call_depth";
+const STORAGE_KEY_INTERRUPTS                = 22; // "interrupts";
+const STORAGE_KEY_MEMORY_RAM                = 23; // "memory_ram";
+const STORAGE_KEY_MEMORY_IO                 = 24; // "memory_io";
+const STORAGE_KEY_STATE_SAVED               = 25; // "state_saved";
 
 function save_state(state as CPUState) as Void {
     set_state_saved(false);
@@ -107,7 +107,7 @@ function save_state_memory_io(state as CPUState) as Void {
     save_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function save_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
+function save_state_memory(state as CPUState, storage_key, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
     var encodings = new [mem_size / 8];
     for (var i = 0; i < encodings.size(); i++) {
@@ -166,7 +166,7 @@ function load_state_memory_io(state as CPUState) as Void {
     load_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function load_state_memory(state as CPUState, storage_key as String, mem_addr as U32, mem_size as U32) as Void {
+function load_state_memory(state as CPUState, storage_key, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
     var encodings = app.Storage.getValue(storage_key) as std.Array<U32>;
     for (var i = 0; i < mem_size / 8; i++) {

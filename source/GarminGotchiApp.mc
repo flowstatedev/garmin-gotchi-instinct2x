@@ -22,20 +22,24 @@ class GarminGotchiApp extends app.AppBase {
     );
 
     (:enable_log)  const RUN_MAX_STEPS = 10;
-    (:disable_log) const RUN_MAX_STEPS = 160;
+    // (:disable_log) const RUN_MAX_STEPS = 160;
+     (:disable_log) const RUN_MAX_STEPS = 40;
     const RUN_TIMER_PERIOD_MS     = 50;
     const UPDATE_SCREEN_PERIOD_MS = 500;
     const UPDATE_SCREEN_THRESHOLD = (UPDATE_SCREEN_PERIOD_MS / RUN_TIMER_PERIOD_MS);
 
-    (:tama_program) const PROGRAM = TAMA_PROGRAM;
-    (:test_program) const PROGRAM = TEST_PROGRAM;
+    // (:tama_program) const PROGRAM = TAMA_PROGRAM;
+    // (:test_program) const PROGRAM = TEST_PROGRAM;
+
+    var PROGRAM as std.ByteArray?;
 
     const SPEED_RATIO       = 0;
     const CLOCK_FREQ        = 1000000;
     const SOUND_DURATION_MS = 250;
 
-    var view as GarminGotchiView     = new GarminGotchiView(me);
-    var ctrl as GarminGotchiDelegate = new GarminGotchiDelegate(me);
+    // var view as GarminGotchiView     = new GarminGotchiView(me);
+    // var ctrl as GarminGotchiDelegate = new GarminGotchiDelegate(me);
+    var ctrl as GarminGotchiDelegate?;
 
     var emulator as tama.Tamalib = new tama.Tamalib_impl() as tama.Tamalib;
     var breakpoints as tama.Breakpoints? = null;
@@ -53,22 +57,57 @@ class GarminGotchiApp extends app.AppBase {
 
     var start_time as tama.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
+    var misc_timer as time.Timer = new time.Timer();
+
+    function loadProgram(rezId, offset) {
+        var fragment = Application.loadResource(Rez.JsonData[rezId]) as std.Array<std.Number>;
+        for (var i = 0; i < 768; i++) {
+            var v = fragment[i];
+            PROGRAM[offset] = v >> 24;
+            offset++;
+            PROGRAM[offset] = (v >> 16) & 0xff;
+            offset++;
+            PROGRAM[offset] = (v >> 8) & 0xff;
+            offset++;
+            PROGRAM[offset] = (v) & 0xff;
+            offset++;
+        }
+    }
 
     function initialize() {
         AppBase.initialize();
-        load();
+        PROGRAM = new [12288]b;
+
+        loadProgram(:TAMA_PROGRAM1, 0);
+        loadProgram(:TAMA_PROGRAM2, 3072);
+
+        misc_timer.start(method(:afterInitialize), 50, false);
     }
 
-    function onStart(state as std.Dictionary?) as Void {
+    function afterInitialize() as Void {
+        load();
+
+        misc_timer.start(method(:afterLoad), 50, false);
+    }
+
+    function afterLoad() as Void {
+        loadProgram(:TAMA_PROGRAM3, 6144);
+        loadProgram(:TAMA_PROGRAM4, 9216);
+
         start();
     }
+
+    // function onStart(state as std.Dictionary?) as Void {
+    //     start();
+    // }
 
     function onStop(state as std.Dictionary?) as Void {
         stop();
     }
 
     function getInitialView() as [ui.Views] or [ui.Views, ui.InputDelegates] {
-        return [view, ctrl];
+        ctrl = new GarminGotchiDelegate(me);
+        return [new GarminGotchiView(me), ctrl];
     }
 
     function reset() as Void {
@@ -81,7 +120,9 @@ class GarminGotchiApp extends app.AppBase {
         }
         start_time = sys.getTimer();
 
-        ctrl.clear_button_events();
+        if (ctrl != null) {
+            ctrl.clear_button_events();
+        }
 
         emulator.register_hal(me);
         emulator.init(PROGRAM, breakpoints, CLOCK_FREQ);
@@ -210,12 +251,14 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function handler() as tama.Int {
-        ctrl.handle_button_events();
+        if (ctrl != null) {
+            ctrl.handle_button_events();
+        }
         return 0;
     }
 
 }
 
-function getApp() as GarminGotchiApp {
-    return app.getApp() as GarminGotchiApp;
-}
+// function getApp() as GarminGotchiApp {
+//     return app.getApp() as GarminGotchiApp;
+// }

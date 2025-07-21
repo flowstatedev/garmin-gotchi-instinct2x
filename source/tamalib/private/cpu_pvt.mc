@@ -147,47 +147,47 @@ class CPU_impl {
 
     const INPUT_PORT_NUM = 2;
 
-    class Op {
-        typedef OpCallback as (Method(arg0 as U8, arg1 as U8) as Void);
+    // class Op {
+    //     typedef OpCallback as (Method(arg0 as U8, arg1 as U8) as Void);
 
-        var log as String;
-        var code as U12;
-        var mask as U12;
-        var shift_arg0 as U12;
-        var mask_arg0 as U12; // != 0 only if there are two arguments
-        var cycles as U8;
-        var cb as OpCallback;
+    //     var log as String;
+    //     var code as U12;
+    //     var mask as U12;
+    //     var shift_arg0 as U12;
+    //     var mask_arg0 as U12; // != 0 only if there are two arguments
+    //     var cycles as U8;
+    //     var cb as OpCallback;
 
-        function initialize(
-            log as String,
-            code as U12,
-            mask as U12,
-            shift_arg0 as U12,
-            mask_arg0 as U12,
-            cycles as U8,
-            cb as OpCallback
-        ) {
-            me.log = log;
-            me.code = code;
-            me.mask = mask;
-            me.shift_arg0 = shift_arg0;
-            me.mask_arg0 = mask_arg0;
-            me.cycles = cycles;
-            me.cb = cb;
-        }
-    }
+    //     function initialize(
+    //         log as String,
+    //         code as U12,         // [0]
+    //         mask as U12,         // [1]
+    //         shift_arg0 as U12,   // [2]
+    //         mask_arg0 as U12,    // [3]
+    //         cycles as U8,        // [4]
+    //         cb as OpCallback     // [5] (Symbol)
+    //     ) {
+    //         me.log = log;
+    //         me.code = code;
+    //         me.mask = mask;
+    //         me.shift_arg0 = shift_arg0;
+    //         me.mask_arg0 = mask_arg0;
+    //         me.cycles = cycles;
+    //         me.cb = cb;
+    //     }
+    // }
 
-    typedef Ops as std.Array<Op>;
+    typedef Ops as std.Array<std.Array>;
 
-    class InputPort {
-        var states as U4;
+    // class InputPort {
+    //     var states as U4;
 
-        function initialize(states as U4) {
-            me.states = states;
-        }
-    }
+    //     function initialize(states as U4) {
+    //         me.states = states;
+    //     }
+    // }
 
-    typedef InputPorts as std.Array<InputPort>;
+    typedef InputPorts as std.Array<std.Number>;
 
     class MemoryRange {
         var addr as U12;
@@ -217,8 +217,8 @@ class CPU_impl {
     var memory as Memory = new [MEM_BUFFER_SIZE]b;
 
     var inputs as InputPorts = [
-        new InputPort(0),
-        new InputPort(0),
+        0,
+        0,
     ];
 
     const refresh_locs as MemoryRanges = [
@@ -237,14 +237,14 @@ class CPU_impl {
         new Interrupt(0x0, 0x0, false, 0x02), // Clock timer
     ];
 
-    const interrupt_names as Strings = [
-        "INT_PROG_TIMER_SLOT",
-        "INT_SERIAL_SLOT",
-        "INT_K10_K13_SLOT",
-        "INT_K00_K03_SLOT",
-        "INT_STOPWATCH_SLOT",
-        "INT_CLOCK_TIMER_SLOT",
-    ];
+    // const interrupt_names as Strings = [
+    //     "INT_PROG_TIMER_SLOT",
+    //     "INT_SERIAL_SLOT",
+    //     "INT_K10_K13_SLOT",
+    //     "INT_K00_K03_SLOT",
+    //     "INT_STOPWATCH_SLOT",
+    //     "INT_CLOCK_TIMER_SLOT",
+    // ];
 
     var call_depth as U32 = 0;
 
@@ -335,14 +335,14 @@ class CPU_impl {
     }
 
     function set_input_pin(pin as Pin, state as PinState) as Void {
-        var old_state = (inputs[pin & 0x4].states >> (pin & 0x3)) & 0x1;
+        var old_state = (inputs[pin & 0x4] >> (pin & 0x3)) & 0x1;
 
         /* Trigger the interrupt if the state changed */
         if (state != old_state) {
             switch ((pin & 0x4) >> 2) {
                 case 0:
                     /* Active HIGH/LOW depending on the relation register */
-                    if (state != ((GET_IO_MEMORY(memory, REG_K00_K03_INPUT_RELATION) >> (pin & 0x3)) & 0x1)) {
+                    if (state != ((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_K00_K03_INPUT_RELATION) >> (pin & 0x3)) & 0x1)) {
                         generate_interrupt(INT_K00_K03_SLOT, pin & 0x3);
                     }
                     break;
@@ -357,7 +357,7 @@ class CPU_impl {
         }
 
         /* Set the I/O */
-        inputs[pin & 0x4].states = (inputs[pin & 0x4].states & ~(0x1 << (pin & 0x3))) | (state << (pin & 0x3));
+        inputs[pin & 0x4] = (inputs[pin & 0x4] & ~(0x1 << (pin & 0x3))) | (state << (pin & 0x3));
     }
 
     function sync_ref_timestamp() as Void {
@@ -430,11 +430,11 @@ class CPU_impl {
 
             case REG_CLOCK_TIMER_DATA_1:
                 /* Clock timer data (16-128Hz) */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_CLOCK_TIMER_DATA_2:
                 /* Clock timer data (1-8Hz) */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_PROG_TIMER_DATA_L:
                 /* Prog timer data (low) */
@@ -454,27 +454,27 @@ class CPU_impl {
 
             case REG_K00_K03_INPUT_PORT:
                 /* Input port (K00-K03) */
-                return inputs[0].states;
+                return inputs[0];
 
             case REG_K00_K03_INPUT_RELATION:
                 /* Input relation register (K00-K03) */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_K10_K13_INPUT_PORT:
                 /* Input port (K10-K13) */
-                return inputs[1].states;
+                return inputs[1];
 
             case REG_R40_R43_BZ_OUTPUT_PORT:
                 /* Output port (R40-R43) */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_CPU_OSC3_CTRL:
                 /* CPU/OSC3 clocks switch, CPU voltage switch */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_LCD_CTRL:
                 /* LCD control */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_LCD_CONTRAST:
                 /* LCD contrast */
@@ -482,15 +482,15 @@ class CPU_impl {
 
             case REG_SVD_CTRL:
                 /* SVD */
-                return GET_IO_MEMORY(memory, n) & 0x7; // Voltage always OK
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n) & 0x7; // Voltage always OK
 
             case REG_BUZZER_CTRL1:
                 /* Buzzer config 1 */
-                return GET_IO_MEMORY(memory, n);
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n);
 
             case REG_BUZZER_CTRL2:
                 /* Buzzer config 2 */
-                return GET_IO_MEMORY(memory, n) & 0x3; // Buzzer ready
+                return /*GET_IO_MEMORY*/GET_MEMORY(memory, n) & 0x3; // Buzzer ready
 
             case REG_CLK_WD_TIMER_CTRL:
                 /* Clock/Watchdog timer reset */
@@ -509,7 +509,7 @@ class CPU_impl {
                 break;
 
             default:
-                g_hal.log(LOG_ERROR, "Read from unimplemented I/O 0x%03X - PC = 0x%04X\n", [n, pc]);
+                //g_hal.log(LOG_ERROR, "Read from unimplemented I/O 0x%03X - PC = 0x%04X\n", [n, pc]);
         }
 
         return 0;
@@ -583,7 +583,7 @@ class CPU_impl {
 
             case REG_R40_R43_BZ_OUTPUT_PORT:
                 /* Output port (R40-R43) */
-                //g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", [v]);
+                ////g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", [v]);
                 g_hw.enable_buzzer(!bool(v & 0x8));
                 break;
 
@@ -594,13 +594,13 @@ class CPU_impl {
                     /* OSC3 */
                     cpu_frequency = OSC3_FREQUENCY;
                     scaled_cycle_accumulator = 0;
-                    //g_hal.log(LOG_INFO, "Switch to OSC3\n", []);
+                    ////g_hal.log(LOG_INFO, "Switch to OSC3\n", []);
                 }
                 if (!bool(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
                     /* OSC1 */
                     cpu_frequency = OSC1_FREQUENCY;
                     scaled_cycle_accumulator = 0;
-                    //g_hal.log(LOG_INFO, "Switch to OSC1\n", []);
+                    ////g_hal.log(LOG_INFO, "Switch to OSC1\n", []);
                 }
                 break;
 
@@ -655,7 +655,7 @@ class CPU_impl {
                 break;
 
             default:
-                g_hal.log(LOG_ERROR, "Write 0x%X to unimplemented I/O 0x%03X - PC = 0x%04X\n", [v, n, pc]);
+                //g_hal.log(LOG_ERROR, "Write 0x%X to unimplemented I/O 0x%03X - PC = 0x%04X\n", [v, n, pc]);
         }
     }
 
@@ -672,61 +672,68 @@ class CPU_impl {
     }
 
     function get_memory(n as U12) as U4 {
-        var res = 0;
+        // var res = 0;
 
-        if (n < MEM_RAM_SIZE) {
-            /* RAM */
-            g_hal.log(LOG_MEMORY, "RAM              - ", []);
-            res = GET_RAM_MEMORY(memory, n);
-        } else if (n >= MEM_DISPLAY1_ADDR && n < (MEM_DISPLAY1_ADDR + MEM_DISPLAY1_SIZE)) {
-            /* Display Memory 1 */
-            g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
-            res = GET_DISP1_MEMORY(memory, n);
-        } else if (n >= MEM_DISPLAY2_ADDR && n < (MEM_DISPLAY2_ADDR + MEM_DISPLAY2_SIZE)) {
-            /* Display Memory 2 */
-            g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
-            res = GET_DISP2_MEMORY(memory, n);
-        } else if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
-            /* I/O Memory */
-            g_hal.log(LOG_MEMORY, "I/O              - ", []);
-            res = get_io(n);
-        } else {
-            g_hal.log(LOG_ERROR, "Read from invalid memory address 0x%03X - PC = 0x%04X\n", [n, pc]);
-            return 0;
-        }
+        // if (n < MEM_RAM_SIZE) {
+        //     /* RAM */
+        //     //g_hal.log(LOG_MEMORY, "RAM              - ", []);
+        //     res = GET_RAM_MEMORY(memory, n);
+        // } else if (n >= MEM_DISPLAY1_ADDR && n < (MEM_DISPLAY1_ADDR + MEM_DISPLAY1_SIZE)) {
+        //     /* Display Memory 1 */
+        //     //g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
+        //     res = GET_DISP1_MEMORY(memory, n);
+        // } else if (n >= MEM_DISPLAY2_ADDR && n < (MEM_DISPLAY2_ADDR + MEM_DISPLAY2_SIZE)) {
+        //     /* Display Memory 2 */
+        //     //g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
+        //     res = GET_DISP2_MEMORY(memory, n);
+        // } else if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
+        //     /* I/O Memory */
+        //     //g_hal.log(LOG_MEMORY, "I/O              - ", []);
+        //     res = get_io(n);
+        // } else {
+        //     //g_hal.log(LOG_ERROR, "Read from invalid memory address 0x%03X - PC = 0x%04X\n", [n, pc]);
+        //     return 0;
+        // }
 
-        g_hal.log(LOG_MEMORY, "Read  0x%X - Address 0x%03X - PC = 0x%04X\n", [res, n, pc]);
+         if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
+            return get_io(n);
+         } else {
+            return GET_MEMORY(memory, n);
+         }
 
-        return res;
+        //g_hal.log(LOG_MEMORY, "Read  0x%X - Address 0x%03X - PC = 0x%04X\n", [res, n, pc]);
+
+        // return res;
     }
 
     function set_memory(n as U12, v as U4) as Void {
         /* Cache any data written to a valid address, and process it */
+        SET_MEMORY(memory, n, v);
         if (n < MEM_RAM_SIZE) {
             /* RAM */
-            SET_RAM_MEMORY(memory, n, v);
-            g_hal.log(LOG_MEMORY, "RAM              - ", []);
+            // SET_RAM_MEMORY(memory, n, v);
+            //g_hal.log(LOG_MEMORY, "RAM              - ", []);
         } else if (n >= MEM_DISPLAY1_ADDR && n < (MEM_DISPLAY1_ADDR + MEM_DISPLAY1_SIZE)) {
             /* Display Memory 1 */
-            SET_DISP1_MEMORY(memory, n, v);
+            // SET_DISP1_MEMORY(memory, n, v);
             set_lcd(n, v);
-            g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
+            //g_hal.log(LOG_MEMORY, "Display Memory 1 - ", []);
         } else if (n >= MEM_DISPLAY2_ADDR && n < (MEM_DISPLAY2_ADDR + MEM_DISPLAY2_SIZE)) {
             /* Display Memory 2 */
-            SET_DISP2_MEMORY(memory, n, v);
+            // SET_DISP2_MEMORY(memory, n, v);
             set_lcd(n, v);
-            g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
+            //g_hal.log(LOG_MEMORY, "Display Memory 2 - ", []);
         } else if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
             /* I/O Memory */
-            SET_IO_MEMORY(memory, n, v);
+            // SET_IO_MEMORY(memory, n, v);
             set_io(n, v);
-            g_hal.log(LOG_MEMORY, "I/O              - ", []);
+            //g_hal.log(LOG_MEMORY, "I/O              - ", []);
         } else {
-            g_hal.log(LOG_ERROR, "Write 0x%X to invalid memory address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
+            //g_hal.log(LOG_ERROR, "Write 0x%X to invalid memory address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
             return;
         }
 
-        g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
+        //g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
     }
 
     function refresh_hw() as Void {
@@ -1477,115 +1484,115 @@ class CPU_impl {
     }
 
     /* The E0C6S46 supported instructions */
-    const OPS as Ops = [
-        new Op("PSET #0x%02X            ",  0xE40, MASK_7B,  0, 0,     5,  method(:op_pset_cb)    ), // PSET
-        new Op("JP   #0x%02X            ",  0x000, MASK_4B,  0, 0,     5,  method(:op_jp_cb)      ), // JP
-        new Op("JP   C #0x%02X          ",  0x200, MASK_4B,  0, 0,     5,  method(:op_jp_c_cb)    ), // JP_C
-        new Op("JP   NC #0x%02X         ",  0x300, MASK_4B,  0, 0,     5,  method(:op_jp_nc_cb)   ), // JP_NC
-        new Op("JP   Z #0x%02X          ",  0x600, MASK_4B,  0, 0,     5,  method(:op_jp_z_cb)    ), // JP_Z
-        new Op("JP   NZ #0x%02X         ",  0x700, MASK_4B,  0, 0,     5,  method(:op_jp_nz_cb)   ), // JP_NZ
-        new Op("JPBA                  ",    0xFE8, MASK_12B, 0, 0,     5,  method(:op_jpba_cb)    ), // JPBA
-        new Op("CALL #0x%02X            ",  0x400, MASK_4B,  0, 0,     7,  method(:op_call_cb)    ), // CALL
-        new Op("CALZ #0x%02X            ",  0x500, MASK_4B,  0, 0,     7,  method(:op_calz_cb)    ), // CALZ
-        new Op("RET                   ",    0xFDF, MASK_12B, 0, 0,     7,  method(:op_ret_cb)     ), // RET
-        new Op("RETS                  ",    0xFDE, MASK_12B, 0, 0,     12, method(:op_rets_cb)    ), // RETS
-        new Op("RETD #0x%02X            ",  0x100, MASK_4B,  0, 0,     12, method(:op_retd_cb)    ), // RETD
-        new Op("NOP5                  ",    0xFFB, MASK_12B, 0, 0,     5,  method(:op_nop5_cb)    ), // NOP5
-        new Op("NOP7                  ",    0xFFF, MASK_12B, 0, 0,     7,  method(:op_nop7_cb)    ), // NOP7
-        new Op("HALT                  ",    0xFF8, MASK_12B, 0, 0,     5,  method(:op_halt_cb)    ), // HALT
-        new Op("INC  X #0x%02X          ",  0xEE0, MASK_12B, 0, 0,     5,  method(:op_inc_x_cb)   ), // INC_X
-        new Op("INC  Y #0x%02X          ",  0xEF0, MASK_12B, 0, 0,     5,  method(:op_inc_y_cb)   ), // INC_Y
-        new Op("LD   X #0x%02X          ",  0xB00, MASK_4B,  0, 0,     5,  method(:op_ld_x_cb)    ), // LD_X
-        new Op("LD   Y #0x%02X          ",  0x800, MASK_4B,  0, 0,     5,  method(:op_ld_y_cb)    ), // LD_Y
-        new Op("LD   XP R(%X)          ",   0xE80, MASK_10B, 0, 0,     5,  method(:op_ld_xp_r_cb) ), // LD_XP_R
-        new Op("LD   XH R(%X)          ",   0xE84, MASK_10B, 0, 0,     5,  method(:op_ld_xh_r_cb) ), // LD_XH_R
-        new Op("LD   XL R(%X)          ",   0xE88, MASK_10B, 0, 0,     5,  method(:op_ld_xl_r_cb) ), // LD_XL_R
-        new Op("LD   YP R(%X)          ",   0xE90, MASK_10B, 0, 0,     5,  method(:op_ld_yp_r_cb) ), // LD_YP_R
-        new Op("LD   YH R(%X)          ",   0xE94, MASK_10B, 0, 0,     5,  method(:op_ld_yh_r_cb) ), // LD_YH_R
-        new Op("LD   YL R(%X)          ",   0xE98, MASK_10B, 0, 0,     5,  method(:op_ld_yl_r_cb) ), // LD_YL_R
-        new Op("LD   R(%X) XP          ",   0xEA0, MASK_10B, 0, 0,     5,  method(:op_ld_r_xp_cb) ), // LD_R_XP
-        new Op("LD   R(%X) XH          ",   0xEA4, MASK_10B, 0, 0,     5,  method(:op_ld_r_xh_cb) ), // LD_R_XH
-        new Op("LD   R(%X) XL          ",   0xEA8, MASK_10B, 0, 0,     5,  method(:op_ld_r_xl_cb) ), // LD_R_XL
-        new Op("LD   R(%X) YP          ",   0xEB0, MASK_10B, 0, 0,     5,  method(:op_ld_r_yp_cb) ), // LD_R_YP
-        new Op("LD   R(%X) YH          ",   0xEB4, MASK_10B, 0, 0,     5,  method(:op_ld_r_yh_cb) ), // LD_R_YH
-        new Op("LD   R(%X) YL          ",   0xEB8, MASK_10B, 0, 0,     5,  method(:op_ld_r_yl_cb) ), // LD_R_YL
-        new Op("ADC  XH #0x%02X         ",  0xA00, MASK_8B,  0, 0,     7,  method(:op_adc_xh_cb)  ), // ADC_XH
-        new Op("ADC  XL #0x%02X         ",  0xA10, MASK_8B,  0, 0,     7,  method(:op_adc_xl_cb)  ), // ADC_XL
-        new Op("ADC  YH #0x%02X         ",  0xA20, MASK_8B,  0, 0,     7,  method(:op_adc_yh_cb)  ), // ADC_YH
-        new Op("ADC  YL #0x%02X         ",  0xA30, MASK_8B,  0, 0,     7,  method(:op_adc_yl_cb)  ), // ADC_YL
-        new Op("CP   XH #0x%02X         ",  0xA40, MASK_8B,  0, 0,     7,  method(:op_cp_xh_cb)   ), // CP_XH
-        new Op("CP   XL #0x%02X         ",  0xA50, MASK_8B,  0, 0,     7,  method(:op_cp_xl_cb)   ), // CP_XL
-        new Op("CP   YH #0x%02X         ",  0xA60, MASK_8B,  0, 0,     7,  method(:op_cp_yh_cb)   ), // CP_YH
-        new Op("CP   YL #0x%02X         ",  0xA70, MASK_8B,  0, 0,     7,  method(:op_cp_yl_cb)   ), // CP_YL
-        new Op("LD   R(%X) #0x%02X       ", 0xE00, MASK_6B,  4, 0x030, 5,  method(:op_ld_r_i_cb)  ), // LD_R_I
-        new Op("LD   R(%X) Q(%X)        ",  0xEC0, MASK_8B,  2, 0x00C, 5,  method(:op_ld_r_q_cb)  ), // LD_R_Q
-        new Op("LD   A M(#0x%02X)       ",  0xFA0, MASK_8B,  0, 0,     5,  method(:op_ld_a_mn_cb) ), // LD_A_MN
-        new Op("LD   B M(#0x%02X)       ",  0xFB0, MASK_8B,  0, 0,     5,  method(:op_ld_b_mn_cb) ), // LD_B_MN
-        new Op("LD   M(#0x%02X) A       ",  0xF80, MASK_8B,  0, 0,     5,  method(:op_ld_mn_a_cb) ), // LD_MN_A
-        new Op("LD   M(#0x%02X) B       ",  0xF90, MASK_8B,  0, 0,     5,  method(:op_ld_mn_b_cb) ), // LD_MN_B
-        new Op("LDPX MX #0x%02X         ",  0xE60, MASK_8B,  0, 0,     5,  method(:op_ldpx_mx_cb) ), // LDPX_MX
-        new Op("LDPX R(%X) Q(%X)        ",  0xEE0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpx_r_cb)  ), // LDPX_R
-        new Op("LDPY MY #0x%02X         ",  0xE70, MASK_8B,  0, 0,     5,  method(:op_ldpy_my_cb) ), // LDPY_MY
-        new Op("LDPY R(%X) Q(%X)        ",  0xEF0, MASK_8B,  2, 0x00C, 5,  method(:op_ldpy_r_cb)  ), // LDPY_R
-        new Op("LBPX #0x%02X            ",  0x900, MASK_4B,  0, 0,     5,  method(:op_lbpx_cb)    ), // LBPX
-        new Op("SET  #0x%02X            ",  0xF40, MASK_8B,  0, 0,     7,  method(:op_set_cb)     ), // SET
-        new Op("RST  #0x%02X            ",  0xF50, MASK_8B,  0, 0,     7,  method(:op_rst_cb)     ), // RST
-        new Op("SCF                   ",    0xF41, MASK_12B, 0, 0,     7,  method(:op_scf_cb)     ), // SCF
-        new Op("RCF                   ",    0xF5E, MASK_12B, 0, 0,     7,  method(:op_rcf_cb)     ), // RCF
-        new Op("SZF                   ",    0xF42, MASK_12B, 0, 0,     7,  method(:op_szf_cb)     ), // SZF
-        new Op("RZF                   ",    0xF5D, MASK_12B, 0, 0,     7,  method(:op_rzf_cb)     ), // RZF
-        new Op("SDF                   ",    0xF44, MASK_12B, 0, 0,     7,  method(:op_sdf_cb)     ), // SDF
-        new Op("RDF                   ",    0xF5B, MASK_12B, 0, 0,     7,  method(:op_rdf_cb)     ), // RDF
-        new Op("EI                    ",    0xF48, MASK_12B, 0, 0,     7,  method(:op_ei_cb)      ), // EI
-        new Op("DI                    ",    0xF57, MASK_12B, 0, 0,     7,  method(:op_di_cb)      ), // DI
-        new Op("INC  SP               ",    0xFDB, MASK_12B, 0, 0,     5,  method(:op_inc_sp_cb)  ), // INC_SP
-        new Op("DEC  SP               ",    0xFCB, MASK_12B, 0, 0,     5,  method(:op_dec_sp_cb)  ), // DEC_SP
-        new Op("PUSH R(%X)             ",   0xFC0, MASK_10B, 0, 0,     5,  method(:op_push_r_cb)  ), // PUSH_R
-        new Op("PUSH XP               ",    0xFC4, MASK_12B, 0, 0,     5,  method(:op_push_xp_cb) ), // PUSH_XP
-        new Op("PUSH XH               ",    0xFC5, MASK_12B, 0, 0,     5,  method(:op_push_xh_cb) ), // PUSH_XH
-        new Op("PUSH XL               ",    0xFC6, MASK_12B, 0, 0,     5,  method(:op_push_xl_cb) ), // PUSH_XL
-        new Op("PUSH YP               ",    0xFC7, MASK_12B, 0, 0,     5,  method(:op_push_yp_cb) ), // PUSH_YP
-        new Op("PUSH YH               ",    0xFC8, MASK_12B, 0, 0,     5,  method(:op_push_yh_cb) ), // PUSH_YH
-        new Op("PUSH YL               ",    0xFC9, MASK_12B, 0, 0,     5,  method(:op_push_yl_cb) ), // PUSH_YL
-        new Op("PUSH F                ",    0xFCA, MASK_12B, 0, 0,     5,  method(:op_push_f_cb)  ), // PUSH_F
-        new Op("POP  R(%X)             ",   0xFD0, MASK_10B, 0, 0,     5,  method(:op_pop_r_cb)   ), // POP_R
-        new Op("POP  XP               ",    0xFD4, MASK_12B, 0, 0,     5,  method(:op_pop_xp_cb)  ), // POP_XP
-        new Op("POP  XH               ",    0xFD5, MASK_12B, 0, 0,     5,  method(:op_pop_xh_cb)  ), // POP_XH
-        new Op("POP  XL               ",    0xFD6, MASK_12B, 0, 0,     5,  method(:op_pop_xl_cb)  ), // POP_XL
-        new Op("POP  YP               ",    0xFD7, MASK_12B, 0, 0,     5,  method(:op_pop_yp_cb)  ), // POP_YP
-        new Op("POP  YH               ",    0xFD8, MASK_12B, 0, 0,     5,  method(:op_pop_yh_cb)  ), // POP_YH
-        new Op("POP  YL               ",    0xFD9, MASK_12B, 0, 0,     5,  method(:op_pop_yl_cb)  ), // POP_YL
-        new Op("POP  F                ",    0xFDA, MASK_12B, 0, 0,     5,  method(:op_pop_f_cb)   ), // POP_F
-        new Op("LD   SPH R(%X)         ",   0xFE0, MASK_10B, 0, 0,     5,  method(:op_ld_sph_r_cb)), // LD_SPH_R
-        new Op("LD   SPL R(%X)         ",   0xFF0, MASK_10B, 0, 0,     5,  method(:op_ld_spl_r_cb)), // LD_SPL_R
-        new Op("LD   R(%X) SPH     ",       0xFE4, MASK_10B, 0, 0,     5,  method(:op_ld_r_sph_cb)), // LD_R_SPH
-        new Op("LD   R(%X) SPL     ",       0xFF4, MASK_10B, 0, 0,     5,  method(:op_ld_r_spl_cb)), // LD_R_SPL
-        new Op("ADD  R(%X) #0x%02X       ", 0xC00, MASK_6B,  4, 0x030, 7,  method(:op_add_r_i_cb) ), // ADD_R_I
-        new Op("ADD  R(%X) Q(%X)        ",  0xA80, MASK_8B,  2, 0x00C, 7,  method(:op_add_r_q_cb) ), // ADD_R_Q
-        new Op("ADC  R(%X) #0x%02X       ", 0xC40, MASK_6B,  4, 0x030, 7,  method(:op_adc_r_i_cb) ), // ADC_R_I
-        new Op("ADC  R(%X) Q(%X)        ",  0xA90, MASK_8B,  2, 0x00C, 7,  method(:op_adc_r_q_cb) ), // ADC_R_Q
-        new Op("SUB  R(%X) Q(%X)        ",  0xAA0, MASK_8B,  2, 0x00C, 7,  method(:op_sub_cb)     ), // SUB
-        new Op("SBC  R(%X) #0x%02X       ", 0xD40, MASK_6B,  4, 0x030, 7,  method(:op_sbc_r_i_cb) ), // SBC_R_I
-        new Op("SBC  R(%X) Q(%X)        ",  0xAB0, MASK_8B,  2, 0x00C, 7,  method(:op_sbc_r_q_cb) ), // SBC_R_Q
-        new Op("AND  R(%X) #0x%02X       ", 0xC80, MASK_6B,  4, 0x030, 7,  method(:op_and_r_i_cb) ), // AND_R_I
-        new Op("AND  R(%X) Q(%X)        ",  0xAC0, MASK_8B,  2, 0x00C, 7,  method(:op_and_r_q_cb) ), // AND_R_Q
-        new Op("OR   R(%X) #0x%02X       ", 0xCC0, MASK_6B,  4, 0x030, 7,  method(:op_or_r_i_cb)  ), // OR_R_I
-        new Op("OR   R(%X) Q(%X)        ",  0xAD0, MASK_8B,  2, 0x00C, 7,  method(:op_or_r_q_cb)  ), // OR_R_Q
-        new Op("XOR  R(%X) #0x%02X       ", 0xD00, MASK_6B,  4, 0x030, 7,  method(:op_xor_r_i_cb) ), // XOR_R_I
-        new Op("XOR  R(%X) Q(%X)        ",  0xAE0, MASK_8B,  2, 0x00C, 7,  method(:op_xor_r_q_cb) ), // XOR_R_Q
-        new Op("CP   R(%X) #0x%02X       ", 0xDC0, MASK_6B,  4, 0x030, 7,  method(:op_cp_r_i_cb)  ), // CP_R_I
-        new Op("CP   R(%X) Q(%X)        ",  0xF00, MASK_8B,  2, 0x00C, 7,  method(:op_cp_r_q_cb)  ), // CP_R_Q
-        new Op("FAN  R(%X) #0x%02X       ", 0xD80, MASK_6B,  4, 0x030, 7,  method(:op_fan_r_i_cb) ), // FAN_R_I
-        new Op("FAN  R(%X) Q(%X)        ",  0xF10, MASK_8B,  2, 0x00C, 7,  method(:op_fan_r_q_cb) ), // FAN_R_Q
-        new Op("RLC  R(%X)             ",   0xAF0, MASK_8B,  0, 0,     7,  method(:op_rlc_cb)     ), // RLC
-        new Op("RRC  R(%X)             ",   0xE8C, MASK_10B, 0, 0,     5,  method(:op_rrc_cb)     ), // RRC
-        new Op("INC  M(#0x%02X)         ",  0xF60, MASK_8B,  0, 0,     7,  method(:op_inc_mn_cb)  ), // INC_MN
-        new Op("DEC  M(#0x%02X)         ",  0xF70, MASK_8B,  0, 0,     7,  method(:op_dec_mn_cb)  ), // DEC_MN
-        new Op("ACPX R(%X)             ",   0xF28, MASK_10B, 0, 0,     7,  method(:op_acpx_cb)    ), // ACPX
-        new Op("ACPY R(%X)             ",   0xF2C, MASK_10B, 0, 0,     7,  method(:op_acpy_cb)    ), // ACPY
-        new Op("SCPX R(%X)             ",   0xF38, MASK_10B, 0, 0,     7,  method(:op_scpx_cb)    ), // SCPX
-        new Op("SCPY R(%X)             ",   0xF3C, MASK_10B, 0, 0,     7,  method(:op_scpy_cb)    ), // SCPY
-        new Op("NOT  R(%X)             ",   0xD0F, 0xFCF,    4, 0,     7,  method(:op_not_cb)     ), // NOT
+    const OPS = [
+          0xE40, MASK_7B,  0, 0,     5,  :op_pset_cb    , // PSET
+          0x000, MASK_4B,  0, 0,     5,  :op_jp_cb      , // JP
+          0x200, MASK_4B,  0, 0,     5,  :op_jp_c_cb    , // JP_C
+          0x300, MASK_4B,  0, 0,     5,  :op_jp_nc_cb   , // JP_NC
+          0x600, MASK_4B,  0, 0,     5,  :op_jp_z_cb    , // JP_Z
+          0x700, MASK_4B,  0, 0,     5,  :op_jp_nz_cb   , // JP_NZ
+            0xFE8, MASK_12B, 0, 0,     5,  :op_jpba_cb    , // JPBA
+          0x400, MASK_4B,  0, 0,     7,  :op_call_cb    , // CALL
+          0x500, MASK_4B,  0, 0,     7,  :op_calz_cb    , // CALZ
+            0xFDF, MASK_12B, 0, 0,     7,  :op_ret_cb     , // RET
+            0xFDE, MASK_12B, 0, 0,     12, :op_rets_cb    , // RETS
+          0x100, MASK_4B,  0, 0,     12, :op_retd_cb    , // RETD
+            0xFFB, MASK_12B, 0, 0,     5,  :op_nop5_cb    , // NOP5
+            0xFFF, MASK_12B, 0, 0,     7,  :op_nop7_cb    , // NOP7
+            0xFF8, MASK_12B, 0, 0,     5,  :op_halt_cb    , // HALT
+          0xEE0, MASK_12B, 0, 0,     5,  :op_inc_x_cb   , // INC_X
+          0xEF0, MASK_12B, 0, 0,     5,  :op_inc_y_cb   , // INC_Y
+          0xB00, MASK_4B,  0, 0,     5,  :op_ld_x_cb    , // LD_X
+          0x800, MASK_4B,  0, 0,     5,  :op_ld_y_cb    , // LD_Y
+           0xE80, MASK_10B, 0, 0,     5,  :op_ld_xp_r_cb , // LD_XP_R
+           0xE84, MASK_10B, 0, 0,     5,  :op_ld_xh_r_cb , // LD_XH_R
+           0xE88, MASK_10B, 0, 0,     5,  :op_ld_xl_r_cb , // LD_XL_R
+           0xE90, MASK_10B, 0, 0,     5,  :op_ld_yp_r_cb , // LD_YP_R
+           0xE94, MASK_10B, 0, 0,     5,  :op_ld_yh_r_cb , // LD_YH_R
+           0xE98, MASK_10B, 0, 0,     5,  :op_ld_yl_r_cb , // LD_YL_R
+           0xEA0, MASK_10B, 0, 0,     5,  :op_ld_r_xp_cb , // LD_R_XP
+           0xEA4, MASK_10B, 0, 0,     5,  :op_ld_r_xh_cb , // LD_R_XH
+           0xEA8, MASK_10B, 0, 0,     5,  :op_ld_r_xl_cb , // LD_R_XL
+           0xEB0, MASK_10B, 0, 0,     5,  :op_ld_r_yp_cb , // LD_R_YP
+           0xEB4, MASK_10B, 0, 0,     5,  :op_ld_r_yh_cb , // LD_R_YH
+           0xEB8, MASK_10B, 0, 0,     5,  :op_ld_r_yl_cb , // LD_R_YL
+          0xA00, MASK_8B,  0, 0,     7,  :op_adc_xh_cb  , // ADC_XH
+          0xA10, MASK_8B,  0, 0,     7,  :op_adc_xl_cb  , // ADC_XL
+          0xA20, MASK_8B,  0, 0,     7,  :op_adc_yh_cb  , // ADC_YH
+          0xA30, MASK_8B,  0, 0,     7,  :op_adc_yl_cb  , // ADC_YL
+          0xA40, MASK_8B,  0, 0,     7,  :op_cp_xh_cb   , // CP_XH
+          0xA50, MASK_8B,  0, 0,     7,  :op_cp_xl_cb   , // CP_XL
+          0xA60, MASK_8B,  0, 0,     7,  :op_cp_yh_cb   , // CP_YH
+          0xA70, MASK_8B,  0, 0,     7,  :op_cp_yl_cb   , // CP_YL
+         0xE00, MASK_6B,  4, 0x030, 5,  :op_ld_r_i_cb  , // LD_R_I
+          0xEC0, MASK_8B,  2, 0x00C, 5,  :op_ld_r_q_cb  , // LD_R_Q
+          0xFA0, MASK_8B,  0, 0,     5,  :op_ld_a_mn_cb , // LD_A_MN
+          0xFB0, MASK_8B,  0, 0,     5,  :op_ld_b_mn_cb , // LD_B_MN
+          0xF80, MASK_8B,  0, 0,     5,  :op_ld_mn_a_cb , // LD_MN_A
+          0xF90, MASK_8B,  0, 0,     5,  :op_ld_mn_b_cb , // LD_MN_B
+          0xE60, MASK_8B,  0, 0,     5,  :op_ldpx_mx_cb , // LDPX_MX
+          0xEE0, MASK_8B,  2, 0x00C, 5,  :op_ldpx_r_cb  , // LDPX_R
+          0xE70, MASK_8B,  0, 0,     5,  :op_ldpy_my_cb , // LDPY_MY
+          0xEF0, MASK_8B,  2, 0x00C, 5,  :op_ldpy_r_cb  , // LDPY_R
+          0x900, MASK_4B,  0, 0,     5,  :op_lbpx_cb    , // LBPX
+          0xF40, MASK_8B,  0, 0,     7,  :op_set_cb     , // SET
+          0xF50, MASK_8B,  0, 0,     7,  :op_rst_cb     , // RST
+            0xF41, MASK_12B, 0, 0,     7,  :op_scf_cb     , // SCF
+            0xF5E, MASK_12B, 0, 0,     7,  :op_rcf_cb     , // RCF
+            0xF42, MASK_12B, 0, 0,     7,  :op_szf_cb     , // SZF
+            0xF5D, MASK_12B, 0, 0,     7,  :op_rzf_cb     , // RZF
+            0xF44, MASK_12B, 0, 0,     7,  :op_sdf_cb     , // SDF
+            0xF5B, MASK_12B, 0, 0,     7,  :op_rdf_cb     , // RDF
+            0xF48, MASK_12B, 0, 0,     7,  :op_ei_cb      , // EI
+            0xF57, MASK_12B, 0, 0,     7,  :op_di_cb      , // DI
+            0xFDB, MASK_12B, 0, 0,     5,  :op_inc_sp_cb  , // INC_SP
+            0xFCB, MASK_12B, 0, 0,     5,  :op_dec_sp_cb  , // DEC_SP
+           0xFC0, MASK_10B, 0, 0,     5,  :op_push_r_cb  , // PUSH_R
+            0xFC4, MASK_12B, 0, 0,     5,  :op_push_xp_cb , // PUSH_XP
+            0xFC5, MASK_12B, 0, 0,     5,  :op_push_xh_cb , // PUSH_XH
+            0xFC6, MASK_12B, 0, 0,     5,  :op_push_xl_cb , // PUSH_XL
+            0xFC7, MASK_12B, 0, 0,     5,  :op_push_yp_cb , // PUSH_YP
+            0xFC8, MASK_12B, 0, 0,     5,  :op_push_yh_cb , // PUSH_YH
+            0xFC9, MASK_12B, 0, 0,     5,  :op_push_yl_cb , // PUSH_YL
+            0xFCA, MASK_12B, 0, 0,     5,  :op_push_f_cb  , // PUSH_F
+           0xFD0, MASK_10B, 0, 0,     5,  :op_pop_r_cb   , // POP_R
+            0xFD4, MASK_12B, 0, 0,     5,  :op_pop_xp_cb  , // POP_XP
+            0xFD5, MASK_12B, 0, 0,     5,  :op_pop_xh_cb  , // POP_XH
+            0xFD6, MASK_12B, 0, 0,     5,  :op_pop_xl_cb  , // POP_XL
+            0xFD7, MASK_12B, 0, 0,     5,  :op_pop_yp_cb  , // POP_YP
+            0xFD8, MASK_12B, 0, 0,     5,  :op_pop_yh_cb  , // POP_YH
+            0xFD9, MASK_12B, 0, 0,     5,  :op_pop_yl_cb  , // POP_YL
+            0xFDA, MASK_12B, 0, 0,     5,  :op_pop_f_cb   , // POP_F
+           0xFE0, MASK_10B, 0, 0,     5,  :op_ld_sph_r_cb, // LD_SPH_R
+           0xFF0, MASK_10B, 0, 0,     5,  :op_ld_spl_r_cb, // LD_SPL_R
+               0xFE4, MASK_10B, 0, 0,     5,  :op_ld_r_sph_cb, // LD_R_SPH
+               0xFF4, MASK_10B, 0, 0,     5,  :op_ld_r_spl_cb, // LD_R_SPL
+         0xC00, MASK_6B,  4, 0x030, 7,  :op_add_r_i_cb , // ADD_R_I
+          0xA80, MASK_8B,  2, 0x00C, 7,  :op_add_r_q_cb , // ADD_R_Q
+         0xC40, MASK_6B,  4, 0x030, 7,  :op_adc_r_i_cb , // ADC_R_I
+          0xA90, MASK_8B,  2, 0x00C, 7,  :op_adc_r_q_cb , // ADC_R_Q
+          0xAA0, MASK_8B,  2, 0x00C, 7,  :op_sub_cb     , // SUB
+         0xD40, MASK_6B,  4, 0x030, 7,  :op_sbc_r_i_cb , // SBC_R_I
+          0xAB0, MASK_8B,  2, 0x00C, 7,  :op_sbc_r_q_cb , // SBC_R_Q
+         0xC80, MASK_6B,  4, 0x030, 7,  :op_and_r_i_cb , // AND_R_I
+          0xAC0, MASK_8B,  2, 0x00C, 7,  :op_and_r_q_cb , // AND_R_Q
+         0xCC0, MASK_6B,  4, 0x030, 7,  :op_or_r_i_cb  , // OR_R_I
+          0xAD0, MASK_8B,  2, 0x00C, 7,  :op_or_r_q_cb  , // OR_R_Q
+         0xD00, MASK_6B,  4, 0x030, 7,  :op_xor_r_i_cb , // XOR_R_I
+          0xAE0, MASK_8B,  2, 0x00C, 7,  :op_xor_r_q_cb , // XOR_R_Q
+         0xDC0, MASK_6B,  4, 0x030, 7,  :op_cp_r_i_cb  , // CP_R_I
+          0xF00, MASK_8B,  2, 0x00C, 7,  :op_cp_r_q_cb  , // CP_R_Q
+         0xD80, MASK_6B,  4, 0x030, 7,  :op_fan_r_i_cb , // FAN_R_I
+          0xF10, MASK_8B,  2, 0x00C, 7,  :op_fan_r_q_cb , // FAN_R_Q
+           0xAF0, MASK_8B,  0, 0,     7,  :op_rlc_cb     , // RLC
+           0xE8C, MASK_10B, 0, 0,     5,  :op_rrc_cb     , // RRC
+          0xF60, MASK_8B,  0, 0,     7,  :op_inc_mn_cb  , // INC_MN
+          0xF70, MASK_8B,  0, 0,     7,  :op_dec_mn_cb  , // DEC_MN
+           0xF28, MASK_10B, 0, 0,     7,  :op_acpx_cb    , // ACPX
+           0xF2C, MASK_10B, 0, 0,     7,  :op_acpy_cb    , // ACPY
+           0xF38, MASK_10B, 0, 0,     7,  :op_scpx_cb    , // SCPX
+           0xF3C, MASK_10B, 0, 0,     7,  :op_scpy_cb    , // SCPY
+           0xD0F, 0xFCF,    4, 0,     7,  :op_not_cb     , // NOT
     ];
 
     function wait_for_cycles(since as Timestamp, cycles as U8) as Timestamp {
@@ -1615,7 +1622,7 @@ class CPU_impl {
         /* Process interrupts in priority order */
         for (var i = 0; i < INT_SLOT_NUM; i++) {
             if (interrupts[i].triggered) {
-                g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", [interrupt_names[i], i]);
+                // //g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", [interrupt_names[i], i]);
                 SET_M((sp - 1) & 0xFF, PCP());
                 SET_M((sp - 2) & 0xFF, PCSH());
                 SET_M((sp - 3) & 0xFF, PCSL());
@@ -1641,36 +1648,36 @@ class CPU_impl {
             return;
         }
 
-        g_hal.log(LOG_CPU, "0x%04X: ", [addr]);
+        //g_hal.log(LOG_CPU, "0x%04X: ", [addr]);
 
         if (call_depth < 100) {
             for (i = 0; i < call_depth; i++) {
-                g_hal.log(LOG_CPU, "  ", []);
+                //g_hal.log(LOG_CPU, "  ", []);
             }
         } else {
             /* Something went wrong with the call depth */
-            g_hal.log(LOG_CPU, "<<< ", []);
+            //g_hal.log(LOG_CPU, "<<< ", []);
         }
 
-        if (OPS[op_num].mask_arg0 != 0) {
-            /* Two arguments */
-            g_hal.log(LOG_CPU, OPS[op_num].log, [(op & OPS[op_num].mask_arg0) >> OPS[op_num].shift_arg0, op & ~(OPS[op_num].mask | OPS[op_num].mask_arg0)]);
-        } else {
-            /* One argument */
-            g_hal.log(LOG_CPU, OPS[op_num].log, [(op & ~OPS[op_num].mask) >> OPS[op_num].shift_arg0]);
-        }
+        // if (OPS[op_num].mask_arg0 != 0) {
+        //     /* Two arguments */
+        //     //g_hal.log(LOG_CPU, OPS[op_num].log, [(op & OPS[op_num].mask_arg0) >> OPS[op_num].shift_arg0, op & ~(OPS[op_num].mask | OPS[op_num].mask_arg0)]);
+        // } else {
+        //     /* One argument */
+        //     //g_hal.log(LOG_CPU, OPS[op_num].log, [(op & ~OPS[op_num].mask) >> OPS[op_num].shift_arg0]);
+        // }
 
         if (call_depth < 10) {
             for (i = 0; i < (10 - call_depth); i++) {
-                g_hal.log(LOG_CPU, "  ", []);
+                //g_hal.log(LOG_CPU, "  ", []);
             }
         }
 
-        g_hal.log(LOG_CPU, " ; 0x%03X - ", [op]);
+        //g_hal.log(LOG_CPU, " ; 0x%03X - ", [op]);
         for (i = 0; i < 12; i++) {
-            g_hal.log(LOG_CPU, "%s", [((op >> (11 - i)) & 0x1) ? "1" : "0"]);
+            //g_hal.log(LOG_CPU, "%s", [((op >> (11 - i)) & 0x1) ? "1" : "0"]);
         }
-        g_hal.log(LOG_CPU, " - PC = 0x%04X, SP = 0x%02X, NP = 0x%02X, X = 0x%03X, Y = 0x%03X, A = 0x%X, B = 0x%X, F = 0x%X\n", [pc, sp, np, x, y, a, b, flags]);
+        //g_hal.log(LOG_CPU, " - PC = 0x%04X, SP = 0x%02X, NP = 0x%02X, X = 0x%03X, Y = 0x%03X, A = 0x%X, B = 0x%X, F = 0x%X\n", [pc, sp, np, x, y, a, b, flags]);
     }
 
     function handle_timers() as Void {
@@ -1681,10 +1688,10 @@ class CPU_impl {
             } while (tick_counter - clk_timer_2hz_timestamp >= TIMER_2HZ_PERIOD);
 
             /* Update clock timer data for 1Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 3));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 3));
 
             /* Generate interrupt on falling edge only (1Hz) */
-            if (!bool((GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 3) & 0x1 )) {
+            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 3) & 0x1 )) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 3);
             }
         }
@@ -1695,10 +1702,10 @@ class CPU_impl {
             } while (tick_counter - clk_timer_4hz_timestamp >= TIMER_4HZ_PERIOD);
 
             /* Update clock timer data for 2Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 2));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 2));
 
             /* Generate interrupt on falling edge only (2Hz) */
-            if (!bool((GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 2) & 0x1 )) {
+            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 2) & 0x1 )) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 2);
             }
         }
@@ -1709,7 +1716,7 @@ class CPU_impl {
             } while (tick_counter - clk_timer_8hz_timestamp >= TIMER_8HZ_PERIOD);
 
             /* Update clock timer data for 4Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 1));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 1));
         }
 
         if (tick_counter - clk_timer_16hz_timestamp >= TIMER_16HZ_PERIOD) {
@@ -1718,10 +1725,10 @@ class CPU_impl {
             } while (tick_counter - clk_timer_16hz_timestamp >= TIMER_16HZ_PERIOD);
 
             /* Update clock timer data for 8Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 0));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 0));
 
             /* Generate interrupt on falling edge only (8Hz) */
-            if (!bool((GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >>0) & 0x1 )) {
+            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >>0) & 0x1 )) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 1);
             }
         }
@@ -1732,7 +1739,7 @@ class CPU_impl {
             } while (tick_counter - clk_timer_32hz_timestamp >= TIMER_32HZ_PERIOD);
 
             /* Update clock timer data for 16Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 3));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 3));
         }
 
         if (tick_counter - clk_timer_64hz_timestamp >= TIMER_64HZ_PERIOD) {
@@ -1741,10 +1748,10 @@ class CPU_impl {
             } while (tick_counter - clk_timer_64hz_timestamp >= TIMER_64HZ_PERIOD);
 
             /* Update clock timer data for 32Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 2));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 2));
 
             /* Generate interrupt on falling edge only (32Hz) */
-            if (!bool((GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) >> 2) & 0x1 )) {
+            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) >> 2) & 0x1 )) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 0);
             }
         }
@@ -1755,7 +1762,7 @@ class CPU_impl {
             } while (tick_counter - clk_timer_128hz_timestamp >= TIMER_128HZ_PERIOD);
 
             /* Update clock timer data for 64Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 1));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 1));
         }
 
         if (tick_counter - clk_timer_256hz_timestamp >= TIMER_256HZ_PERIOD) {
@@ -1764,7 +1771,7 @@ class CPU_impl {
             } while (tick_counter - clk_timer_256hz_timestamp >= TIMER_256HZ_PERIOD);
 
             /* Update clock timer data for 128Hz */
-            SET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, GET_IO_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 0));
+            /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 0));
         }
 
         if (prog_timer_enabled && tick_counter - prog_timer_timestamp >= TIMER_256HZ_PERIOD) {
@@ -1796,9 +1803,9 @@ class CPU_impl {
             memory[i] = 0;
         }
 
-        SET_IO_MEMORY(memory, REG_R40_R43_BZ_OUTPUT_PORT, 0xF); // Output port (R40-R43)
-        SET_IO_MEMORY(memory, REG_LCD_CTRL, 0x8); // LCD control
-        SET_IO_MEMORY(memory, REG_K00_K03_INPUT_RELATION, 0xF); // Active high
+        /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_R40_R43_BZ_OUTPUT_PORT, 0xF); // Output port (R40-R43)
+        /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_LCD_CTRL, 0x8); // LCD control
+        /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_K00_K03_INPUT_RELATION, 0xF); // Active high
 
         cpu_frequency = OSC1_FREQUENCY;
 
@@ -1834,14 +1841,14 @@ class CPU_impl {
             /* Lookup the OP code */
             var op_found = false;
             for (i = 0; i < OPS.size(); i++) {
-                if ((op & OPS[i].mask) == OPS[i].code) {
+                if ((op & OPS[i * 6  + 1/*mask*/]) == OPS[i * 6 + 0/*code*/]) {
                     op_found = true;
                     break;
                 }
             }
 
             if (!op_found) {
-                g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
+                //g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
                 return 1;
             }
 
@@ -1857,19 +1864,20 @@ class CPU_impl {
             ref_ts = wait_for_cycles(ref_ts, previous_cycles);
 
             /* Process the OP code */
-            if (OPS[i].cb != null) {
-                if (OPS[i].mask_arg0 != 0) {
+            var cb = method(OPS[i * 6 + 5/*callback symbol*/]);
+            if (cb != null) {
+                if (OPS[i * 6 + 3/*mask_arg0*/] != 0) {
                     /* Two arguments */
-                    OPS[i].cb.invoke((op & OPS[i].mask_arg0) >> OPS[i].shift_arg0, op & ~(OPS[i].mask | OPS[i].mask_arg0));
+                    cb.invoke((op & OPS[i * 6 + 3/*mask_arg0*/]) >> OPS[i * 6 + 2/*shift_arg0*/], op & ~(OPS[i * 6 + 1/*mask*/] | OPS[i * 6 + 3/*mask_arg0*/]));
                 } else {
                     /* One arguments */
-                    OPS[i].cb.invoke((op & ~OPS[i].mask) >> OPS[i].shift_arg0, 0);
+                    cb.invoke((op & ~OPS[i * 6 + 1/*mask*/]) >> OPS[i * 6 + 2/*shift_arg0*/], 0);
                 }
             }
 
             /* Prepare for the next instruction */
             pc = next_pc;
-            previous_cycles = OPS[i].cycles;
+            previous_cycles = OPS[i * 6 + 4/*cycles*/];
 
             if (i != 0) {
                 /* OP code is not PSET, reset NP */

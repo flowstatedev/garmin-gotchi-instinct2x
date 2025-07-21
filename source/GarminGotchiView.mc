@@ -21,7 +21,19 @@ class GarminGotchiView extends ui.View {
     (:initialized) var SUBSCREEN_CIRCLE as tama.Circle;
     (:initialized) var MATRIX as tama.Rect;
     (:initialized) var PIXEL_SIZE as tama.Int;
-    (:initialized) var ICON_BITMAPS as BitmapResources;
+    // (:initialized) var ICON_BITMAPS as BitmapResources;
+    (:initialized) var BACKGROUND;
+
+    (:initialized) const ICON_BITMAPS = [
+        :IconFood,
+        :IconLight,
+        :IconGame,
+        :IconMedicine,
+        :IconBathroom,
+        :IconMeter,
+        :IconDiscipline,
+        :IconAttention,
+    ]; // ICON_BITMAPS must have length equal to ICON_NUM (8)
 
     var game as GarminGotchiApp;
 
@@ -31,14 +43,15 @@ class GarminGotchiView extends ui.View {
     }
 
     function onLayout(dc as gfx.Dc) as Void {
-        setLayout(Rez.Layouts.Layout(dc));
+        // setLayout(Rez.Layouts.Layout(dc));
         compute_layout(dc);
     }
 
     function onShow() as Void {}
 
     function onUpdate(dc as gfx.Dc) as Void {
-        View.onUpdate(dc);
+        // View.onUpdate(dc);
+        dc.drawBitmap(0, 0, BACKGROUND);
         draw_screen(dc);
     }
 
@@ -57,16 +70,7 @@ class GarminGotchiView extends ui.View {
             MATRIX_WIDTH,
             MATRIX_HEIGHT
         );
-        ICON_BITMAPS = [
-            app.loadResource(Rez.Drawables.IconFood),
-            app.loadResource(Rez.Drawables.IconLight),
-            app.loadResource(Rez.Drawables.IconGame),
-            app.loadResource(Rez.Drawables.IconMedicine),
-            app.loadResource(Rez.Drawables.IconBathroom),
-            app.loadResource(Rez.Drawables.IconMeter),
-            app.loadResource(Rez.Drawables.IconDiscipline),
-            app.loadResource(Rez.Drawables.IconAttention),
-        ] as BitmapResources;
+        BACKGROUND = app.loadResource(Rez.Drawables.Background);
     }
 
     function draw_timer_callback() as Void {
@@ -86,7 +90,9 @@ class GarminGotchiView extends ui.View {
     }
 
     function clear_subscreen(dc as gfx.Dc) as Void {
-        draw_circle(dc, SUBSCREEN_CIRCLE, COLOR_BLACK, true);
+        // draw_circle(dc, SUBSCREEN_CIRCLE, COLOR_BLACK, true);
+        dc.setColor(COLOR_BLACK, COLOR_EMPTY);
+        dc.fillCircle(SUBSCREEN_CIRCLE.x, SUBSCREEN_CIRCLE.y, SUBSCREEN_CIRCLE.r);
     }
 
     function draw_matrix(dc as gfx.Dc) as Void {
@@ -106,35 +112,46 @@ class GarminGotchiView extends ui.View {
             PIXEL_SIZE,
             PIXEL_SIZE
         );
-        draw_rect(dc, pixel, COLOR_BLACK, true);
+
+        // draw_rect(dc, pixel, COLOR_BLACK, true);
+        dc.setColor(COLOR_BLACK, COLOR_EMPTY);
+        dc.fillRectangle(pixel.x, pixel.y, pixel.width, pixel.height);
     }
 
+    var last_icon = null;
+    var icon_resource = null;
     function draw_icon(dc as gfx.Dc) as Void {
         dc.setColor(COLOR_WHITE, COLOR_EMPTY);
         for (var i = 0; i < game.icons.size(); i++) {
             if (game.icons[i] != 0) {
-                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, ICON_BITMAPS[i]);
+            // if (true) { // TEST: force icon to be displayed to test worst-case peak memory usage
+                var current_icon = ICON_BITMAPS[i];
+                if (last_icon != current_icon) {
+                    last_icon = current_icon;
+                    icon_resource = app.loadResource(Rez.Drawables[ICON_BITMAPS[i]]);
+                }
+                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, icon_resource);
                 break;
             }
         }
     }
 
-    function draw_circle(dc as gfx.Dc, circle as tama.Circle, color as gfx.ColorValue, fill as tama.Bool) as Void {
-        dc.setColor(color, COLOR_EMPTY);
-        if (fill) {
-            dc.fillCircle(circle.x, circle.y, circle.r);
-        } else {
-            dc.drawCircle(circle.x, circle.y, circle.r);
-        }
-    }
+    // function draw_circle(dc as gfx.Dc, circle as tama.Circle, color as gfx.ColorValue, fill as tama.Bool) as Void {
+    //     dc.setColor(color, COLOR_EMPTY);
+    //     if (fill) {
+    //         dc.fillCircle(circle.x, circle.y, circle.r);
+    //     } else {
+    //         dc.drawCircle(circle.x, circle.y, circle.r);
+    //     }
+    // }
 
-    function draw_rect(dc as gfx.Dc, rect as tama.Rect, color as gfx.ColorValue, fill as tama.Bool) as Void {
-        dc.setColor(color, COLOR_EMPTY);
-        if (fill) {
-            dc.fillRectangle(rect.x, rect.y, rect.width, rect.height);
-        } else {
-            dc.drawRectangle(rect.x, rect.y, rect.width, rect.height);
-        }
-    }
+    // function draw_rect(dc as gfx.Dc, rect as tama.Rect, color as gfx.ColorValue, fill as tama.Bool) as Void {
+    //     dc.setColor(color, COLOR_EMPTY);
+    //     if (fill) {
+    //         dc.fillRectangle(rect.x, rect.y, rect.width, rect.height);
+    //     } else {
+    //         dc.drawRectangle(rect.x, rect.y, rect.width, rect.height);
+    //     }
+    // }
 
 }
