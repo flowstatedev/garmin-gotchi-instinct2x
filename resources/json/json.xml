@@ -1,15 +1,18 @@
 <resources>
-    <!-- It's tama.mc/TAMA_PROGRAM except every 4 bytes are encoded into a single 32-bit integer [*], and the resulting data is split into 4 arrays of equal size.
+    <!--
+        // See file://./../../source/programs/tama.mc
 
-      [*]
-      json_array[n] = byte_array[n * 4]  << 24 | byte_array[n * 4 + 1] << 16 | byte_array[n * 4 + 2] << 8 | byte_array[n * 4 + 3]
+        The following json data is tama.mc/TAMA_PROGRAM except every 4 bytes are encoded into a single 32-bit integer [*], and the resulting data is split into 4 arrays of equal size.
 
-      NOTE:
-      - json data cannot be directly deserialized to a byte array, only a normal array of objects (which is why we pack the bytes into 32-bit ints)
-      - an array of 32-bit integers in Monkey C takes *5 bytes* per element (1 byte is used for the object type), which means
-        that we absolutely have to ultimately convert these resources to back to an ByteArray, as we cannot afford to
-        eat the 25% memory penalty
-      - due to memory and watchdog constraints, we have to split the data up into 4 arrays
+        [*]
+        json_array[n] = byte_array[n * 4]  << 24 | byte_array[n * 4 + 1] << 16 | byte_array[n * 4 + 2] << 8 | byte_array[n * 4 + 3]
+
+        NOTE:
+        - json data cannot be directly deserialized to a byte array, only a normal array of objects (which is why we pack the bytes into 32-bit ints)
+        - an array of 32-bit integers in Monkey C takes *5 bytes* per element (1 byte is used for the object type), which means
+            that we absolutely have to ultimately convert these resources to back to an ByteArray, as we cannot afford to
+            eat the 25% memory penalty
+        - due to memory and watchdog constraints, we have to split the data up into 4 arrays
     -->
     <jsonData id="TAMA_PROGRAM1">
 [
