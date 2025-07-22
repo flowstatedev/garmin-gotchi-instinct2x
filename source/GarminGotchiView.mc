@@ -96,27 +96,33 @@ class GarminGotchiView extends ui.View {
     }
 
     function draw_matrix(dc as gfx.Dc) as Void {
+        dc.setColor(COLOR_BLACK, COLOR_EMPTY);
+
         for (var x = 0; x < tama.LCD_WIDTH; x++) {
             for (var y = 0; y < tama.LCD_HEIGHT; y++) {
-                if (tama.bool(game.matrix[x + y * tama.LCD_WIDTH])) {
-                    draw_pixel(dc, x, y);
+                if (game.matrix[x + y * tama.LCD_WIDTH] != 0) {
+                    // draw_pixel(dc, x, y);
+                    dc.fillRectangle(
+                        MATRIX.x + (x * PIXEL_SIZE),
+                        MATRIX.y + (y * PIXEL_SIZE),
+                        PIXEL_SIZE,
+                        PIXEL_SIZE
+                    );
                 }
             }
         }
     }
 
-    function draw_pixel(dc as gfx.Dc, x as tama.Int, y as tama.Int) as Void {
-        var pixel = new tama.Rect(
-            MATRIX.x + (x * PIXEL_SIZE),
-            MATRIX.y + (y * PIXEL_SIZE),
-            PIXEL_SIZE,
-            PIXEL_SIZE
-        );
+    // function draw_pixel(dc as gfx.Dc, x as tama.Int, y as tama.Int) as Void {
+        // var pixel = new tama.Rect(
+        //     MATRIX.x + (x * PIXEL_SIZE),
+        //     MATRIX.y + (y * PIXEL_SIZE),
+        //     PIXEL_SIZE,
+        //     PIXEL_SIZE
+        // );
 
         // draw_rect(dc, pixel, COLOR_BLACK, true);
-        dc.setColor(COLOR_BLACK, COLOR_EMPTY);
-        dc.fillRectangle(pixel.x, pixel.y, pixel.width, pixel.height);
-    }
+    // }
 
     var last_icon = null;
     var icon_resource = null;
