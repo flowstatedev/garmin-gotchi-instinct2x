@@ -92,15 +92,18 @@ class GarminGotchiApp extends app.AppBase {
         misc_timer.start(method(:afterLoadFullProgram), 50, false);
     }
 
+    var isProgramLoaded as Boolean = false;
     function afterLoadFullProgram() as Void {
         load();
-
-        start();
+        isProgramLoaded = true;
+        onStart(null);
     }
 
-    // function onStart(state as Dictionary?) as Void {
-    //     start();
-    // }
+    function onStart(state as Dictionary?) as Void {
+        if (isProgramLoaded) {
+            start();
+        }
+    }
 
     function onStop(state as Dictionary?) as Void {
         stop();
