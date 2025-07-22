@@ -336,7 +336,7 @@ class CPU_impl {
 
     function generate_interrupt(slot as IntSlot, bit as U8) as Void {
         /* Set the factor flag no matter what */
-        interrupts[slot] |= (0x1 << (bit + INTERRUPT_FACTOR_FLAG_BITSHIFT));
+        interrupts[slot] |= (0x1 << (bit + INTERRUPT_FACTOR_FLAG_REG_BITSHIFT));
 
         /* Trigger the INT only if not masked */
         if (interrupts[slot] & (0x1 << (bit + INTERRUPT_MASK_REG_BITSHIFT))) {
@@ -380,38 +380,38 @@ class CPU_impl {
         switch (n) {
             case REG_CLK_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (clock timer) */
-                tmp = (interrupts[INT_CLOCK_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_CLOCK_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_CLOCK_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_CLOCK_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_SW_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (stopwatch) */
-                tmp = (interrupts[INT_STOPWATCH_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_STOPWATCH_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_STOPWATCH_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_STOPWATCH_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_PROG_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (prog timer) */
-                tmp = (interrupts[INT_PROG_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_PROG_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_PROG_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_PROG_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_SERIAL_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (serial) */
-                tmp = (interrupts[INT_SERIAL_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_SERIAL_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_SERIAL_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_SERIAL_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_K00_K03_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (K00-K03) */
-                tmp = (interrupts[INT_K00_K03_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_K00_K03_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_K00_K03_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_K00_K03_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_K10_K13_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (K10-K13) */
-                tmp = (interrupts[INT_K10_K13_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
-                interrupts[INT_K10_K13_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
+                tmp = (interrupts[INT_K10_K13_SLOT] & INTERRUPT_FACTOR_FLAG_REG_BITMASK) >> INTERRUPT_FACTOR_FLAG_REG_BITSHIFT;
+                interrupts[INT_K10_K13_SLOT] &= ~INTERRUPT_FACTOR_FLAG_REG_BITMASK;
                 return tmp;
 
             case REG_CLOCK_INT_MASKS:

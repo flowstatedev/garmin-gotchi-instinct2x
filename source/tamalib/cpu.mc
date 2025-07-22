@@ -113,8 +113,8 @@ typedef Interrupts as std.Array<std.Number>;
 //   triggered = (interrupt >> 8) & 0xff
 //   vector = interrupt & 0xff
 
-const INTERRUPT_FACTOR_FLAG_BITMASK = 0xff000000;
-const INTERRUPT_FACTOR_FLAG_BITSHIFT = 24;
+const INTERRUPT_FACTOR_FLAG_REG_BITMASK = 0xff000000;
+const INTERRUPT_FACTOR_FLAG_REG_BITSHIFT = 24;
 const INTERRUPT_MASK_REG_BITMASK = 0x00ff0000;
 const INTERRUPT_MASK_REG_BITSHIFT = 16;
 const INTERRUPT_TRIGGERED_BITMASK = 0x0000ff00;
