@@ -91,12 +91,13 @@ function save_state_interrupts(state as CPUState) as Void {
     var interrupts = state.get_interrupts();
     var encodings = new [INT_SLOT_NUM];
     for (var i = 0; i < INT_SLOT_NUM; i++) {
-        encodings[i] = (0x0000 as U32
-            |     (interrupts[i].factor_flag_reg << 24)
-            |     (interrupts[i].mask_reg        << 16)
-            |     (interrupts[i].triggered       <<  8)
-            |     (interrupts[i].vector          <<  0)
-        );
+        // encodings[i] = (0x0000 as U32
+        //     |     (interrupts[i].factor_flag_reg << 24)
+        //     |     (interrupts[i].mask_reg        << 16)
+        //     |     (interrupts[i].triggered       <<  8)
+        //     |     (interrupts[i].vector          <<  0)
+        // );
+        encodings[i] = interrupts[i];
     }
     app.Storage.setValue(STORAGE_KEY_INTERRUPTS, encodings as app.PropertyValueType);
 }
@@ -153,10 +154,11 @@ function load_state_interrupts(state as CPUState) as Void {
     var interrupts = state.get_interrupts();
     var encodings = app.Storage.getValue(STORAGE_KEY_INTERRUPTS) as Array<U32>;
     for (var i = 0; i < INT_SLOT_NUM; i++) {
-        interrupts[i].factor_flag_reg = ((encodings[i] >> 24) & 0x0F);
-        interrupts[i].mask_reg =        ((encodings[i] >> 16) & 0x0F);
-        interrupts[i].triggered =       ((encodings[i] >>  8) & 0x01);
-        interrupts[i].vector =          ((encodings[i] >>  0) & 0xFF);
+        // interrupts[i].factor_flag_reg = ((encodings[i] >> 24) & 0x0F);
+        // interrupts[i].mask_reg =        ((encodings[i] >> 16) & 0x0F);
+        // interrupts[i].triggered =       ((encodings[i] >>  8) & 0x01);
+        // interrupts[i].vector =          ((encodings[i] >>  0) & 0xFF);
+        interrupts[i] = encodings[i];
     }
 }
 

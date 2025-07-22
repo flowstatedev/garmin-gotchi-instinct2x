@@ -199,17 +199,17 @@ class CPU_impl {
 
     typedef InputPorts as std.Array<std.Number>;
 
-    class MemoryRange {
-        var addr as U12;
-        var size as U12;
+    // class MemoryRange {
+    //     var addr as U12;
+    //     var size as U12;
 
-        function initialize(addr as U12, size as U12) {
-            me.addr = addr;
-            me.size = size;
-        }
-    }
+    //     function initialize(addr as U12, size as U12) {
+    //         me.addr = addr;
+    //         me.size = size;
+    //     }
+    // }
 
-    typedef MemoryRanges as std.Array<MemoryRange>;
+    // typedef MemoryRanges as std.Array<MemoryRange>;
 
     (:initialized) var g_hal as HAL;
     (:initialized) var g_hw as HW;
@@ -231,20 +231,20 @@ class CPU_impl {
         0,
     ];
 
-    const refresh_locs as MemoryRanges = [
-        new MemoryRange(MEM_DISPLAY1_ADDR, MEM_DISPLAY1_SIZE), // Display Memory 1
-        new MemoryRange(MEM_DISPLAY2_ADDR, MEM_DISPLAY2_SIZE), // Display Memory 2
-        new MemoryRange(REG_BUZZER_CTRL1, 1),                  // Buzzer frequency
-        new MemoryRange(REG_R40_R43_BZ_OUTPUT_PORT, 1),        // Buzzer enabled
+    const refresh_locs as Array<Number> = [
+        MEM_DISPLAY1_ADDR << 16 | MEM_DISPLAY1_SIZE, // Display Memory 1
+        MEM_DISPLAY2_ADDR << 16 | MEM_DISPLAY2_SIZE, // Display Memory 2
+        REG_BUZZER_CTRL1 << 16 | 1,                  // Buzzer frequency
+        REG_R40_R43_BZ_OUTPUT_PORT << 16 | 1,        // Buzzer enabled
     ];
 
     var interrupts as Interrupts = [
-        new Interrupt(0x0, 0x0, 0, 0x0C), // Prog timer
-        new Interrupt(0x0, 0x0, 0, 0x0A), // Serial interface
-        new Interrupt(0x0, 0x0, 0, 0x08), // Input (K10-K13)
-        new Interrupt(0x0, 0x0, 0, 0x06), // Input (K00-K03)
-        new Interrupt(0x0, 0x0, 0, 0x04), // Stopwatch timer
-        new Interrupt(0x0, 0x0, 0, 0x02), // Clock timer
+        0x0C, // Prog timer
+        0x0A, // Serial interface
+        0x08, // Input (K10-K13)
+        0x06, // Input (K00-K03)
+        0x04, // Stopwatch timer
+        0x02, // Clock timer
     ];
 
     // const interrupt_names as Strings = [
@@ -336,11 +336,11 @@ class CPU_impl {
 
     function generate_interrupt(slot as IntSlot, bit as U8) as Void {
         /* Set the factor flag no matter what */
-        interrupts[slot].factor_flag_reg = interrupts[slot].factor_flag_reg | (0x1 << bit);
+        interrupts[slot] |= (0x1 << (bit + INTERRUPT_FACTOR_FLAG_BITSHIFT));
 
         /* Trigger the INT only if not masked */
-        if (interrupts[slot].mask_reg & (0x1 << bit)) {
-            interrupts[slot].triggered = 1;
+        if (interrupts[slot] & (0x1 << (bit + INTERRUPT_MASK_REG_BITSHIFT))) {
+            interrupts[slot] |= 1 << INTERRUPT_TRIGGERED_BITSHIFT;
         }
     }
 
@@ -380,63 +380,63 @@ class CPU_impl {
         switch (n) {
             case REG_CLK_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (clock timer) */
-                tmp = interrupts[INT_CLOCK_TIMER_SLOT].factor_flag_reg;
-                interrupts[INT_CLOCK_TIMER_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_CLOCK_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_CLOCK_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_SW_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (stopwatch) */
-                tmp = interrupts[INT_STOPWATCH_SLOT].factor_flag_reg;
-                interrupts[INT_STOPWATCH_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_STOPWATCH_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_STOPWATCH_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_PROG_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (prog timer) */
-                tmp = interrupts[INT_PROG_TIMER_SLOT].factor_flag_reg;
-                interrupts[INT_PROG_TIMER_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_PROG_TIMER_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_PROG_TIMER_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_SERIAL_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (serial) */
-                tmp = interrupts[INT_SERIAL_SLOT].factor_flag_reg;
-                interrupts[INT_SERIAL_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_SERIAL_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_SERIAL_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_K00_K03_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (K00-K03) */
-                tmp = interrupts[INT_K00_K03_SLOT].factor_flag_reg;
-                interrupts[INT_K00_K03_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_K00_K03_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_K00_K03_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_K10_K13_INT_FACTOR_FLAGS:
                 /* Interrupt factor flags (K10-K13) */
-                tmp = interrupts[INT_K10_K13_SLOT].factor_flag_reg;
-                interrupts[INT_K10_K13_SLOT].factor_flag_reg = 0;
+                tmp = (interrupts[INT_K10_K13_SLOT] & INTERRUPT_FACTOR_FLAG_BITMASK) >> INTERRUPT_FACTOR_FLAG_BITSHIFT;
+                interrupts[INT_K10_K13_SLOT] &= ~INTERRUPT_FACTOR_FLAG_BITMASK;
                 return tmp;
 
             case REG_CLOCK_INT_MASKS:
                 /* Clock timer interrupt masks */
-                return interrupts[INT_CLOCK_TIMER_SLOT].mask_reg;
+                return ((interrupts[INT_CLOCK_TIMER_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT);
 
             case REG_SW_INT_MASKS:
                 /* Stopwatch interrupt masks */
-                return interrupts[INT_STOPWATCH_SLOT].mask_reg & 0x3;
+                return ((interrupts[INT_STOPWATCH_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT) & 0x3;
 
             case REG_PROG_INT_MASKS:
                 /* Prog timer interrupt masks */
-                return interrupts[INT_PROG_TIMER_SLOT].mask_reg & 0x1;
+                return ((interrupts[INT_PROG_TIMER_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT) & 0x1;
 
             case REG_SERIAL_INT_MASKS:
                 /* Serial interface interrupt masks */
-                return interrupts[INT_SERIAL_SLOT].mask_reg & 0x1;
+                return ((interrupts[INT_SERIAL_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT) & 0x1;
 
             case REG_K00_K03_INT_MASKS:
                 /* Input (K00-K03) interrupt masks */
-                return interrupts[INT_K00_K03_SLOT].mask_reg;
+                return ((interrupts[INT_K00_K03_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT);
 
             case REG_K10_K13_INT_MASKS:
                 /* Input (K10-K13) interrupt masks */
-                return interrupts[INT_K10_K13_SLOT].mask_reg;
+                return ((interrupts[INT_K10_K13_SLOT] & INTERRUPT_MASK_REG_BITMASK) >> INTERRUPT_MASK_REG_BITSHIFT);
 
             case REG_CLOCK_TIMER_DATA_1:
                 /* Clock timer data (16-128Hz) */
@@ -532,37 +532,43 @@ class CPU_impl {
         switch (n) {
             case REG_CLOCK_INT_MASKS:
                 /* Clock timer interrupt masks */
-                interrupts[INT_CLOCK_TIMER_SLOT].mask_reg = v;
+                interrupts[INT_CLOCK_TIMER_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_CLOCK_TIMER_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_SW_INT_MASKS:
                 /* Stopwatch interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_STOPWATCH_SLOT].mask_reg = v;
+                interrupts[INT_STOPWATCH_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_STOPWATCH_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_PROG_INT_MASKS:
                 /* Prog timer interrupt masks */
                 /* Assume Prog timer INT enabled (0x1) */
-                interrupts[INT_PROG_TIMER_SLOT].mask_reg = v;
+                interrupts[INT_PROG_TIMER_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_PROG_TIMER_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_SERIAL_INT_MASKS:
                 /* Serial interface interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_SERIAL_SLOT].mask_reg = v;
+                interrupts[INT_SERIAL_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_SERIAL_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_K00_K03_INT_MASKS:
                 /* Input (K00-K03) interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_K00_K03_SLOT].mask_reg = v;
+                interrupts[INT_K00_K03_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_K00_K03_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_K10_K13_INT_MASKS:
                 /* Input (K10-K13) interrupt masks */
                 /* Assume all INT disabled */
-                interrupts[INT_K10_K13_SLOT].mask_reg = v;
+                interrupts[INT_K10_K13_SLOT] &= ~INTERRUPT_MASK_REG_BITMASK;
+                interrupts[INT_K10_K13_SLOT] |= v << INTERRUPT_MASK_REG_BITSHIFT;
                 break;
 
             case REG_CLOCK_TIMER_DATA_1:
@@ -755,7 +761,9 @@ class CPU_impl {
 
     function refresh_hw() as Void {
         for (var i = 0; i < refresh_locs.size(); i++) {
-            for (var n = refresh_locs[i].addr; n < (refresh_locs[i].addr + refresh_locs[i].size); n++) {
+            var addr = refresh_locs[i] >> 16;
+            var size = refresh_locs[i] & 0xffff;
+            for (var n = addr; n < addr + size; n++) {
                 set_memory(n, GET_MEMORY(memory, n));
             }
         }
@@ -1640,7 +1648,7 @@ class CPU_impl {
     function process_interrupts() as Void {
         /* Process interrupts in priority order */
         for (var i = 0; i < INT_SLOT_NUM; i++) {
-            if (interrupts[i].triggered) {
+            if (interrupts[i] & INTERRUPT_TRIGGERED_BITMASK) {
                 // //g_hal.log(LOG_INT, "Interrupt %s (%u) triggered\n", [interrupt_names[i], i]);
                 SET_M((sp - 1) & 0xFF, PCP());
                 SET_M((sp - 2) & 0xFF, PCSH());
@@ -1648,12 +1656,12 @@ class CPU_impl {
                 sp = (sp - 3) & 0xFF;
                 CLEAR_I();
                 np = TO_NP(NBP(), 1);
-                pc = TO_PC(PCB(), 1, interrupts[i].vector);
+                pc = TO_PC(PCB(), 1, (interrupts[i] >> INTERRUPT_VECTOR_BITSHIFT) & 0xf);
                 call_depth++;
                 cpu_halted = false;
 
                 ref_ts = wait_for_cycles(ref_ts, 12);
-                interrupts[i].triggered = 0;
+                interrupts[i] &= ~INTERRUPT_TRIGGERED_BITMASK;
                 return;
             }
         }

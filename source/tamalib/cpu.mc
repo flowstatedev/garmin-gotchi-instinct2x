@@ -91,21 +91,36 @@ enum IntSlot {
     INT_SLOT_NUM,
 }
 
-class Interrupt {
-    var factor_flag_reg as U4;
-    var mask_reg as U4;
-    var triggered as Int;
-    var vector as U8;
+// class Interrupt {
+//     var factor_flag_reg as U4;
+//     var mask_reg as U4;
+//     var triggered as Int;
+//     var vector as U8;
 
-    function initialize(factor_flag_reg as U4, mask_reg as U4, triggered as Int, vector as U8) {
-        me.factor_flag_reg = factor_flag_reg;
-        me.mask_reg = mask_reg;
-        me.triggered = triggered;
-        me.vector = vector;
-    }
-}
+//     function initialize(factor_flag_reg as U4, mask_reg as U4, triggered as Int, vector as U8) {
+//         me.factor_flag_reg = factor_flag_reg;
+//         me.mask_reg = mask_reg;
+//         me.triggered = triggered;
+//         me.vector = vector;
+//     }
+// }
 
-typedef Interrupts as std.Array<Interrupt>;
+typedef Interrupts as std.Array<std.Number>;
+
+// Instead of using the Interrupt class, encode interrupts as 32-bit int:
+//   factor_flag_reg = interrupt >> 24
+//   mask_reg = (interrupt >> 16) & 0xff
+//   triggered = (interrupt >> 8) & 0xff
+//   vector = interrupt & 0xff
+
+const INTERRUPT_FACTOR_FLAG_BITMASK = 0xff000000;
+const INTERRUPT_FACTOR_FLAG_BITSHIFT = 24;
+const INTERRUPT_MASK_REG_BITMASK = 0x00ff0000;
+const INTERRUPT_MASK_REG_BITSHIFT = 16;
+const INTERRUPT_TRIGGERED_BITMASK = 0x0000ff00;
+const INTERRUPT_TRIGGERED_BITSHIFT = 8;
+const INTERRUPT_VECTOR_BITMASK = 0x000000ff;
+const INTERRUPT_VECTOR_BITSHIFT = 0;
 
 typedef CPUState as interface {
     function get_pc()                        as U13;        function set_pc(                       in as U13)        as Void;
