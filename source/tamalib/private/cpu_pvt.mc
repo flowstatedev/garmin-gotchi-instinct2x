@@ -1920,11 +1920,9 @@ class CPU_impl {
         handle_timers();
 
         /* Check if there is any pending interrupt */
-        if (flags & FLAG_I) {
-            if (op_code != OP_CODE_PSET && op_code != OP_CODE_EI) {
-                // Do not process interrupts after a PSET or EI operation
-                process_interrupts();
-            }
+        if ((flags & FLAG_I) != 0 && op_code != OP_CODE_PSET && op_code != OP_CODE_EI) {
+            // Do not process interrupts after a PSET or EI operation
+            process_interrupts();
         }
 
         /* Check if we could pause the execution */
