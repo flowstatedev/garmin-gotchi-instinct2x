@@ -33,7 +33,7 @@ class GarminGotchiView extends ui.View {
         :IconMeter,
         :IconDiscipline,
         :IconAttention,
-    ]; // ICON_BITMAPS must have length equal to ICON_NUM (8)
+    ]; // The size of ICON_BITMAPS[] should be ICON_NUM (8)
 
     var game as GarminGotchiApp;
 
@@ -129,7 +129,7 @@ class GarminGotchiView extends ui.View {
     function draw_icon(dc as gfx.Dc) as Void {
         dc.setColor(COLOR_WHITE, COLOR_EMPTY);
         for (var i = 0; i < game.icons.size(); i++) {
-            if (game.icons[i] != 0) {
+            if (game.icons[i]) {
             // if (true) { // TEST: force icon to be displayed to test worst-case peak memory usage
                 var current_icon = ICON_BITMAPS[i];
                 if (last_icon != current_icon) {

@@ -82,7 +82,7 @@ class CPU_impl {
     const FLAG_D = (0x1 << 2);
     const FLAG_I = (0x1 << 3);
 
-    // function C() as Bool { return bool(flags & FLAG_C); }
+    // function C() as Bool { return bool(flags & FLAG_C); } // return (flags & FLAG_C) ? true : false
     // function Z() as Bool { return bool(flags & FLAG_Z); }
     // function D() as Bool { return bool(flags & FLAG_D); }
     // function I() as Bool { return bool(flags & FLAG_I); }
@@ -177,7 +177,16 @@ class CPU_impl {
     //     }
     // }
 
-    typedef Ops as std.Array<std.Array>;
+    // typedef Ops as std.Array<Op>;
+
+    const OP_CODE = 0;
+    const OP_MASK = 1;
+    const OP_SHIFT_ARG0 = 2;
+    const OP_MASK_ARG0 = 3;
+    const OP_CYCLES = 4;
+    const OP_CALLBACK_SYMBOL = 5;
+
+    const OP_ELEMENT_SIZE = 6;
 
     // class InputPort {
     //     var states as U4;
@@ -229,12 +238,12 @@ class CPU_impl {
     ];
 
     var interrupts as Interrupts = [
-        new Interrupt(0x0, 0x0, false, 0x0C), // Prog timer
-        new Interrupt(0x0, 0x0, false, 0x0A), // Serial interface
-        new Interrupt(0x0, 0x0, false, 0x08), // Input (K10-K13)
-        new Interrupt(0x0, 0x0, false, 0x06), // Input (K00-K03)
-        new Interrupt(0x0, 0x0, false, 0x04), // Stopwatch timer
-        new Interrupt(0x0, 0x0, false, 0x02), // Clock timer
+        new Interrupt(0x0, 0x0, 0, 0x0C), // Prog timer
+        new Interrupt(0x0, 0x0, 0, 0x0A), // Serial interface
+        new Interrupt(0x0, 0x0, 0, 0x08), // Input (K10-K13)
+        new Interrupt(0x0, 0x0, 0, 0x06), // Input (K00-K03)
+        new Interrupt(0x0, 0x0, 0, 0x04), // Stopwatch timer
+        new Interrupt(0x0, 0x0, 0, 0x02), // Clock timer
     ];
 
     // const interrupt_names as Strings = [
@@ -330,7 +339,7 @@ class CPU_impl {
 
         /* Trigger the INT only if not masked */
         if (interrupts[slot].mask_reg & (0x1 << bit)) {
-            interrupts[slot].triggered = true;
+            interrupts[slot].triggered = 1;
         }
     }
 
@@ -502,7 +511,7 @@ class CPU_impl {
 
             case REG_PROG_TIMER_CTRL:
                 /* Prog timer stop/run/reset */
-                return int(prog_timer_enabled);
+                return prog_timer_enabled ? 1 : 0;
 
             case REG_PROG_TIMER_CLK_SEL:
                 /* Prog timer clock selection */
@@ -1488,114 +1497,114 @@ class CPU_impl {
 
     /* The E0C6S46 supported instructions */
     const OPS = [
-          0xE40, MASK_7B,  0, 0,     5,  :op_pset_cb    , // PSET
-          0x000, MASK_4B,  0, 0,     5,  :op_jp_cb      , // JP
-          0x200, MASK_4B,  0, 0,     5,  :op_jp_c_cb    , // JP_C
-          0x300, MASK_4B,  0, 0,     5,  :op_jp_nc_cb   , // JP_NC
-          0x600, MASK_4B,  0, 0,     5,  :op_jp_z_cb    , // JP_Z
-          0x700, MASK_4B,  0, 0,     5,  :op_jp_nz_cb   , // JP_NZ
-            0xFE8, MASK_12B, 0, 0,     5,  :op_jpba_cb    , // JPBA
-          0x400, MASK_4B,  0, 0,     7,  :op_call_cb    , // CALL
-          0x500, MASK_4B,  0, 0,     7,  :op_calz_cb    , // CALZ
-            0xFDF, MASK_12B, 0, 0,     7,  :op_ret_cb     , // RET
-            0xFDE, MASK_12B, 0, 0,     12, :op_rets_cb    , // RETS
-          0x100, MASK_4B,  0, 0,     12, :op_retd_cb    , // RETD
-            0xFFB, MASK_12B, 0, 0,     5,  :op_nop5_cb    , // NOP5
-            0xFFF, MASK_12B, 0, 0,     7,  :op_nop7_cb    , // NOP7
-            0xFF8, MASK_12B, 0, 0,     5,  :op_halt_cb    , // HALT
-          0xEE0, MASK_12B, 0, 0,     5,  :op_inc_x_cb   , // INC_X
-          0xEF0, MASK_12B, 0, 0,     5,  :op_inc_y_cb   , // INC_Y
-          0xB00, MASK_4B,  0, 0,     5,  :op_ld_x_cb    , // LD_X
-          0x800, MASK_4B,  0, 0,     5,  :op_ld_y_cb    , // LD_Y
-           0xE80, MASK_10B, 0, 0,     5,  :op_ld_xp_r_cb , // LD_XP_R
-           0xE84, MASK_10B, 0, 0,     5,  :op_ld_xh_r_cb , // LD_XH_R
-           0xE88, MASK_10B, 0, 0,     5,  :op_ld_xl_r_cb , // LD_XL_R
-           0xE90, MASK_10B, 0, 0,     5,  :op_ld_yp_r_cb , // LD_YP_R
-           0xE94, MASK_10B, 0, 0,     5,  :op_ld_yh_r_cb , // LD_YH_R
-           0xE98, MASK_10B, 0, 0,     5,  :op_ld_yl_r_cb , // LD_YL_R
-           0xEA0, MASK_10B, 0, 0,     5,  :op_ld_r_xp_cb , // LD_R_XP
-           0xEA4, MASK_10B, 0, 0,     5,  :op_ld_r_xh_cb , // LD_R_XH
-           0xEA8, MASK_10B, 0, 0,     5,  :op_ld_r_xl_cb , // LD_R_XL
-           0xEB0, MASK_10B, 0, 0,     5,  :op_ld_r_yp_cb , // LD_R_YP
-           0xEB4, MASK_10B, 0, 0,     5,  :op_ld_r_yh_cb , // LD_R_YH
-           0xEB8, MASK_10B, 0, 0,     5,  :op_ld_r_yl_cb , // LD_R_YL
-          0xA00, MASK_8B,  0, 0,     7,  :op_adc_xh_cb  , // ADC_XH
-          0xA10, MASK_8B,  0, 0,     7,  :op_adc_xl_cb  , // ADC_XL
-          0xA20, MASK_8B,  0, 0,     7,  :op_adc_yh_cb  , // ADC_YH
-          0xA30, MASK_8B,  0, 0,     7,  :op_adc_yl_cb  , // ADC_YL
-          0xA40, MASK_8B,  0, 0,     7,  :op_cp_xh_cb   , // CP_XH
-          0xA50, MASK_8B,  0, 0,     7,  :op_cp_xl_cb   , // CP_XL
-          0xA60, MASK_8B,  0, 0,     7,  :op_cp_yh_cb   , // CP_YH
-          0xA70, MASK_8B,  0, 0,     7,  :op_cp_yl_cb   , // CP_YL
-         0xE00, MASK_6B,  4, 0x030, 5,  :op_ld_r_i_cb  , // LD_R_I
-          0xEC0, MASK_8B,  2, 0x00C, 5,  :op_ld_r_q_cb  , // LD_R_Q
-          0xFA0, MASK_8B,  0, 0,     5,  :op_ld_a_mn_cb , // LD_A_MN
-          0xFB0, MASK_8B,  0, 0,     5,  :op_ld_b_mn_cb , // LD_B_MN
-          0xF80, MASK_8B,  0, 0,     5,  :op_ld_mn_a_cb , // LD_MN_A
-          0xF90, MASK_8B,  0, 0,     5,  :op_ld_mn_b_cb , // LD_MN_B
-          0xE60, MASK_8B,  0, 0,     5,  :op_ldpx_mx_cb , // LDPX_MX
-          0xEE0, MASK_8B,  2, 0x00C, 5,  :op_ldpx_r_cb  , // LDPX_R
-          0xE70, MASK_8B,  0, 0,     5,  :op_ldpy_my_cb , // LDPY_MY
-          0xEF0, MASK_8B,  2, 0x00C, 5,  :op_ldpy_r_cb  , // LDPY_R
-          0x900, MASK_4B,  0, 0,     5,  :op_lbpx_cb    , // LBPX
-          0xF40, MASK_8B,  0, 0,     7,  :op_set_cb     , // SET
-          0xF50, MASK_8B,  0, 0,     7,  :op_rst_cb     , // RST
-            0xF41, MASK_12B, 0, 0,     7,  :op_scf_cb     , // SCF
-            0xF5E, MASK_12B, 0, 0,     7,  :op_rcf_cb     , // RCF
-            0xF42, MASK_12B, 0, 0,     7,  :op_szf_cb     , // SZF
-            0xF5D, MASK_12B, 0, 0,     7,  :op_rzf_cb     , // RZF
-            0xF44, MASK_12B, 0, 0,     7,  :op_sdf_cb     , // SDF
-            0xF5B, MASK_12B, 0, 0,     7,  :op_rdf_cb     , // RDF
-            0xF48, MASK_12B, 0, 0,     7,  :op_ei_cb      , // EI
-            0xF57, MASK_12B, 0, 0,     7,  :op_di_cb      , // DI
-            0xFDB, MASK_12B, 0, 0,     5,  :op_inc_sp_cb  , // INC_SP
-            0xFCB, MASK_12B, 0, 0,     5,  :op_dec_sp_cb  , // DEC_SP
-           0xFC0, MASK_10B, 0, 0,     5,  :op_push_r_cb  , // PUSH_R
-            0xFC4, MASK_12B, 0, 0,     5,  :op_push_xp_cb , // PUSH_XP
-            0xFC5, MASK_12B, 0, 0,     5,  :op_push_xh_cb , // PUSH_XH
-            0xFC6, MASK_12B, 0, 0,     5,  :op_push_xl_cb , // PUSH_XL
-            0xFC7, MASK_12B, 0, 0,     5,  :op_push_yp_cb , // PUSH_YP
-            0xFC8, MASK_12B, 0, 0,     5,  :op_push_yh_cb , // PUSH_YH
-            0xFC9, MASK_12B, 0, 0,     5,  :op_push_yl_cb , // PUSH_YL
-            0xFCA, MASK_12B, 0, 0,     5,  :op_push_f_cb  , // PUSH_F
-           0xFD0, MASK_10B, 0, 0,     5,  :op_pop_r_cb   , // POP_R
-            0xFD4, MASK_12B, 0, 0,     5,  :op_pop_xp_cb  , // POP_XP
-            0xFD5, MASK_12B, 0, 0,     5,  :op_pop_xh_cb  , // POP_XH
-            0xFD6, MASK_12B, 0, 0,     5,  :op_pop_xl_cb  , // POP_XL
-            0xFD7, MASK_12B, 0, 0,     5,  :op_pop_yp_cb  , // POP_YP
-            0xFD8, MASK_12B, 0, 0,     5,  :op_pop_yh_cb  , // POP_YH
-            0xFD9, MASK_12B, 0, 0,     5,  :op_pop_yl_cb  , // POP_YL
-            0xFDA, MASK_12B, 0, 0,     5,  :op_pop_f_cb   , // POP_F
-           0xFE0, MASK_10B, 0, 0,     5,  :op_ld_sph_r_cb, // LD_SPH_R
-           0xFF0, MASK_10B, 0, 0,     5,  :op_ld_spl_r_cb, // LD_SPL_R
-               0xFE4, MASK_10B, 0, 0,     5,  :op_ld_r_sph_cb, // LD_R_SPH
-               0xFF4, MASK_10B, 0, 0,     5,  :op_ld_r_spl_cb, // LD_R_SPL
-         0xC00, MASK_6B,  4, 0x030, 7,  :op_add_r_i_cb , // ADD_R_I
-          0xA80, MASK_8B,  2, 0x00C, 7,  :op_add_r_q_cb , // ADD_R_Q
-         0xC40, MASK_6B,  4, 0x030, 7,  :op_adc_r_i_cb , // ADC_R_I
-          0xA90, MASK_8B,  2, 0x00C, 7,  :op_adc_r_q_cb , // ADC_R_Q
-          0xAA0, MASK_8B,  2, 0x00C, 7,  :op_sub_cb     , // SUB
-         0xD40, MASK_6B,  4, 0x030, 7,  :op_sbc_r_i_cb , // SBC_R_I
-          0xAB0, MASK_8B,  2, 0x00C, 7,  :op_sbc_r_q_cb , // SBC_R_Q
-         0xC80, MASK_6B,  4, 0x030, 7,  :op_and_r_i_cb , // AND_R_I
-          0xAC0, MASK_8B,  2, 0x00C, 7,  :op_and_r_q_cb , // AND_R_Q
-         0xCC0, MASK_6B,  4, 0x030, 7,  :op_or_r_i_cb  , // OR_R_I
-          0xAD0, MASK_8B,  2, 0x00C, 7,  :op_or_r_q_cb  , // OR_R_Q
-         0xD00, MASK_6B,  4, 0x030, 7,  :op_xor_r_i_cb , // XOR_R_I
-          0xAE0, MASK_8B,  2, 0x00C, 7,  :op_xor_r_q_cb , // XOR_R_Q
-         0xDC0, MASK_6B,  4, 0x030, 7,  :op_cp_r_i_cb  , // CP_R_I
-          0xF00, MASK_8B,  2, 0x00C, 7,  :op_cp_r_q_cb  , // CP_R_Q
-         0xD80, MASK_6B,  4, 0x030, 7,  :op_fan_r_i_cb , // FAN_R_I
-          0xF10, MASK_8B,  2, 0x00C, 7,  :op_fan_r_q_cb , // FAN_R_Q
-           0xAF0, MASK_8B,  0, 0,     7,  :op_rlc_cb     , // RLC
-           0xE8C, MASK_10B, 0, 0,     5,  :op_rrc_cb     , // RRC
-          0xF60, MASK_8B,  0, 0,     7,  :op_inc_mn_cb  , // INC_MN
-          0xF70, MASK_8B,  0, 0,     7,  :op_dec_mn_cb  , // DEC_MN
-           0xF28, MASK_10B, 0, 0,     7,  :op_acpx_cb    , // ACPX
-           0xF2C, MASK_10B, 0, 0,     7,  :op_acpy_cb    , // ACPY
-           0xF38, MASK_10B, 0, 0,     7,  :op_scpx_cb    , // SCPX
-           0xF3C, MASK_10B, 0, 0,     7,  :op_scpy_cb    , // SCPY
-           0xD0F, 0xFCF,    4, 0,     7,  :op_not_cb     , // NOT
+        0xE40, MASK_7B,  0, 0,     5,  :op_pset_cb    , // PSET
+        0x000, MASK_4B,  0, 0,     5,  :op_jp_cb      , // JP
+        0x200, MASK_4B,  0, 0,     5,  :op_jp_c_cb    , // JP_C
+        0x300, MASK_4B,  0, 0,     5,  :op_jp_nc_cb   , // JP_NC
+        0x600, MASK_4B,  0, 0,     5,  :op_jp_z_cb    , // JP_Z
+        0x700, MASK_4B,  0, 0,     5,  :op_jp_nz_cb   , // JP_NZ
+        0xFE8, MASK_12B, 0, 0,     5,  :op_jpba_cb    , // JPBA
+        0x400, MASK_4B,  0, 0,     7,  :op_call_cb    , // CALL
+        0x500, MASK_4B,  0, 0,     7,  :op_calz_cb    , // CALZ
+        0xFDF, MASK_12B, 0, 0,     7,  :op_ret_cb     , // RET
+        0xFDE, MASK_12B, 0, 0,     12, :op_rets_cb    , // RETS
+        0x100, MASK_4B,  0, 0,     12, :op_retd_cb    , // RETD
+        0xFFB, MASK_12B, 0, 0,     5,  :op_nop5_cb    , // NOP5
+        0xFFF, MASK_12B, 0, 0,     7,  :op_nop7_cb    , // NOP7
+        0xFF8, MASK_12B, 0, 0,     5,  :op_halt_cb    , // HALT
+        0xEE0, MASK_12B, 0, 0,     5,  :op_inc_x_cb   , // INC_X
+        0xEF0, MASK_12B, 0, 0,     5,  :op_inc_y_cb   , // INC_Y
+        0xB00, MASK_4B,  0, 0,     5,  :op_ld_x_cb    , // LD_X
+        0x800, MASK_4B,  0, 0,     5,  :op_ld_y_cb    , // LD_Y
+        0xE80, MASK_10B, 0, 0,     5,  :op_ld_xp_r_cb , // LD_XP_R
+        0xE84, MASK_10B, 0, 0,     5,  :op_ld_xh_r_cb , // LD_XH_R
+        0xE88, MASK_10B, 0, 0,     5,  :op_ld_xl_r_cb , // LD_XL_R
+        0xE90, MASK_10B, 0, 0,     5,  :op_ld_yp_r_cb , // LD_YP_R
+        0xE94, MASK_10B, 0, 0,     5,  :op_ld_yh_r_cb , // LD_YH_R
+        0xE98, MASK_10B, 0, 0,     5,  :op_ld_yl_r_cb , // LD_YL_R
+        0xEA0, MASK_10B, 0, 0,     5,  :op_ld_r_xp_cb , // LD_R_XP
+        0xEA4, MASK_10B, 0, 0,     5,  :op_ld_r_xh_cb , // LD_R_XH
+        0xEA8, MASK_10B, 0, 0,     5,  :op_ld_r_xl_cb , // LD_R_XL
+        0xEB0, MASK_10B, 0, 0,     5,  :op_ld_r_yp_cb , // LD_R_YP
+        0xEB4, MASK_10B, 0, 0,     5,  :op_ld_r_yh_cb , // LD_R_YH
+        0xEB8, MASK_10B, 0, 0,     5,  :op_ld_r_yl_cb , // LD_R_YL
+        0xA00, MASK_8B,  0, 0,     7,  :op_adc_xh_cb  , // ADC_XH
+        0xA10, MASK_8B,  0, 0,     7,  :op_adc_xl_cb  , // ADC_XL
+        0xA20, MASK_8B,  0, 0,     7,  :op_adc_yh_cb  , // ADC_YH
+        0xA30, MASK_8B,  0, 0,     7,  :op_adc_yl_cb  , // ADC_YL
+        0xA40, MASK_8B,  0, 0,     7,  :op_cp_xh_cb   , // CP_XH
+        0xA50, MASK_8B,  0, 0,     7,  :op_cp_xl_cb   , // CP_XL
+        0xA60, MASK_8B,  0, 0,     7,  :op_cp_yh_cb   , // CP_YH
+        0xA70, MASK_8B,  0, 0,     7,  :op_cp_yl_cb   , // CP_YL
+        0xE00, MASK_6B,  4, 0x030, 5,  :op_ld_r_i_cb  , // LD_R_I
+        0xEC0, MASK_8B,  2, 0x00C, 5,  :op_ld_r_q_cb  , // LD_R_Q
+        0xFA0, MASK_8B,  0, 0,     5,  :op_ld_a_mn_cb , // LD_A_MN
+        0xFB0, MASK_8B,  0, 0,     5,  :op_ld_b_mn_cb , // LD_B_MN
+        0xF80, MASK_8B,  0, 0,     5,  :op_ld_mn_a_cb , // LD_MN_A
+        0xF90, MASK_8B,  0, 0,     5,  :op_ld_mn_b_cb , // LD_MN_B
+        0xE60, MASK_8B,  0, 0,     5,  :op_ldpx_mx_cb , // LDPX_MX
+        0xEE0, MASK_8B,  2, 0x00C, 5,  :op_ldpx_r_cb  , // LDPX_R
+        0xE70, MASK_8B,  0, 0,     5,  :op_ldpy_my_cb , // LDPY_MY
+        0xEF0, MASK_8B,  2, 0x00C, 5,  :op_ldpy_r_cb  , // LDPY_R
+        0x900, MASK_4B,  0, 0,     5,  :op_lbpx_cb    , // LBPX
+        0xF40, MASK_8B,  0, 0,     7,  :op_set_cb     , // SET
+        0xF50, MASK_8B,  0, 0,     7,  :op_rst_cb     , // RST
+        0xF41, MASK_12B, 0, 0,     7,  :op_scf_cb     , // SCF
+        0xF5E, MASK_12B, 0, 0,     7,  :op_rcf_cb     , // RCF
+        0xF42, MASK_12B, 0, 0,     7,  :op_szf_cb     , // SZF
+        0xF5D, MASK_12B, 0, 0,     7,  :op_rzf_cb     , // RZF
+        0xF44, MASK_12B, 0, 0,     7,  :op_sdf_cb     , // SDF
+        0xF5B, MASK_12B, 0, 0,     7,  :op_rdf_cb     , // RDF
+        0xF48, MASK_12B, 0, 0,     7,  :op_ei_cb      , // EI
+        0xF57, MASK_12B, 0, 0,     7,  :op_di_cb      , // DI
+        0xFDB, MASK_12B, 0, 0,     5,  :op_inc_sp_cb  , // INC_SP
+        0xFCB, MASK_12B, 0, 0,     5,  :op_dec_sp_cb  , // DEC_SP
+        0xFC0, MASK_10B, 0, 0,     5,  :op_push_r_cb  , // PUSH_R
+        0xFC4, MASK_12B, 0, 0,     5,  :op_push_xp_cb , // PUSH_XP
+        0xFC5, MASK_12B, 0, 0,     5,  :op_push_xh_cb , // PUSH_XH
+        0xFC6, MASK_12B, 0, 0,     5,  :op_push_xl_cb , // PUSH_XL
+        0xFC7, MASK_12B, 0, 0,     5,  :op_push_yp_cb , // PUSH_YP
+        0xFC8, MASK_12B, 0, 0,     5,  :op_push_yh_cb , // PUSH_YH
+        0xFC9, MASK_12B, 0, 0,     5,  :op_push_yl_cb , // PUSH_YL
+        0xFCA, MASK_12B, 0, 0,     5,  :op_push_f_cb  , // PUSH_F
+        0xFD0, MASK_10B, 0, 0,     5,  :op_pop_r_cb   , // POP_R
+        0xFD4, MASK_12B, 0, 0,     5,  :op_pop_xp_cb  , // POP_XP
+        0xFD5, MASK_12B, 0, 0,     5,  :op_pop_xh_cb  , // POP_XH
+        0xFD6, MASK_12B, 0, 0,     5,  :op_pop_xl_cb  , // POP_XL
+        0xFD7, MASK_12B, 0, 0,     5,  :op_pop_yp_cb  , // POP_YP
+        0xFD8, MASK_12B, 0, 0,     5,  :op_pop_yh_cb  , // POP_YH
+        0xFD9, MASK_12B, 0, 0,     5,  :op_pop_yl_cb  , // POP_YL
+        0xFDA, MASK_12B, 0, 0,     5,  :op_pop_f_cb   , // POP_F
+        0xFE0, MASK_10B, 0, 0,     5,  :op_ld_sph_r_cb, // LD_SPH_R
+        0xFF0, MASK_10B, 0, 0,     5,  :op_ld_spl_r_cb, // LD_SPL_R
+        0xFE4, MASK_10B, 0, 0,     5,  :op_ld_r_sph_cb, // LD_R_SPH
+        0xFF4, MASK_10B, 0, 0,     5,  :op_ld_r_spl_cb, // LD_R_SPL
+        0xC00, MASK_6B,  4, 0x030, 7,  :op_add_r_i_cb , // ADD_R_I
+        0xA80, MASK_8B,  2, 0x00C, 7,  :op_add_r_q_cb , // ADD_R_Q
+        0xC40, MASK_6B,  4, 0x030, 7,  :op_adc_r_i_cb , // ADC_R_I
+        0xA90, MASK_8B,  2, 0x00C, 7,  :op_adc_r_q_cb , // ADC_R_Q
+        0xAA0, MASK_8B,  2, 0x00C, 7,  :op_sub_cb     , // SUB
+        0xD40, MASK_6B,  4, 0x030, 7,  :op_sbc_r_i_cb , // SBC_R_I
+        0xAB0, MASK_8B,  2, 0x00C, 7,  :op_sbc_r_q_cb , // SBC_R_Q
+        0xC80, MASK_6B,  4, 0x030, 7,  :op_and_r_i_cb , // AND_R_I
+        0xAC0, MASK_8B,  2, 0x00C, 7,  :op_and_r_q_cb , // AND_R_Q
+        0xCC0, MASK_6B,  4, 0x030, 7,  :op_or_r_i_cb  , // OR_R_I
+        0xAD0, MASK_8B,  2, 0x00C, 7,  :op_or_r_q_cb  , // OR_R_Q
+        0xD00, MASK_6B,  4, 0x030, 7,  :op_xor_r_i_cb , // XOR_R_I
+        0xAE0, MASK_8B,  2, 0x00C, 7,  :op_xor_r_q_cb , // XOR_R_Q
+        0xDC0, MASK_6B,  4, 0x030, 7,  :op_cp_r_i_cb  , // CP_R_I
+        0xF00, MASK_8B,  2, 0x00C, 7,  :op_cp_r_q_cb  , // CP_R_Q
+        0xD80, MASK_6B,  4, 0x030, 7,  :op_fan_r_i_cb , // FAN_R_I
+        0xF10, MASK_8B,  2, 0x00C, 7,  :op_fan_r_q_cb , // FAN_R_Q
+        0xAF0, MASK_8B,  0, 0,     7,  :op_rlc_cb     , // RLC
+        0xE8C, MASK_10B, 0, 0,     5,  :op_rrc_cb     , // RRC
+        0xF60, MASK_8B,  0, 0,     7,  :op_inc_mn_cb  , // INC_MN
+        0xF70, MASK_8B,  0, 0,     7,  :op_dec_mn_cb  , // DEC_MN
+        0xF28, MASK_10B, 0, 0,     7,  :op_acpx_cb    , // ACPX
+        0xF2C, MASK_10B, 0, 0,     7,  :op_acpy_cb    , // ACPY
+        0xF38, MASK_10B, 0, 0,     7,  :op_scpx_cb    , // SCPX
+        0xF3C, MASK_10B, 0, 0,     7,  :op_scpy_cb    , // SCPY
+        0xD0F, 0xFCF,    4, 0,     7,  :op_not_cb     , // NOT
     ];
 
     function wait_for_cycles(since as Timestamp, cycles as U8) as Timestamp {
@@ -1637,7 +1646,7 @@ class CPU_impl {
                 cpu_halted = false;
 
                 ref_ts = wait_for_cycles(ref_ts, 12);
-                interrupts[i].triggered = false;
+                interrupts[i].triggered = 0;
                 return;
             }
         }
@@ -1844,7 +1853,7 @@ class CPU_impl {
             /* Lookup the OP code */
             var op_found = false;
             for (i = 0; i < OPS.size(); i++) {
-                if ((op & OPS[i * 6  + 1/*mask*/]) == OPS[i * 6 + 0/*code*/]) {
+                if ((op & OPS[i * OP_ELEMENT_SIZE + OP_MASK]) == OPS[i * OP_ELEMENT_SIZE + OP_CODE]) {
                     op_found = true;
                     break;
                 }
@@ -1867,20 +1876,20 @@ class CPU_impl {
             ref_ts = wait_for_cycles(ref_ts, previous_cycles);
 
             /* Process the OP code */
-            var cb = method(OPS[i * 6 + 5/*callback symbol*/]);
+            var cb = method(OPS[i * OP_ELEMENT_SIZE + OP_CALLBACK_SYMBOL]);
             if (cb != null) {
-                if (OPS[i * 6 + 3/*mask_arg0*/]) {
+                if (OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]) {
                     /* Two arguments */
-                    cb.invoke((op & OPS[i * 6 + 3/*mask_arg0*/]) >> OPS[i * 6 + 2/*shift_arg0*/], op & ~(OPS[i * 6 + 1/*mask*/] | OPS[i * 6 + 3/*mask_arg0*/]));
+                    cb.invoke((op & OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]) >> OPS[i * OP_ELEMENT_SIZE + OP_SHIFT_ARG0], op & ~(OPS[i * OP_ELEMENT_SIZE + OP_MASK] | OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]));
                 } else {
                     /* One arguments */
-                    cb.invoke((op & ~OPS[i * 6 + 1/*mask*/]) >> OPS[i * 6 + 2/*shift_arg0*/], 0);
+                    cb.invoke((op & ~OPS[i * OP_ELEMENT_SIZE + OP_MASK]) >> OPS[i * OP_ELEMENT_SIZE + OP_SHIFT_ARG0], 0);
                 }
             }
 
             /* Prepare for the next instruction */
             pc = next_pc;
-            previous_cycles = OPS[i * 6 + 4/*cycles*/];
+            previous_cycles = OPS[i * OP_ELEMENT_SIZE + OP_CYCLES];
 
             if (i) {
                 /* OP code is not PSET, reset NP */

@@ -94,10 +94,10 @@ enum IntSlot {
 class Interrupt {
     var factor_flag_reg as U4;
     var mask_reg as U4;
-    var triggered as Bool;
+    var triggered as Int;
     var vector as U8;
 
-    function initialize(factor_flag_reg as U4, mask_reg as U4, triggered as Bool, vector as U8) {
+    function initialize(factor_flag_reg as U4, mask_reg as U4, triggered as Int, vector as U8) {
         me.factor_flag_reg = factor_flag_reg;
         me.mask_reg = mask_reg;
         me.triggered = triggered;

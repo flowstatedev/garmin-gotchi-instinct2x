@@ -1,7 +1,7 @@
 using Toybox.Lang as std;
 
 module tamalib {
-
+/*
 function int(val as Bool or Num) as Int {
     switch (val) {
         case instanceof std.Boolean:
@@ -18,5 +18,5 @@ function bool(val as Int) as Bool {
 function float(val as Int) as Float {
     return val.toFloat();
 }
-
+*/
 }

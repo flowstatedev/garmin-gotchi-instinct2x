@@ -190,7 +190,7 @@ class GarminGotchiApp extends app.AppBase {
 
     (:disable_log) function is_log_enabled(level as tama.LogLevel) as tama.Bool { return false; }
     (:enable_log)  function is_log_enabled(level as tama.LogLevel) as tama.Bool {
-        return tama.bool(LOG_LEVEL_FLAGS & (level as tama.Int));
+        return (LOG_LEVEL_FLAGS & (level as tama.Int)) ? true : false;
     }
 
     (:disable_log) function log(level as tama.LogLevel, buff as tama.String, args as tama.Objects) as Void {}
@@ -219,7 +219,7 @@ class GarminGotchiApp extends app.AppBase {
 
     function set_lcd_matrix(x as tama.U8, y as tama.U8, val as tama.Bool) as Void {
         var old_val = matrix[x + y * tama.LCD_WIDTH];
-        var new_val = tama.int(val);
+        var new_val = val ? 1 : 0;
         if (old_val != new_val) {
             update_screen_request = true;
             matrix[x + y * tama.LCD_WIDTH] = new_val;
@@ -228,7 +228,7 @@ class GarminGotchiApp extends app.AppBase {
 
     function set_lcd_icon(icon as tama.U8, val as tama.Bool) as Void {
         var old_val = icons[icon];
-        var new_val = tama.int(val);
+        var new_val = val ? 1 : 0;
         if (old_val != new_val) {
             update_screen_request = true;
             icons[icon] = new_val;

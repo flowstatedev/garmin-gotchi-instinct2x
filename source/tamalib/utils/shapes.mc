@@ -17,7 +17,7 @@ class Circle {
 }
 
 function bbox_to_circle(box as gfx.BoundingBox) as Circle {
-    var r = float(box.width) / 2;
+    var r = box.width / 2.0;
     var x = (box.x as Int) + r;
     var y = (box.y as Int) + r;
     return new Circle(round(x), round(y), round(r));

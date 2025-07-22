@@ -92,7 +92,7 @@ function save_state_interrupts(state as CPUState) as Void {
         encodings[i] = (0x0000 as U32
             |     (interrupts[i].factor_flag_reg << 24)
             |     (interrupts[i].mask_reg        << 16)
-            | (int(interrupts[i].triggered)      <<  8)
+            |     (interrupts[i].triggered       <<  8)
             |     (interrupts[i].vector          <<  0)
         );
     }
@@ -153,7 +153,7 @@ function load_state_interrupts(state as CPUState) as Void {
     for (var i = 0; i < INT_SLOT_NUM; i++) {
         interrupts[i].factor_flag_reg = ((encodings[i] >> 24) & 0x0F);
         interrupts[i].mask_reg =        ((encodings[i] >> 16) & 0x0F);
-        interrupts[i].triggered =   bool((encodings[i] >>  8) & 0x01);
+        interrupts[i].triggered =       ((encodings[i] >>  8) & 0x01);
         interrupts[i].vector =          ((encodings[i] >>  0) & 0xFF);
     }
 }

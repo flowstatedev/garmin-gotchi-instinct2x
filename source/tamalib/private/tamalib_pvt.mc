@@ -115,7 +115,7 @@ class Tamalib_impl {
     function mainloop() as Void {
         var ts;
 
-        while (!bool(g_hal.handler())) {
+        while (g_hal.handler() != 0) {
             step();
 
             /* Update the screen @ g_framerate fps */
