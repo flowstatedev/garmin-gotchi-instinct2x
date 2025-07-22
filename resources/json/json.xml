@@ -8,11 +8,11 @@
       - json data cannot be directly deserialized to a byte array, only a normal array of objects (which is why we pack the bytes into 32-bit ints)
       - an array of 32-bit integers in Monkey C takes *5 bytes* per element (1 byte is used for the object type), which means
         that we absolutely have to ultimately convert these resources to back to an ByteArray, as we cannot afford to
-        eat a 25% memory penalty
+        eat the 25% memory penalty
       - due to memory and watchdog constraints, we have to split the data up into 4 arrays
     -->
-      <jsonData id="TAMA_PROGRAM1">
-        [
+    <jsonData id="TAMA_PROGRAM1">
+[
 262278279,
 235932288,
 176163477,
@@ -781,8 +781,10 @@
 235212674,
 239075328,
 268374015
-]</jsonData>
-<jsonData id="TAMA_PROGRAM2">[
+]
+    </jsonData>
+    <jsonData id="TAMA_PROGRAM2">
+[
 95618844,
 100337414,
 239468574,
@@ -1553,8 +1555,9 @@
 268374015
 ]
     </jsonData>
-    <jsonData id="TAMA_PROGRAM3">[
-        17563921,
+    <jsonData id="TAMA_PROGRAM3">
+[
+17563921,
 18350372,
 19988794,
 21168460,
@@ -2321,8 +2324,11 @@
 268374015,
 268374015,
 268374015,
-268374015]</jsonData>
-<jsonData id="TAMA_PROGRAM4">[
+268374015
+]
+    </jsonData>
+    <jsonData id="TAMA_PROGRAM4">
+[
 234884736,
 186910976,
 185862432,
@@ -3090,6 +3096,7 @@
 150997248,
 150997248,
 150997248,
-150995200]
+150995200
+]
     </jsonData>
 </resources>
