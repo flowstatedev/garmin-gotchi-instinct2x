@@ -134,12 +134,11 @@ class GarminGotchiView extends ui.View {
             if (game.icons[i]) {
             // if (true) { // TEST: force icon to be displayed to test worst-case peak memory usage
                 var current_icon_symbol = ICON_BITMAPS[i];
-                var icon_resource = last_icon_resource;
                 if (last_icon_symbol != current_icon_symbol) {
                     last_icon_symbol = current_icon_symbol;
-                    icon_resource = app.loadResource(Rez.Drawables[ICON_BITMAPS[i]] as ResourceId) as BitmapType;
+                    last_icon_resource = app.loadResource(Rez.Drawables[ICON_BITMAPS[i]] as ResourceId) as BitmapType;
                 }
-                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, icon_resource as BitmapType);
+                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, last_icon_resource as BitmapType);
                 break;
             }
         }
