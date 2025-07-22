@@ -22,8 +22,8 @@ class GarminGotchiApp extends app.AppBase {
     );
 
     (:enable_log)  const RUN_MAX_STEPS = 10;
-    // (:disable_log) const RUN_MAX_STEPS = 160;
-     (:disable_log) const RUN_MAX_STEPS = 40;
+    // (:disable_log) const RUN_MAX_STEPS = 160; // instinct3solar45mm
+    (:disable_log) const RUN_MAX_STEPS = 40; // instinct2x
     const RUN_TIMER_PERIOD_MS     = 50;
     const UPDATE_SCREEN_PERIOD_MS = 500;
     const UPDATE_SCREEN_THRESHOLD = (UPDATE_SCREEN_PERIOD_MS / RUN_TIMER_PERIOD_MS);
@@ -32,7 +32,7 @@ class GarminGotchiApp extends app.AppBase {
     // (:test_program) const PROGRAM = TEST_PROGRAM;
 
     const PROGRAM as ByteArray = new [12288]b;
-    const PROGRAM_FRAGMENT_SIZE = 3072;
+    const PROGRAM_FRAGMENT_SIZE = 3072; // size of each fragment in bytes
 
     const SPEED_RATIO       = 0;
     const CLOCK_FREQ        = 1000000;
@@ -59,9 +59,9 @@ class GarminGotchiApp extends app.AppBase {
     var start_time as tama.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
 
-    function loadProgram(rezId as Symbol, offset as Number) as Void {
+    function loadProgramFragment(rezId as Symbol, offset as Number) as Void {
         var fragment = Application.loadResource(Rez.JsonData[rezId] as ResourceId) as Array<Number>;
-        var fragment_size_uint32 = PROGRAM_FRAGMENT_SIZE / 4;
+        var fragment_size_uint32 = PROGRAM_FRAGMENT_SIZE / 4; // size of each fragment in uint32s
         for (var i = 0; i < fragment_size_uint32; i++) {
             var v = fragment[i];
             PROGRAM[offset] = v >> 24;
@@ -78,15 +78,15 @@ class GarminGotchiApp extends app.AppBase {
     function initialize() {
         AppBase.initialize();
 
-        loadProgram(:TAMA_PROGRAM1, 0);
-        loadProgram(:TAMA_PROGRAM2, PROGRAM_FRAGMENT_SIZE);
+        loadProgramFragment(:TAMA_PROGRAM1, 0);
+        loadProgramFragment(:TAMA_PROGRAM2, PROGRAM_FRAGMENT_SIZE);
 
         run_timer.start(method(:afterLoadHalfProgram), 50, false);
     }
 
     function afterLoadHalfProgram() as Void {
-        loadProgram(:TAMA_PROGRAM3, PROGRAM_FRAGMENT_SIZE * 2);
-        loadProgram(:TAMA_PROGRAM4, PROGRAM_FRAGMENT_SIZE * 3);
+        loadProgramFragment(:TAMA_PROGRAM3, PROGRAM_FRAGMENT_SIZE * 2);
+        loadProgramFragment(:TAMA_PROGRAM4, PROGRAM_FRAGMENT_SIZE * 3);
 
         run_timer.start(method(:afterLoadFullProgram), 50, false);
     }
