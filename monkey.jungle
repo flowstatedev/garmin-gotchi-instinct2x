@@ -1,6 +1,6 @@
 project.manifest = manifest.xml
 project.optimization = 3p,enable-constant-folding,enable-empty-function-removal,enable-lexical-only-constants,enable-static-branch-elimination
-project.typecheck = gradual
+project.typecheck = strict
 
 base.sourcePath = source
 

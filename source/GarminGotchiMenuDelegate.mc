@@ -1,6 +1,6 @@
 using Toybox.System as sys;
 using Toybox.WatchUi as ui;
-using Toybox.Lang as std;
+import Toybox.Lang;
 
 class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
 
@@ -13,7 +13,7 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
         game.pause();
     }
 
-    function onMenuItem(item as std.Symbol) as Void {
+    function onMenuItem(item as Symbol) as Void {
         switch (item) {
             case :MenuResume:
                 break;

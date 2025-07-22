@@ -2,13 +2,15 @@ using Toybox.Application as app;
 using Toybox.Graphics as gfx;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
-using Toybox.Lang as std;
+import Toybox.Lang;
+import Toybox.WatchUi;
+import Toybox.Graphics;
 
 using tamalib as tama;
 
 class GarminGotchiView extends ui.View {
 
-    typedef BitmapResources as std.Array<ui.BitmapResource>;
+    typedef BitmapResources as Array<BitmapType>;
 
     (:standard_colors) const COLOR_WHITE = gfx.COLOR_WHITE;
     (:inverted_colors) const COLOR_WHITE = gfx.COLOR_BLACK;
@@ -22,9 +24,9 @@ class GarminGotchiView extends ui.View {
     (:initialized) var MATRIX as tama.Rect;
     (:initialized) var PIXEL_SIZE as tama.Int;
     // (:initialized) var ICON_BITMAPS as BitmapResources;
-    (:initialized) var BACKGROUND;
+    (:initialized) var BACKGROUND as BitmapType?;
 
-    (:initialized) const ICON_BITMAPS = [
+    (:initialized) const ICON_BITMAPS as Array<Symbol> = [
         :IconFood,
         :IconLight,
         :IconGame,
@@ -51,7 +53,7 @@ class GarminGotchiView extends ui.View {
 
     function onUpdate(dc as gfx.Dc) as Void {
         // View.onUpdate(dc);
-        dc.drawBitmap(0, 0, BACKGROUND);
+        dc.drawBitmap(0, 0, BACKGROUND as BitmapType);
         draw_screen(dc);
     }
 
@@ -70,7 +72,7 @@ class GarminGotchiView extends ui.View {
             MATRIX_WIDTH,
             MATRIX_HEIGHT
         );
-        BACKGROUND = app.loadResource(Rez.Drawables.Background);
+        BACKGROUND = app.loadResource(Rez.Drawables.Background) as BitmapType;
     }
 
     function draw_timer_callback() as Void {
@@ -124,19 +126,20 @@ class GarminGotchiView extends ui.View {
         // draw_rect(dc, pixel, COLOR_BLACK, true);
     // }
 
-    var last_icon = null;
-    var icon_resource = null;
+    var last_icon_symbol as Symbol? = null;
+    var last_icon_resource as BitmapType? = null;
     function draw_icon(dc as gfx.Dc) as Void {
         dc.setColor(COLOR_WHITE, COLOR_EMPTY);
         for (var i = 0; i < game.icons.size(); i++) {
             if (game.icons[i]) {
             // if (true) { // TEST: force icon to be displayed to test worst-case peak memory usage
-                var current_icon = ICON_BITMAPS[i];
-                if (last_icon != current_icon) {
-                    last_icon = current_icon;
-                    icon_resource = app.loadResource(Rez.Drawables[ICON_BITMAPS[i]]);
+                var current_icon_symbol = ICON_BITMAPS[i];
+                var icon_resource = last_icon_resource;
+                if (last_icon_symbol != current_icon_symbol) {
+                    last_icon_symbol = current_icon_symbol;
+                    icon_resource = app.loadResource(Rez.Drawables[ICON_BITMAPS[i]] as ResourceId) as BitmapType;
                 }
-                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, icon_resource);
+                dc.drawBitmap(SUBSCREEN_RECT.x, SUBSCREEN_RECT.y, icon_resource as BitmapType);
                 break;
             }
         }

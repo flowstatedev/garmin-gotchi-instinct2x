@@ -3,15 +3,15 @@ using Toybox.Attention as att;
 using Toybox.System as sys;
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
-using Toybox.Lang as std;
+import Toybox.Lang;
 
 using tamalib as tama;
 
 class GarminGotchiApp extends app.AppBase {
 
     (:enable_sounds) const HAS_TONE_PROFILE as tama.Bool = att has :ToneProfile;
-    (:enable_sounds) typedef ToneProfile as std.Array<att.ToneProfile>;
-    (:enable_sounds) typedef SoundProfile as {:toneProfile as ToneProfile, :repeatCount as std.Number};
+    (:enable_sounds) typedef ToneProfile as Array<att.ToneProfile>;
+    (:enable_sounds) typedef SoundProfile as {:toneProfile as ToneProfile, :repeatCount as Number};
 
     (:enable_log) const LOG_LEVEL_FLAGS = (0
         | tama.LOG_ERROR
@@ -31,7 +31,8 @@ class GarminGotchiApp extends app.AppBase {
     // (:tama_program) const PROGRAM = TAMA_PROGRAM;
     // (:test_program) const PROGRAM = TEST_PROGRAM;
 
-    var PROGRAM as std.ByteArray?;
+    const PROGRAM as ByteArray = new [12288]b;
+    const PROGRAM_FRAGMENT_SIZE = 3072;
 
     const SPEED_RATIO       = 0;
     const CLOCK_FREQ        = 1000000;
@@ -59,9 +60,10 @@ class GarminGotchiApp extends app.AppBase {
     var run_timer as time.Timer = new time.Timer();
     var misc_timer as time.Timer = new time.Timer();
 
-    function loadProgram(rezId, offset) {
-        var fragment = Application.loadResource(Rez.JsonData[rezId]) as std.Array<std.Number>;
-        for (var i = 0; i < 768; i++) {
+    function loadProgram(rezId as Symbol, offset as Number) as Void {
+        var fragment = Application.loadResource(Rez.JsonData[rezId] as ResourceId) as Array<Number>;
+        var fragment_size_uint32 = PROGRAM_FRAGMENT_SIZE / 4;
+        for (var i = 0; i < fragment_size_uint32; i++) {
             var v = fragment[i];
             PROGRAM[offset] = v >> 24;
             offset++;
@@ -76,10 +78,9 @@ class GarminGotchiApp extends app.AppBase {
 
     function initialize() {
         AppBase.initialize();
-        PROGRAM = new [12288]b;
 
         loadProgram(:TAMA_PROGRAM1, 0);
-        loadProgram(:TAMA_PROGRAM2, 3072);
+        loadProgram(:TAMA_PROGRAM2, PROGRAM_FRAGMENT_SIZE);
 
         misc_timer.start(method(:afterInitialize), 50, false);
     }
@@ -91,17 +92,17 @@ class GarminGotchiApp extends app.AppBase {
     }
 
     function afterLoad() as Void {
-        loadProgram(:TAMA_PROGRAM3, 6144);
-        loadProgram(:TAMA_PROGRAM4, 9216);
+        loadProgram(:TAMA_PROGRAM3, PROGRAM_FRAGMENT_SIZE * 2);
+        loadProgram(:TAMA_PROGRAM4, PROGRAM_FRAGMENT_SIZE * 3);
 
         start();
     }
 
-    // function onStart(state as std.Dictionary?) as Void {
+    // function onStart(state as Dictionary?) as Void {
     //     start();
     // }
 
-    function onStop(state as std.Dictionary?) as Void {
+    function onStop(state as Dictionary?) as Void {
         stop();
     }
 

@@ -19,6 +19,7 @@
  */
 
 using Toybox.Lang as std;
+import Toybox.Lang;
 
 module tamalib {
 
@@ -1496,8 +1497,10 @@ class CPU_impl {
     }
 
     /* The E0C6S46 supported instructions */
+    const OP_CODE_PSET = 0xE40;
+    const OP_CODE_EI = 0xF48;
     const OPS = [
-        0xE40, MASK_7B,  0, 0,     5,  :op_pset_cb    , // PSET
+ OP_CODE_PSET, MASK_7B,  0, 0,     5,  :op_pset_cb    , // PSET
         0x000, MASK_4B,  0, 0,     5,  :op_jp_cb      , // JP
         0x200, MASK_4B,  0, 0,     5,  :op_jp_c_cb    , // JP_C
         0x300, MASK_4B,  0, 0,     5,  :op_jp_nc_cb   , // JP_NC
@@ -1555,7 +1558,7 @@ class CPU_impl {
         0xF5D, MASK_12B, 0, 0,     7,  :op_rzf_cb     , // RZF
         0xF44, MASK_12B, 0, 0,     7,  :op_sdf_cb     , // SDF
         0xF5B, MASK_12B, 0, 0,     7,  :op_rdf_cb     , // RDF
-        0xF48, MASK_12B, 0, 0,     7,  :op_ei_cb      , // EI
+   OP_CODE_EI, MASK_12B, 0, 0,     7,  :op_ei_cb      , // EI
         0xF57, MASK_12B, 0, 0,     7,  :op_di_cb      , // DI
         0xFDB, MASK_12B, 0, 0,     5,  :op_inc_sp_cb  , // INC_SP
         0xFCB, MASK_12B, 0, 0,     5,  :op_dec_sp_cb  , // DEC_SP
@@ -1844,22 +1847,27 @@ class CPU_impl {
     }
 
     function step() as Int {
-        var i = 0;
-
+        // - unsure if this initializer for op_code is strictly correct, but it preserves previous logic
+        // (which used to be based on i being initialized to 0 and checked in place of op_code)
+        // - this is only an issue if it's possible to have pending interrupts when cpu is halted
+        var op_code = OP_CODE_PSET;
         if (!cpu_halted) {
             var prg_i = pc * 2;
             var op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
 
             /* Lookup the OP code */
-            var op_found = false;
+            var op_index = -1;
+            var i;
             for (i = 0; i < OPS.size(); i++) {
-                if ((op & OPS[i * OP_ELEMENT_SIZE + OP_MASK]) == OPS[i * OP_ELEMENT_SIZE + OP_CODE]) {
-                    op_found = true;
+                var index = i * OP_ELEMENT_SIZE;
+                op_code = OPS[index + OP_CODE];
+                if ((op & OPS[index + OP_MASK] as Number) == op_code) {
+                    op_index = index;
                     break;
                 }
             }
 
-            if (!op_found) {
+            if (op_index == -1) {
                 //g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
                 return 1;
             }
@@ -1876,22 +1884,22 @@ class CPU_impl {
             ref_ts = wait_for_cycles(ref_ts, previous_cycles);
 
             /* Process the OP code */
-            var cb = method(OPS[i * OP_ELEMENT_SIZE + OP_CALLBACK_SYMBOL]);
+            var cb = method(OPS[op_index + OP_CALLBACK_SYMBOL] as Symbol);
             if (cb != null) {
-                if (OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]) {
+                if (OPS[op_index + OP_MASK_ARG0]) {
                     /* Two arguments */
-                    cb.invoke((op & OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]) >> OPS[i * OP_ELEMENT_SIZE + OP_SHIFT_ARG0], op & ~(OPS[i * OP_ELEMENT_SIZE + OP_MASK] | OPS[i * OP_ELEMENT_SIZE + OP_MASK_ARG0]));
+                    cb.invoke((op & OPS[op_index + OP_MASK_ARG0] as Number) >> OPS[op_index + OP_SHIFT_ARG0] as Number, op & ~(OPS[op_index + OP_MASK] as Number | OPS[op_index + OP_MASK_ARG0] as Number));
                 } else {
                     /* One arguments */
-                    cb.invoke((op & ~OPS[i * OP_ELEMENT_SIZE + OP_MASK]) >> OPS[i * OP_ELEMENT_SIZE + OP_SHIFT_ARG0], 0);
+                    cb.invoke((op & ~(OPS[op_index + OP_MASK] as Number)) >> OPS[op_index + OP_SHIFT_ARG0] as Number, 0);
                 }
             }
 
             /* Prepare for the next instruction */
             pc = next_pc;
-            previous_cycles = OPS[i * OP_ELEMENT_SIZE + OP_CYCLES];
+            previous_cycles = OPS[op_index + OP_CYCLES] as Number;
 
-            if (i) {
+            if (op_code != OP_CODE_PSET) {
                 /* OP code is not PSET, reset NP */
                 np = (pc >> 8) & 0x1F;
             }
@@ -1908,7 +1916,7 @@ class CPU_impl {
 
         /* Check if there is any pending interrupt */
         if (flags & FLAG_I) {
-            if (i != 0 && i != 58) {
+            if (op_code != OP_CODE_PSET && op_code != OP_CODE_EI) {
                 // Do not process interrupts after a PSET or EI operation
                 process_interrupts();
             }

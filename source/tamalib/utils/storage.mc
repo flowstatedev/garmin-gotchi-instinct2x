@@ -1,5 +1,5 @@
 using Toybox.Application as app;
-using Toybox.Lang as std;
+import Toybox.Lang;
 
 module tamalib {
 
@@ -29,6 +29,8 @@ const STORAGE_KEY_INTERRUPTS                = 22; // "interrupts";
 const STORAGE_KEY_MEMORY_RAM                = 23; // "memory_ram";
 const STORAGE_KEY_MEMORY_IO                 = 24; // "memory_io";
 const STORAGE_KEY_STATE_SAVED               = 25; // "state_saved";
+
+typedef StorageKeyType as Number;
 
 function save_state(state as CPUState) as Void {
     set_state_saved(false);
@@ -107,7 +109,7 @@ function save_state_memory_io(state as CPUState) as Void {
     save_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function save_state_memory(state as CPUState, storage_key, mem_addr as U32, mem_size as U32) as Void {
+function save_state_memory(state as CPUState, storage_key as StorageKeyType, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
     var encodings = new [mem_size / 8];
     for (var i = 0; i < encodings.size(); i++) {
@@ -149,7 +151,7 @@ function load_state_variables(state as CPUState) as Void {
 
 function load_state_interrupts(state as CPUState) as Void {
     var interrupts = state.get_interrupts();
-    var encodings = app.Storage.getValue(STORAGE_KEY_INTERRUPTS) as std.Array<U32>;
+    var encodings = app.Storage.getValue(STORAGE_KEY_INTERRUPTS) as Array<U32>;
     for (var i = 0; i < INT_SLOT_NUM; i++) {
         interrupts[i].factor_flag_reg = ((encodings[i] >> 24) & 0x0F);
         interrupts[i].mask_reg =        ((encodings[i] >> 16) & 0x0F);
@@ -166,9 +168,9 @@ function load_state_memory_io(state as CPUState) as Void {
     load_state_memory(state, STORAGE_KEY_MEMORY_IO, MEM_IO_ADDR, MEM_IO_SIZE);
 }
 
-function load_state_memory(state as CPUState, storage_key, mem_addr as U32, mem_size as U32) as Void {
+function load_state_memory(state as CPUState, storage_key as StorageKeyType, mem_addr as U32, mem_size as U32) as Void {
     var memory = state.get_memory();
-    var encodings = app.Storage.getValue(storage_key) as std.Array<U32>;
+    var encodings = app.Storage.getValue(storage_key) as Array<U32>;
     for (var i = 0; i < mem_size / 8; i++) {
         var addr = (mem_addr / 2) + (i * 4);
         memory[addr + 0] = (encodings[i] >> 24) & 0xFF;

@@ -33,13 +33,13 @@ class HW_impl {
     // ]b;
 
     // efficient for CIQ 3
-    const SEG_POS = StringUtil.convertEncodedString(
+    const SEG_POS as Bytes = StringUtil.convertEncodedString(
         "00010203040506072008090a0b0c0d0e0f2122231f1e1d1c1b1a191824171615141312111025262728292a2b2c2d2e2f303132",
         {
             :fromRepresentation  => StringUtil.REPRESENTATION_STRING_HEX,
             :toRepresentation  => StringUtil.REPRESENTATION_BYTE_ARRAY
         }
-    );
+    ) as Bytes;
     (:initialized) var g_hal as HAL;
     (:initialized) var g_cpu as CPU;
 

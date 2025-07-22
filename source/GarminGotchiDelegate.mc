@@ -1,6 +1,6 @@
 using Toybox.WatchUi as ui;
 using Toybox.Timer as time;
-using Toybox.Lang as std;
+import Toybox.Lang;
 
 using tamalib as tama;
 
@@ -24,27 +24,27 @@ class GarminGotchiDelegate extends ui.BehaviorDelegate {
         me.game = game;
     }
 
-    function onMenu() as std.Boolean {
+    function onMenu() as Boolean {
         ui.pushView(new Rez.Menus.Menu(), new GarminGotchiMenuDelegate(game), ui.SLIDE_UP);
         return true;
     }
 
-    function onPreviousPage() as std.Boolean {
+    function onPreviousPage() as Boolean {
         add_button_event(tama.BTN_LEFT);
         return true;
     }
 
-    function onNextPage() as std.Boolean {
+    function onNextPage() as Boolean {
         add_button_event(tama.BTN_RIGHT);
         return true;
     }
 
-    function onSelect() as std.Boolean {
+    function onSelect() as Boolean {
         add_button_event(tama.BTN_MIDDLE);
         return true;
     }
 
-    function onBack() as std.Boolean {
+    function onBack() as Boolean {
         add_button_event(tama.BTN_TAP);
         return true;
     }
