@@ -7,6 +7,7 @@ import Toybox.WatchUi;
 import Toybox.Graphics;
 
 using tamalib as tama;
+import tamalib;
 
 class GarminGotchiView extends ui.View {
 
@@ -59,10 +60,24 @@ class GarminGotchiView extends ui.View {
 
     function onHide() as Void {}
 
+    function getSubscreen() as Rect {
+        var box = null;
+        if (WatchUi has :getSubscreen) {
+            // instinct2x, instinct3 (solar)
+            box = WatchUi.getSubscreen() as Graphics.BoundingBox;
+            return tama.bbox_to_rect(box);
+        } else {
+            // hardcode for fr955
+            box = new Rect(165, 25, 62, 62);
+        }
+        return box;
+    }
+
     function compute_layout(dc as gfx.Dc) as Void {
         SCREEN = new tama.Rect(0, 0, dc.getWidth(), dc.getHeight());
-        SUBSCREEN_RECT = tama.bbox_to_rect(ui.getSubscreen() as gfx.BoundingBox);
-        SUBSCREEN_CIRCLE = tama.bbox_to_circle(ui.getSubscreen() as gfx.BoundingBox);
+        var subscreenRect = getSubscreen();
+        SUBSCREEN_RECT = subscreenRect;
+        SUBSCREEN_CIRCLE = tama.bbox_to_circle(subscreenRect);
         PIXEL_SIZE = tama.min(SCREEN.width / tama.LCD_WIDTH, SCREEN.height / tama.LCD_HEIGHT) as tama.Int;
         var MATRIX_WIDTH = tama.min(SCREEN.width, tama.LCD_WIDTH * PIXEL_SIZE) as tama.Int;
         var MATRIX_HEIGHT = tama.min(SCREEN.height, tama.LCD_HEIGHT * PIXEL_SIZE) as tama.Int;
