@@ -41,6 +41,10 @@ class GarminGotchiMenuDelegate extends Menu2InputDelegate {
                 break;
         }
 
+        onBack();
+    }
+
+    function onBack() as Void {
         game.start();
         WatchUi.popView(WatchUi.SLIDE_DOWN);
     }
