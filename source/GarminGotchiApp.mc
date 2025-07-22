@@ -58,7 +58,6 @@ class GarminGotchiApp extends app.AppBase {
 
     var start_time as tama.Timestamp = sys.getTimer();
     var run_timer as time.Timer = new time.Timer();
-    var misc_timer as time.Timer = new time.Timer();
 
     function loadProgram(rezId as Symbol, offset as Number) as Void {
         var fragment = Application.loadResource(Rez.JsonData[rezId] as ResourceId) as Array<Number>;
@@ -82,14 +81,14 @@ class GarminGotchiApp extends app.AppBase {
         loadProgram(:TAMA_PROGRAM1, 0);
         loadProgram(:TAMA_PROGRAM2, PROGRAM_FRAGMENT_SIZE);
 
-        misc_timer.start(method(:afterLoadHalfProgram), 50, false);
+        run_timer.start(method(:afterLoadHalfProgram), 50, false);
     }
 
     function afterLoadHalfProgram() as Void {
         loadProgram(:TAMA_PROGRAM3, PROGRAM_FRAGMENT_SIZE * 2);
         loadProgram(:TAMA_PROGRAM4, PROGRAM_FRAGMENT_SIZE * 3);
 
-        misc_timer.start(method(:afterLoadFullProgram), 50, false);
+        run_timer.start(method(:afterLoadFullProgram), 50, false);
     }
 
     var isProgramLoaded as Boolean = false;
