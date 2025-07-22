@@ -82,18 +82,18 @@ class GarminGotchiApp extends app.AppBase {
         loadProgram(:TAMA_PROGRAM1, 0);
         loadProgram(:TAMA_PROGRAM2, PROGRAM_FRAGMENT_SIZE);
 
-        misc_timer.start(method(:afterInitialize), 50, false);
+        misc_timer.start(method(:afterLoadHalfProgram), 50, false);
     }
 
-    function afterInitialize() as Void {
-        load();
-
-        misc_timer.start(method(:afterLoad), 50, false);
-    }
-
-    function afterLoad() as Void {
+    function afterLoadHalfProgram() as Void {
         loadProgram(:TAMA_PROGRAM3, PROGRAM_FRAGMENT_SIZE * 2);
         loadProgram(:TAMA_PROGRAM4, PROGRAM_FRAGMENT_SIZE * 3);
+
+        misc_timer.start(method(:afterLoadFullProgram), 50, false);
+    }
+
+    function afterLoadFullProgram() as Void {
+        load();
 
         start();
     }
