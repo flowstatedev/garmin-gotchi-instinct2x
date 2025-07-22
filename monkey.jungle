@@ -4,25 +4,31 @@ project.typecheck = strict
 
 base.sourcePath = source
 
+defaultExcludeAnnotations = _PLACEHOLDER_EXCLUDE # placeholder exclude to make the compiler happy
+
 # NOTE: for each build option, only one line must remain uncommented at a time,
 #       uncomment the option you want to exclude from the build
 
 # use tamagotchi or test program
-base.excludeAnnotations = $(base.excludeAnnotations);test_program
-# base.excludeAnnotations = $(base.excludeAnnotations);tama_program
+defaultExcludeAnnotations = $(defaultExcludeAnnotations);test_program
+# defaultExcludeAnnotations = $(defaultExcludeAnnotations);tama_program
 
 # disable or enable logging messages (NOTE: emulation runs faster with logging disabled)
-base.excludeAnnotations = $(base.excludeAnnotations);enable_log
-# base.excludeAnnotations = $(base.excludeAnnotations);disable_log
+defaultExcludeAnnotations = $(defaultExcludeAnnotations);enable_log
+# defaultExcludeAnnotations = $(defaultExcludeAnnotations);disable_log
 
 # disable or enable sounds (NOTE: emulation runs slightly faster with sounds disabled)
-# base.excludeAnnotations = $(base.excludeAnnotations);enable_sounds
-base.excludeAnnotations = $(base.excludeAnnotations);disable_sounds
+# defaultExcludeAnnotations = $(defaultExcludeAnnotations);enable_sounds
+defaultExcludeAnnotations = $(defaultExcludeAnnotations);disable_sounds
 
 # disable or enable sleep (NOTE: enable sleep to get accurate FPS)
-base.excludeAnnotations = $(base.excludeAnnotations);enable_sleep
-# base.excludeAnnotations = $(base.excludeAnnotations);disable_sleep
+defaultExcludeAnnotations = $(defaultExcludeAnnotations);enable_sleep
+# defaultExcludeAnnotations = $(defaultExcludeAnnotations);disable_sleep
 
 # invert black and white colors (NOTE: this doesn't affect bitmap resources)
-base.excludeAnnotations = $(base.excludeAnnotations);inverted_colors
-# base.excludeAnnotations = $(base.excludeAnnotations);standard_colors
+defaultExcludeAnnotations = $(defaultExcludeAnnotations);inverted_colors
+# defaultExcludeAnnotations = $(defaultExcludeAnnotations);standard_colors
+
+base.excludeAnnotations = $(defaultExcludeAnnotations);without_layout
+
+fr955.excludeAnnotations = $(defaultExcludeAnnotations);with_layout

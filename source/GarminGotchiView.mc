@@ -5,6 +5,11 @@ using Toybox.Timer as time;
 using Toybox.Lang as std;
 
 using tamalib as tama;
+import tamalib;
+
+import Toybox.Graphics;
+import Toybox.WatchUi;
+import Toybox.Lang;
 
 class GarminGotchiView extends ui.View {
 
@@ -30,24 +35,51 @@ class GarminGotchiView extends ui.View {
         me.game = game;
     }
 
-    function onLayout(dc as gfx.Dc) as Void {
+    // instinct3solar45mm
+    (:with_layout) function onLayout(dc as gfx.Dc) as Void {
         setLayout(Rez.Layouts.Layout(dc));
+        compute_layout(dc);
+    }
+
+    //fr955
+    (:without_layout) const BACKGROUND = WatchUi.loadResource(Rez.Drawables.Background);
+    (:without_layout) function onLayout(dc as gfx.Dc) as Void {
         compute_layout(dc);
     }
 
     function onShow() as Void {}
 
     function onUpdate(dc as gfx.Dc) as Void {
-        View.onUpdate(dc);
+        if (self has :BACKGROUND) {
+            // fr955
+            dc.drawBitmap(0, 0, BACKGROUND as BitmapType);
+        } else {
+            // instinct3solar45mm
+            View.onUpdate(dc);
+        }
         draw_screen(dc);
     }
 
     function onHide() as Void {}
 
+    function getSubscreen() as Rect {
+        var box = null;
+        if (WatchUi has :getSubscreen) {
+            // instinct2x, instinct3 (solar)
+            box = WatchUi.getSubscreen() as Graphics.BoundingBox;
+            return tama.bbox_to_rect(box);
+        } else {
+            // hardcode for fr955
+            box = new Rect(165, 25, 62, 62);
+        }
+        return box;
+    }
+
     function compute_layout(dc as gfx.Dc) as Void {
         SCREEN = new tama.Rect(0, 0, dc.getWidth(), dc.getHeight());
-        SUBSCREEN_RECT = tama.bbox_to_rect(ui.getSubscreen() as gfx.BoundingBox);
-        SUBSCREEN_CIRCLE = tama.bbox_to_circle(ui.getSubscreen() as gfx.BoundingBox);
+        var subscreenRect = getSubscreen();
+        SUBSCREEN_RECT = subscreenRect;
+        SUBSCREEN_CIRCLE = tama.bbox_to_circle(subscreenRect);
         PIXEL_SIZE = tama.min(SCREEN.width / tama.LCD_WIDTH, SCREEN.height / tama.LCD_HEIGHT) as tama.Int;
         var MATRIX_WIDTH = tama.min(SCREEN.width, tama.LCD_WIDTH * PIXEL_SIZE) as tama.Int;
         var MATRIX_HEIGHT = tama.min(SCREEN.height, tama.LCD_HEIGHT * PIXEL_SIZE) as tama.Int;
