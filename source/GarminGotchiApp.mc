@@ -61,8 +61,13 @@ class GarminGotchiApp extends app.AppBase {
 
     function loadProgramFragment(rezId as Symbol, offset as Number) as Void {
         var fragment = Application.loadResource(Rez.JsonData[rezId] as ResourceId) as Array<Number>;
-        var fragment_size_uint32 = PROGRAM_FRAGMENT_SIZE / 4; // size of each fragment in uint32s
-        for (var i = 0; i < fragment_size_uint32; i++) {
+        // The program fragment is stored in an Array of Numbers (in JSON), where each Number encodes
+        // 4 bytes from the original program data
+        var fragment_array_size = PROGRAM_FRAGMENT_SIZE / 4;
+        if (fragment_array_size != fragment.size()) {
+            throw new InvalidValueException("Program fragment from JSON has actual array size of " + fragment.size() + "; expected array size is " + fragment_array_size);
+        }
+        for (var i = 0; i < fragment_array_size; i++) {
             var v = fragment[i];
             PROGRAM[offset] = v >> 24;
             offset++;
