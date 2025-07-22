@@ -74,10 +74,11 @@ class Tamalib_impl {
             return;
         }
 
-        if (bool(g_cpu.step())) {
+        if (g_cpu.step()) {
             exec_mode = EXEC_MODE_PAUSE;
             step_depth = g_cpu.get_depth();
         } else {
+            var cpu_depth = g_cpu.get_depth();
             switch (exec_mode) {
                 case EXEC_MODE_PAUSE:
                 case EXEC_MODE_RUN:
@@ -88,23 +89,23 @@ class Tamalib_impl {
                     break;
 
                 case EXEC_MODE_NEXT:
-                    if (g_cpu.get_depth() <= step_depth) {
+                    if (cpu_depth <= step_depth) {
                         exec_mode = EXEC_MODE_PAUSE;
-                        step_depth = g_cpu.get_depth();
+                        step_depth = cpu_depth;
                     }
                     break;
 
                 case EXEC_MODE_TO_CALL:
-                    if (g_cpu.get_depth() > step_depth) {
+                    if (cpu_depth > step_depth) {
                         exec_mode = EXEC_MODE_PAUSE;
-                        step_depth = g_cpu.get_depth();
+                        step_depth = cpu_depth;
                     }
                     break;
 
                 case EXEC_MODE_TO_RET:
-                    if (g_cpu.get_depth() < step_depth) {
+                    if (cpu_depth < step_depth) {
                         exec_mode = EXEC_MODE_PAUSE;
-                        step_depth = g_cpu.get_depth();
+                        step_depth = cpu_depth;
                     }
                     break;
             }

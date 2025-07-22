@@ -82,10 +82,10 @@ class CPU_impl {
     const FLAG_D = (0x1 << 2);
     const FLAG_I = (0x1 << 3);
 
-    function C() as Bool { return bool(flags & FLAG_C); }
-    function Z() as Bool { return bool(flags & FLAG_Z); }
-    function D() as Bool { return bool(flags & FLAG_D); }
-    function I() as Bool { return bool(flags & FLAG_I); }
+    // function C() as Bool { return bool(flags & FLAG_C); }
+    // function Z() as Bool { return bool(flags & FLAG_Z); }
+    // function D() as Bool { return bool(flags & FLAG_D); }
+    // function I() as Bool { return bool(flags & FLAG_I); }
 
     function SET_C()   as Void { flags |=  FLAG_C; }
     function CLEAR_C() as Void { flags &= ~FLAG_C; }
@@ -329,7 +329,7 @@ class CPU_impl {
         interrupts[slot].factor_flag_reg = interrupts[slot].factor_flag_reg | (0x1 << bit);
 
         /* Trigger the INT only if not masked */
-        if (bool(interrupts[slot].mask_reg & (0x1 << bit))) {
+        if (interrupts[slot].mask_reg & (0x1 << bit)) {
             interrupts[slot].triggered = true;
         }
     }
@@ -516,6 +516,9 @@ class CPU_impl {
     }
 
     function set_io(n as U12, v as U4) as Void {
+        var v_1 = (v & 0x1) ? true : false;
+        var v_2 = (v & 0x2) ? true : false;
+        var v_8 = (v & 0x8) ? true : false;
         switch (n) {
             case REG_CLOCK_INT_MASKS:
                 /* Clock timer interrupt masks */
@@ -584,19 +587,19 @@ class CPU_impl {
             case REG_R40_R43_BZ_OUTPUT_PORT:
                 /* Output port (R40-R43) */
                 ////g_hal.log(LOG_INFO, "Output/Buzzer: 0x%X\n", [v]);
-                g_hw.enable_buzzer(!bool(v & 0x8));
+                g_hw.enable_buzzer(!v_8);
                 break;
 
             case REG_CPU_OSC3_CTRL:
                 /* CPU/OSC3 clocks switch, CPU voltage switch */
                 /* Do not care about OSC3 state nor operating voltage */
-                if (bool(v & 0x8) && cpu_frequency != OSC3_FREQUENCY) {
+                if (v_8 && cpu_frequency != OSC3_FREQUENCY) {
                     /* OSC3 */
                     cpu_frequency = OSC3_FREQUENCY;
                     scaled_cycle_accumulator = 0;
                     ////g_hal.log(LOG_INFO, "Switch to OSC3\n", []);
                 }
-                if (!bool(v & 0x8) && cpu_frequency != OSC1_FREQUENCY) {
+                if (!v_8 && cpu_frequency != OSC1_FREQUENCY) {
                     /* OSC1 */
                     cpu_frequency = OSC1_FREQUENCY;
                     scaled_cycle_accumulator = 0;
@@ -638,15 +641,15 @@ class CPU_impl {
 
             case REG_PROG_TIMER_CTRL:
                 /* Prog timer stop/run/reset */
-                if (bool(v & 0x2)) {
+                if (v_2) {
                     prog_timer_data = prog_timer_rld;
                 }
 
-                if (bool(v & 0x1) && !prog_timer_enabled) {
+                if (v_1 && !prog_timer_enabled) {
                     prog_timer_timestamp = tick_counter;
                 }
 
-                prog_timer_enabled = bool(v & 0x1);
+                prog_timer_enabled = v_1;
                 break;
 
             case REG_PROG_TIMER_CLK_SEL:
@@ -792,25 +795,25 @@ class CPU_impl {
     }
 
     function op_jp_c_cb(arg0 as U8, arg1 as U8) as Void {
-        if (bool(flags & FLAG_C)) {
+        if ((flags & FLAG_C)) {
             next_pc = arg0 | (np << 8);
         }
     }
 
     function op_jp_nc_cb(arg0 as U8, arg1 as U8) as Void {
-        if (!bool(flags & FLAG_C)) {
+        if ((flags & FLAG_C) == 0) {
             next_pc = arg0 | (np << 8);
         }
     }
 
     function op_jp_z_cb(arg0 as U8, arg1 as U8) as Void {
-        if (bool(flags & FLAG_Z)) {
+        if ((flags & FLAG_Z)) {
             next_pc = arg0 | (np << 8);
         }
     }
 
     function op_jp_nz_cb(arg0 as U8, arg1 as U8) as Void {
-        if (!bool(flags & FLAG_Z)) {
+        if ((flags & FLAG_Z) == 0) {
             next_pc = arg0 | (np << 8);
         }
     }
@@ -944,37 +947,37 @@ class CPU_impl {
     function op_adc_xh_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = XH() + arg0 + int(C());
+        tmp = XH() + arg0 + ((flags & FLAG_C) ? 1 : 0);
         x = XL() | ((tmp & 0xF) << 4)| (XP() << 8);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if ((tmp & 0xF) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_adc_xl_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = XL() + arg0 + int(C());
+        tmp = XL() + arg0 + ((flags & FLAG_C) ? 1 : 0);
         x = (tmp & 0xF) | (XH() << 4) | (XP() << 8);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if ((tmp & 0xF) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_adc_yh_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = YH() + arg0 + int(C());
+        tmp = YH() + arg0 + ((flags & FLAG_C) ? 1 : 0);
         y = YL() | ((tmp & 0xF) << 4)| (YP() << 8);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if ((tmp & 0xF) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_adc_yl_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = YL() + arg0 + int(C());
+        tmp = YL() + arg0 + ((flags & FLAG_C) ? 1 : 0);
         y = (tmp & 0xF) | (YH() << 4) | (YP() << 8);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(tmp & 0xF)) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if ((tmp & 0xF) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_xh_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1195,7 +1198,7 @@ class CPU_impl {
         var tmp;
 
         tmp = RQ(arg0) + arg1;
-        if (D()) {
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1205,16 +1208,16 @@ class CPU_impl {
             }
         } else {
             SET_RQ(arg0, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_add_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
         tmp = RQ(arg0) + RQ(arg1);
-        if (D()) {
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1224,16 +1227,16 @@ class CPU_impl {
             }
         } else {
             SET_RQ(arg0, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_adc_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) + arg1 + int(C());
-        if (D()) {
+        tmp = RQ(arg0) + arg1 + ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1243,16 +1246,16 @@ class CPU_impl {
             }
         } else {
             SET_RQ(arg0, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_adc_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) + RQ(arg1) + int(C());
-        if (D()) {
+        tmp = RQ(arg0) + RQ(arg1) + ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_RQ(arg0, (tmp - 10) & 0xF);
                 SET_C();
@@ -1262,17 +1265,17 @@ class CPU_impl {
             }
         } else {
             SET_RQ(arg0, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_sub_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
         tmp = RQ(arg0) - RQ(arg1);
-        if (D()) {
-            if (bool(tmp >> 4)) {
+        if (flags & FLAG_D) {
+            if ((tmp >> 4)) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
                 SET_RQ(arg0, tmp);
@@ -1280,16 +1283,16 @@ class CPU_impl {
         } else {
             SET_RQ(arg0, tmp & 0xF);
         }
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_sbc_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) - arg1 - int(C());
-        if (D()) {
-            if (bool(tmp >> 4)) {
+        tmp = RQ(arg0) - arg1 - ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
+            if ((tmp >> 4)) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
                 SET_RQ(arg0, tmp);
@@ -1297,16 +1300,16 @@ class CPU_impl {
         } else {
             SET_RQ(arg0, tmp & 0xF);
         }
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_sbc_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = RQ(arg0) - RQ(arg1) - int(C());
-        if (D()) {
-            if (bool(tmp >> 4)) {
+        tmp = RQ(arg0) - RQ(arg1) - ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
+            if ((tmp >> 4)) {
                 SET_RQ(arg0, (tmp - 6) & 0xF);
             } else {
                 SET_RQ(arg0, tmp);
@@ -1314,38 +1317,38 @@ class CPU_impl {
         } else {
             SET_RQ(arg0, tmp & 0xF);
         }
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_and_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) & arg1);
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_and_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) & RQ(arg1));
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_or_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) | arg1);
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_or_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) | RQ(arg1));
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_xor_r_i_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) ^ arg1);
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_xor_r_q_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, RQ(arg0) ^ RQ(arg1));
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_cp_r_i_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1359,18 +1362,18 @@ class CPU_impl {
     }
 
     function op_fan_r_i_cb(arg0 as U8, arg1 as U8) as Void {
-        if (!bool(RQ(arg0) & arg1)) { SET_Z(); } else { CLEAR_Z(); }
+        if((RQ(arg0) & arg1) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_fan_r_q_cb(arg0 as U8, arg1 as U8) as Void {
-        if (!bool(RQ(arg0) & RQ(arg1))) { SET_Z(); } else { CLEAR_Z(); }
+        if((RQ(arg0) & RQ(arg1)) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_rlc_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = (RQ(arg0) << 1) | int(C());
-        if (bool(RQ(arg0) & 0x8)) { SET_C(); } else { CLEAR_C(); }
+        tmp = (RQ(arg0) << 1) | ((flags & FLAG_C) ? 1 : 0);
+        if ((RQ(arg0) & 0x8)) { SET_C(); } else { CLEAR_C(); }
         SET_RQ(arg0, tmp & 0xF);
         /* No need to set Z (issue in DS) */
     }
@@ -1378,8 +1381,8 @@ class CPU_impl {
     function op_rrc_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = (RQ(arg0) >> 1) | (int(C()) << 3);
-        if (bool(RQ(arg0) & 0x1)) { SET_C(); } else { CLEAR_C(); }
+        tmp = (RQ(arg0) >> 1) | ((flags & FLAG_C) << 3) ? 1 : 0;
+        if ((RQ(arg0) & 0x1)) { SET_C(); } else { CLEAR_C(); }
         SET_RQ(arg0, tmp & 0xF);
         /* No need to set Z (issue in DS) */
     }
@@ -1389,8 +1392,8 @@ class CPU_impl {
 
         tmp = M(arg0) + 1;
         SET_M(arg0, tmp & 0xF);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(M(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (M(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_dec_mn_cb(arg0 as U8, arg1 as U8) as Void {
@@ -1398,15 +1401,15 @@ class CPU_impl {
 
         tmp = M(arg0) - 1;
         SET_M(arg0, tmp & 0xF);
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(M(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (M(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     function op_acpx_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(x) + RQ(arg0) + int(C());
-        if (D()) {
+        tmp = M(x) + RQ(arg0) + ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_M(x, (tmp - 10) & 0xF);
                 SET_C();
@@ -1416,17 +1419,17 @@ class CPU_impl {
             }
         } else {
             SET_M(x, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(M(x))) { SET_Z(); } else { CLEAR_Z(); }
+        if (M(x) == 0) { SET_Z(); } else { CLEAR_Z(); }
         x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_acpy_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(y) + RQ(arg0) + int(C());
-        if (D()) {
+        tmp = M(y) + RQ(arg0) + ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
             if (tmp >= 10) {
                 SET_M(y, (tmp - 10) & 0xF);
                 SET_C();
@@ -1436,18 +1439,18 @@ class CPU_impl {
             }
         } else {
             SET_M(y, tmp & 0xF);
-            if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+            if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
         }
-        if (!bool(M(y))) { SET_Z(); } else { CLEAR_Z(); }
+        if (M(y) == 0) { SET_Z(); } else { CLEAR_Z(); }
         y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_scpx_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(x) - RQ(arg0) - int(C());
-        if (D()) {
-            if (bool(tmp >> 4)) {
+        tmp = M(x) - RQ(arg0) - ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
+            if ((tmp >> 4)) {
                 SET_M(x, (tmp - 6) & 0xF);
             } else {
                 SET_M(x, tmp);
@@ -1455,17 +1458,17 @@ class CPU_impl {
         } else {
             SET_M(x, tmp & 0xF);
         }
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(M(x))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (M(x) == 0) { SET_Z(); } else { CLEAR_Z(); }
         x = ((x + 1) & 0xFF) | (XP() << 8);
     }
 
     function op_scpy_cb(arg0 as U8, arg1 as U8) as Void {
         var tmp;
 
-        tmp = M(y) - RQ(arg0) - int(C());
-        if (D()) {
-            if (bool(tmp >> 4)) {
+        tmp = M(y) - RQ(arg0) - ((flags & FLAG_C) ? 1 : 0);
+        if (flags & FLAG_D) {
+            if ((tmp >> 4)) {
                 SET_M(y, (tmp - 6) & 0xF);
             } else {
                 SET_M(y, tmp);
@@ -1473,14 +1476,14 @@ class CPU_impl {
         } else {
             SET_M(y, tmp & 0xF);
         }
-        if (bool(tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
-        if (!bool(M(y))) { SET_Z(); } else { CLEAR_Z(); }
+        if ((tmp >> 4)) { SET_C(); } else { CLEAR_C(); }
+        if (M(y) == 0) { SET_Z(); } else { CLEAR_Z(); }
         y = ((y + 1) & 0xFF) | (YP() << 8);
     }
 
     function op_not_cb(arg0 as U8, arg1 as U8) as Void {
         SET_RQ(arg0, ~RQ(arg0) & 0xF);
-        if (!bool(RQ(arg0))) { SET_Z(); } else { CLEAR_Z(); }
+        if (RQ(arg0) == 0) { SET_Z(); } else { CLEAR_Z(); }
     }
 
     /* The E0C6S46 supported instructions */
@@ -1691,7 +1694,7 @@ class CPU_impl {
             /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 3));
 
             /* Generate interrupt on falling edge only (1Hz) */
-            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 3) & 0x1 )) {
+            if (((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 3) & 0x1) == 0) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 3);
             }
         }
@@ -1705,7 +1708,7 @@ class CPU_impl {
             /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 2));
 
             /* Generate interrupt on falling edge only (2Hz) */
-            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 2) & 0x1 )) {
+            if (((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >> 2) & 0x1) == 0) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 2);
             }
         }
@@ -1728,7 +1731,7 @@ class CPU_impl {
             /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) ^ (0x1 << 0));
 
             /* Generate interrupt on falling edge only (8Hz) */
-            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >>0) & 0x1 )) {
+            if (((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_2) >>0) & 0x1) == 0) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 1);
             }
         }
@@ -1751,7 +1754,7 @@ class CPU_impl {
             /*SET_IO_MEMORY*/SET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1, /*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) ^ (0x1 << 2));
 
             /* Generate interrupt on falling edge only (32Hz) */
-            if (!bool((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) >> 2) & 0x1 )) {
+            if (((/*GET_IO_MEMORY*/GET_MEMORY(memory, REG_CLOCK_TIMER_DATA_1) >> 2) & 0x1) == 0) {
                 generate_interrupt(INT_CLOCK_TIMER_SLOT, 0);
             }
         }
@@ -1866,7 +1869,7 @@ class CPU_impl {
             /* Process the OP code */
             var cb = method(OPS[i * 6 + 5/*callback symbol*/]);
             if (cb != null) {
-                if (OPS[i * 6 + 3/*mask_arg0*/] != 0) {
+                if (OPS[i * 6 + 3/*mask_arg0*/]) {
                     /* Two arguments */
                     cb.invoke((op & OPS[i * 6 + 3/*mask_arg0*/]) >> OPS[i * 6 + 2/*shift_arg0*/], op & ~(OPS[i * 6 + 1/*mask*/] | OPS[i * 6 + 3/*mask_arg0*/]));
                 } else {
@@ -1879,7 +1882,7 @@ class CPU_impl {
             pc = next_pc;
             previous_cycles = OPS[i * 6 + 4/*cycles*/];
 
-            if (i != 0) {
+            if (i) {
                 /* OP code is not PSET, reset NP */
                 np = (pc >> 8) & 0x1F;
             }
@@ -1895,8 +1898,11 @@ class CPU_impl {
         handle_timers();
 
         /* Check if there is any pending interrupt */
-        if (I() && i != 0 && i != 58) { // Do not process interrupts after a PSET or EI operation
-            process_interrupts();
+        if (flags & FLAG_I) {
+            if (i != 0 && i != 58) {
+                // Do not process interrupts after a PSET or EI operation
+                process_interrupts();
+            }
         }
 
         /* Check if we could pause the execution */
