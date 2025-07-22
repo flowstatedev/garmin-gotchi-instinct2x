@@ -180,14 +180,14 @@ class CPU_impl {
 
     // typedef Ops as std.Array<Op>;
 
-    const OP_CODE = 0;
-    const OP_MASK = 1;
-    const OP_SHIFT_ARG0 = 2;
-    const OP_MASK_ARG0 = 3;
-    const OP_CYCLES = 4;
-    const OP_CALLBACK_SYMBOL = 5;
+    const OP_INDEX_CODE = 0;
+    const OP_INDEX_MASK = 1;
+    const OP_INDEX_SHIFT_ARG0 = 2;
+    const OP_INDEX_MASK_ARG0 = 3;
+    const OP_INDEX_CYCLES = 4;
+    const OP_INDEX_CALLBACK_SYMBOL = 5;
 
-    const OP_ELEMENT_SIZE = 6;
+    const OP_NUM_INDICES = 6;
 
     // class InputPort {
     //     var states as U4;
@@ -708,11 +708,15 @@ class CPU_impl {
         //     return 0;
         // }
 
-         if (n >= MEM_IO_ADDR && n < (MEM_IO_ADDR + MEM_IO_SIZE)) {
-            return get_io(n);
-         } else {
+        var is_n_valid = n < (MEM_IO_ADDR + MEM_IO_SIZE);
+        if (n >= MEM_IO_ADDR && is_n_valid) {
+           return get_io(n);
+        } else if (is_n_valid) {
             return GET_MEMORY(memory, n);
-         }
+        } else {
+            //g_hal.log(LOG_ERROR, "Read from invalid memory address 0x%03X - PC = 0x%04X\n", [n, pc]);
+            return 0;
+        }
 
         //g_hal.log(LOG_MEMORY, "Read  0x%X - Address 0x%03X - PC = 0x%04X\n", [res, n, pc]);
 
@@ -721,7 +725,6 @@ class CPU_impl {
 
     function set_memory(n as U12, v as U4) as Void {
         /* Cache any data written to a valid address, and process it */
-        SET_MEMORY(memory, n, v);
         if (n < MEM_RAM_SIZE) {
             /* RAM */
             // SET_RAM_MEMORY(memory, n, v);
@@ -745,6 +748,7 @@ class CPU_impl {
             //g_hal.log(LOG_ERROR, "Write 0x%X to invalid memory address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
             return;
         }
+        SET_MEMORY(memory, n, v);
 
         //g_hal.log(LOG_MEMORY, "Write 0x%X - Address 0x%03X - PC = 0x%04X\n", [v, n, pc]);
     }
@@ -1856,18 +1860,19 @@ class CPU_impl {
             var op = g_program[prg_i + 1] | ((g_program[prg_i] & 0xF) << 8);
 
             /* Lookup the OP code */
-            var op_index = -1;
+            var op_offset = -1;
             var i;
-            for (i = 0; i < OPS.size(); i++) {
-                var index = i * OP_ELEMENT_SIZE;
-                op_code = OPS[index + OP_CODE];
-                if ((op & OPS[index + OP_MASK] as Number) == op_code) {
-                    op_index = index;
+            var len = OPS.size() / OP_NUM_INDICES;
+            for (i = 0; i < len; i++) {
+                var offset = i * OP_NUM_INDICES;
+                op_code = OPS[offset + OP_INDEX_CODE];
+                if ((op & OPS[offset + OP_INDEX_MASK] as Number) == op_code) {
+                    op_offset = offset;
                     break;
                 }
             }
 
-            if (op_index == -1) {
+            if (op_offset == -1) {
                 //g_hal.log(LOG_ERROR, "Unknown op-code 0x%X (pc = 0x%04X)\n", [op, pc]);
                 return 1;
             }
@@ -1884,20 +1889,20 @@ class CPU_impl {
             ref_ts = wait_for_cycles(ref_ts, previous_cycles);
 
             /* Process the OP code */
-            var cb = method(OPS[op_index + OP_CALLBACK_SYMBOL] as Symbol);
+            var cb = method(OPS[op_offset + OP_INDEX_CALLBACK_SYMBOL] as Symbol);
             if (cb != null) {
-                if (OPS[op_index + OP_MASK_ARG0]) {
+                if (OPS[op_offset + OP_INDEX_MASK_ARG0]) {
                     /* Two arguments */
-                    cb.invoke((op & OPS[op_index + OP_MASK_ARG0] as Number) >> OPS[op_index + OP_SHIFT_ARG0] as Number, op & ~(OPS[op_index + OP_MASK] as Number | OPS[op_index + OP_MASK_ARG0] as Number));
+                    cb.invoke((op & OPS[op_offset + OP_INDEX_MASK_ARG0] as Number) >> OPS[op_offset + OP_INDEX_SHIFT_ARG0] as Number, op & ~(OPS[op_offset + OP_INDEX_MASK] as Number | OPS[op_offset + OP_INDEX_MASK_ARG0] as Number));
                 } else {
                     /* One arguments */
-                    cb.invoke((op & ~(OPS[op_index + OP_MASK] as Number)) >> OPS[op_index + OP_SHIFT_ARG0] as Number, 0);
+                    cb.invoke((op & ~(OPS[op_offset + OP_INDEX_MASK] as Number)) >> OPS[op_offset + OP_INDEX_SHIFT_ARG0] as Number, 0);
                 }
             }
 
             /* Prepare for the next instruction */
             pc = next_pc;
-            previous_cycles = OPS[op_index + OP_CYCLES] as Number;
+            previous_cycles = OPS[op_offset + OP_INDEX_CYCLES] as Number;
 
             if (op_code != OP_CODE_PSET) {
                 /* OP code is not PSET, reset NP */
