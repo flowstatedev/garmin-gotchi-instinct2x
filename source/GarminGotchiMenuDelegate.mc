@@ -1,20 +1,20 @@
-using Toybox.System as sys;
-using Toybox.WatchUi as ui;
 import Toybox.Lang;
+import Toybox.WatchUi;
 
-class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
+class GarminGotchiMenuDelegate extends Menu2InputDelegate {
 
     var game as GarminGotchiApp;
 
     function initialize(game as GarminGotchiApp) {
-        MenuInputDelegate.initialize();
+        Menu2InputDelegate.initialize();
         me.game = game;
 
         game.pause();
     }
 
-    function onMenuItem(item as Symbol) as Void {
-        switch (item) {
+    function onSelect(item as MenuItem) as Void {
+        var id = item.getId() as Symbol;
+        switch (id) {
             case :MenuResume:
                 break;
 
@@ -31,7 +31,7 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
                 break;
 
             case :MenuExit:
-                sys.exit();
+                System.exit();
 
             case :MenuRestart:
                 game.reset();
@@ -42,6 +42,7 @@ class GarminGotchiMenuDelegate extends ui.MenuInputDelegate {
         }
 
         game.start();
+        WatchUi.popView(WatchUi.SLIDE_DOWN);
     }
 
 }
